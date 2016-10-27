@@ -2,7 +2,7 @@
 Imports System.DirectoryServices
 
 
-Module Main
+Module AccountSync
 
     Class user
         Public firstName
@@ -12,12 +12,15 @@ Module Main
         Public username
         Public profilePath
         Public HomePath
+        Public HomeDriveLetter
         Public classOf
         Public employeeID
         Public employeeNumber
         Public password
         Public startDate
         Public endDate
+        Public enabled
+        Public memberOf
     End Class
 
     Class configSettings
@@ -27,7 +30,13 @@ Module Main
 
 
     Sub Main()
+        Dim config As New configSettings()
+        config = readConfig()
 
+        Dim dirEntry As DirectoryEntry
+        dirEntry = GetDirectoryEntry(config)
+
+        getADUsers(dirEntry)
     End Sub
 
 
@@ -124,6 +133,76 @@ from schoolbox_students
         'Always use a secure connection
         dirEntry.AuthenticationType = AuthenticationTypes.Secure
         Return dirEntry
+    End Function
+
+
+    Sub createUser(dirEntry As DirectoryEntry)
+
+
+    End Sub
+
+    Function getADUsers(dirEntry As DirectoryEntry)
+        Dim searcher As New DirectorySearcher(dirEntry)
+        Dim adUsers As New List(Of user)
+
+        searcher.PropertiesToLoad.Add("cn")
+        searcher.PropertiesToLoad.Add("employeeID")
+        searcher.PropertiesToLoad.Add("distinguishedName")
+        searcher.PropertiesToLoad.Add("employeeNumber")
+        searcher.PropertiesToLoad.Add("givenName")
+        searcher.PropertiesToLoad.Add("homeDirectory")
+        searcher.PropertiesToLoad.Add("homeDrive")
+        searcher.PropertiesToLoad.Add("mail")
+        searcher.PropertiesToLoad.Add("profilePath")
+        searcher.PropertiesToLoad.Add("samAccountName")
+        searcher.PropertiesToLoad.Add("sn")
+        searcher.PropertiesToLoad.Add("userPrincipalName")
+        searcher.PropertiesToLoad.Add("memberof")
+
+
+        searcher.Filter = "(objectCategory=person)"
+        searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+        searcher.SizeLimit = 100000000
+
+
+        Dim queryResults As SearchResultCollection
+        queryResults = searcher.FindAll
+
+        Dim result As SearchResult
+        For Each result In queryResults
+            adUsers.Add(New user)
+
+            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
+            If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
+            If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
+            If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
+            If result.Properties("samAccountName").Count > 0 Then adUsers.Last.username = result.Properties("samAccountName")(0)
+            If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
+            If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
+            If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
+
+
+
+            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
+            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
+
+
+
+            If result.Properties("memberof").Count > 0 Then
+                    For Each i In result.Properties("memberof")
+                        Console.WriteLine(i.ToString)
+                    Next
+                End If
+
+
+
+
+
+
+
+
+        Next
+
     End Function
 
 End Module
