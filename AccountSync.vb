@@ -20,7 +20,8 @@ Module AccountSync
         Public startDate
         Public endDate
         Public enabled
-        Public memberOf
+        Public memberOf As New List(Of String)
+        Public userAccountControl
     End Class
 
     Class configSettings
@@ -158,6 +159,7 @@ from schoolbox_students
         searcher.PropertiesToLoad.Add("sn")
         searcher.PropertiesToLoad.Add("userPrincipalName")
         searcher.PropertiesToLoad.Add("memberof")
+        searcher.PropertiesToLoad.Add("userAccountControl")
 
 
         searcher.Filter = "(objectCategory=person)"
@@ -180,26 +182,23 @@ from schoolbox_students
             If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
             If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
             If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
-
-
-
-            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
-            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
-
-
+            If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
+            If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
+            If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
 
             If result.Properties("memberof").Count > 0 Then
-                    For Each i In result.Properties("memberof")
-                        Console.WriteLine(i.ToString)
-                    Next
-                End If
+                For Each group In result.Properties("memberof")
+                    adUsers.Last.memberOf.Add(group)
+                    Console.WriteLine(group)
+                Next
+            End If
 
-
-
-
-
-
-
+            If result.Properties("userAccountControl").Count = 66048 Then
+                adUsers.Last.enabled = True
+            End If
+            If result.Properties("userAccountControl").Count = 66050 Then
+                adUsers.Last.enabled = False
+            End If
 
         Next
 
