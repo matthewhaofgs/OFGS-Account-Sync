@@ -246,6 +246,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             Dim intEmployeeID As Integer
             Dim strUser As String               ' User to create.
             Dim strUserPrincipalName As String  ' Principal name of user.
+            Dim strDescription As String
 
             'common properties for all user types
             intEmployeeID = objUserToAdd.employeeID
@@ -257,6 +258,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 Case "Student"
                     strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
                     strUserPrincipalName = objUserToAdd.username & config.studentDomainName
+                    strDescription = "Class of " & objUserToAdd.classOf & " Barcode:"
                 Case "Staff"
                 'Do stuff
 
@@ -282,7 +284,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 objUser.Properties("samAccountName").Add(objUserToAdd.username)
                 objUser.Properties("sn").Add(objUserToAdd.surname)
                 objUser.Properties("mail").Add(strUserPrincipalName)
-
+                objUser.Properties("description").Add(strDescription)
 
                 'objUser.Properties("employeeNumber")
                 'objUser.Properties("homeDirectory")
@@ -526,7 +528,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     Function createPassword()
         Dim strPassword As String
 
-        strPassword = "a"
+        strPassword = "avgfh8p9435hgu9e5yhv8b648h6je584sjuy9-6jkh90e64hj5b8964hs[064y"
 
         Return strpassword
     End Function
