@@ -1,56 +1,76 @@
 ﻿Imports System.IO
 Imports System.DirectoryServices
+Imports System.Text.RegularExpressions
 
 
 Module AccountSync
 
     Class user
-        Public firstName
-        Public surname
-        Public displayName
-        Public email
-        Public username
-        Public profilePath
-        Public HomePath
-        Public HomeDriveLetter
-        Public classOf
-        Public employeeID
+        Public firstName As String
+        Public surname As String
+        Public displayName As String
+        Public email As String
+        Public username As String
+        Public profilePath As String
+        Public HomePath As String
+        Public HomeDriveLetter As String
+        Public classOf As Integer
+        Public employeeID As Integer
         Public employeeNumber
-        Public password
+        Public password As String
         Public startDate
         Public endDate
         Public enabled
         Public memberOf As New List(Of String)
         Public userAccountControl
+        Public userType
     End Class
 
     Class configSettings
         Public edumateConnectionString As String
         Public ldapDirectoryEntry As String
+        Public daysInAdvanceToCreateAccounts As Integer
+        Public studentDomainName As String
     End Class
-
 
     Sub Main()
         Dim config As New configSettings()
+
+        Console.WriteLine("Reading config...")
         config = readConfig()
 
+
+
         Dim edumateStudents As List(Of user)
+
+        Console.WriteLine("Getting Edumate student data...")
         edumateStudents = getEdumateStudents(config)
 
+
         Dim dirEntry As DirectoryEntry
+
+        Console.WriteLine("Connecting to AD...")
         dirEntry = GetDirectoryEntry(config)
 
         Dim adUsers As List(Of user)
+        Console.WriteLine("Loading AD users...")
+        Console.WriteLine("")
+        Console.WriteLine("")
         adUsers = getADUsers(dirEntry)
 
         Dim usersToAdd As List(Of user)
         usersToAdd = getEdumateUsersNotInAD(edumateStudents, adUsers)
 
-        usersToAdd = excludeUserOutsideEnrollDate(usersToAdd)
+        usersToAdd = excludeUserOutsideEnrollDate(usersToAdd, config)
 
-        For Each user In usersToAdd
-            Console.WriteLine(user.firstName & " " & user.surname)
-        Next
+        Console.WriteLine("Found " & usersToAdd.Count & " users to add")
+
+        If usersToAdd.Count > 0 Then
+            usersToAdd = evaluateUsernames(usersToAdd, adUsers)
+            createUsers(dirEntry, usersToAdd, config)
+        End If
+
+
 
     End Sub
 
@@ -73,7 +93,11 @@ Module AccountSync
                         Case Left(line, 24) = "edumateConnectionstring="
                             config.edumateConnectionString = Mid(line, 25)
                         Case Left(line, 19) = "ldapDirectoryEntry="
-                            config.edumateConnectionString = Mid(line, 20)
+                            config.ldapDirectoryEntry = Mid(line, 20)
+                        Case Left(line, 30) = "daysInAdvanceToCreateAccounts="
+                            config.daysInAdvanceToCreateAccounts = Mid(line, 31)
+                        Case Left(line, 18) = "studentDomainName="
+                            config.studentDomainName = Mid(line, 19)
                     End Select
 
                 End While
@@ -148,8 +172,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     users.Last.endDate = dr.GetValue(3)
                     users.Last.employeeID = dr.GetValue(4)
                     users.Last.classOf = getYearOf(dr.GetValue(5), dr.GetValue(6))
-
-
+                    users.Last.userType = "Student"
+                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
                 End If
             End While
             conn.Close()
@@ -192,9 +216,6 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     End Function
 
 
-    Sub createUsers(usersToCreate As List(Of user))
-
-    End Sub
 
     ''' <returns>DirectoryEntry</returns>
     Public Function GetDirectoryEntry(config As configSettings) As DirectoryEntry
@@ -212,47 +233,63 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     End Function
 
 
-    Sub createUser(ByVal dirEntry As DirectoryEntry, ByVal objUserToAdd As user)
+    Sub createUsers(dirEntry As DirectoryEntry, ByVal objUsersToAdd As List(Of user), ByVal config As configSettings)
+
+        For Each objUserToAdd In objUsersToAdd
+
+
+            Dim objUser As DirectoryEntry
+            Dim strDisplayName As String        '
+            Dim intEmployeeID As Integer
+            Dim strUser As String               ' User to create.
+            Dim strUserPrincipalName As String  ' Principal name of user.
+
+            intEmployeeID = objUserToAdd.employeeID
+            strDisplayName = objUserToAdd.displayName
+
+            Select Case objUserToAdd.userType
+                Case "Student"
+                    strUser = "CN=" & objUserToAdd.username & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
+                    strUserPrincipalName = objUserToAdd.username & config.studentDomainName
+                Case "Staff"
+                'Do stuff
+
+                Case "Parent"
+                    'Do stuff
+
+                Case Else
+                    'Do Else
+            End Select
+
+            Console.WriteLine("Create:  {0}", strUser)
+
+            ' Create User.
+            Try
+                objUser = dirEntry.Children.Add(strUser, "user")
+                objUser.Properties("displayName").Add(strDisplayName)
+                objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
+                objUser.Properties("EmployeeID").Add(intEmployeeID)
 
 
 
-        Dim objUser As DirectoryEntry       ' User object.
 
-        Dim strDisplayName As String        ' Display name of user.
-        Dim strUser As String               ' User to create.
-        Dim strUserPrincipalName As String  ' Principal name of user.
+                objUser.CommitChanges()
+            Catch e As Exception
+                Console.WriteLine("Error:   Create failed.")
+                Console.WriteLine("         {0}", e.Message)
+                Return
+            End Try
 
-        ' Construct the binding string.
-
-
-        ' Specify User.
-        strUser = "CN=AccTestUser"
-        strDisplayName = "Acc Test User"
-        strUserPrincipalName = "accTestUser@ofgs.nsw.edu.au"
-        Console.WriteLine("Create:  {0}", strUser)
-
-        ' Create User.
-        Try
-            objUser = dirEntry.Children.Add(strUser, "user")
-            objUser.Properties("displayName").Add(strDisplayName)
-            objUser.Properties("userPrincipalName").Add(
-                    strUserPrincipalName)
-            objUser.CommitChanges()
-        Catch e As Exception
-            Console.WriteLine("Error:   Create failed.")
-            Console.WriteLine("         {0}", e.Message)
+            ' Output User attributes.
+            Console.WriteLine("Success: Create succeeded.")
+            Console.WriteLine("Name:    {0}", objUser.Name)
+            Console.WriteLine("         {0}",
+                    objUser.Properties("displayName").Value)
+            Console.WriteLine("         {0}",
+                    objUser.Properties("userPrincipalName").Value)
             Return
-        End Try
 
-        ' Output User attributes.
-        Console.WriteLine("Success: Create succeeded.")
-        Console.WriteLine("Name:    {0}", objUser.Name)
-        Console.WriteLine("         {0}",
-                objUser.Properties("displayName").Value)
-        Console.WriteLine("         {0}",
-                objUser.Properties("userPrincipalName").Value)
-        Return
-
+        Next
     End Sub
 
 
@@ -263,74 +300,84 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
     Function getADUsers(dirEntry As DirectoryEntry)
-        Dim searcher As New DirectorySearcher(dirEntry)
-        Dim adUsers As New List(Of user)
+        Using searcher As New DirectorySearcher(dirEntry)
+            Dim adUsers As New List(Of user)
 
-        searcher.PropertiesToLoad.Add("cn")
-        searcher.PropertiesToLoad.Add("employeeID")
-        searcher.PropertiesToLoad.Add("distinguishedName")
-        searcher.PropertiesToLoad.Add("employeeNumber")
-        searcher.PropertiesToLoad.Add("givenName")
-        searcher.PropertiesToLoad.Add("homeDirectory")
-        searcher.PropertiesToLoad.Add("homeDrive")
-        searcher.PropertiesToLoad.Add("mail")
-        searcher.PropertiesToLoad.Add("profilePath")
-        searcher.PropertiesToLoad.Add("samAccountName")
-        searcher.PropertiesToLoad.Add("sn")
-        searcher.PropertiesToLoad.Add("userPrincipalName")
-        searcher.PropertiesToLoad.Add("memberof")
-        searcher.PropertiesToLoad.Add("userAccountControl")
-
-
-        searcher.Filter = "(objectCategory=person)"
-        searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
-        searcher.SizeLimit = 100000000
+            searcher.PropertiesToLoad.Add("cn")
+            searcher.PropertiesToLoad.Add("employeeID")
+            searcher.PropertiesToLoad.Add("distinguishedName")
+            searcher.PropertiesToLoad.Add("employeeNumber")
+            searcher.PropertiesToLoad.Add("givenName")
+            searcher.PropertiesToLoad.Add("homeDirectory")
+            searcher.PropertiesToLoad.Add("homeDrive")
+            searcher.PropertiesToLoad.Add("mail")
+            searcher.PropertiesToLoad.Add("profilePath")
+            searcher.PropertiesToLoad.Add("samAccountName")
+            searcher.PropertiesToLoad.Add("sn")
+            searcher.PropertiesToLoad.Add("userPrincipalName")
+            searcher.PropertiesToLoad.Add("memberof")
+            searcher.PropertiesToLoad.Add("userAccountControl")
 
 
-        Dim queryResults As SearchResultCollection
-        queryResults = searcher.FindAll
+            searcher.Filter = "(objectCategory=person)"
+            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.SizeLimit = 100000000
+            searcher.Asynchronous = False
+            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.PageSize = 10000
 
-        Dim result As SearchResult
-        For Each result In queryResults
-            adUsers.Add(New user)
+            Dim queryResults As SearchResultCollection
+            queryResults = searcher.FindAll
 
-            If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
-            If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
-            If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
-            If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
-            If result.Properties("samAccountName").Count > 0 Then adUsers.Last.username = result.Properties("samAccountName")(0)
-            If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
-            If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
-            If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
-            If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
-            If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
-            If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
+            Dim result As SearchResult
 
-            If result.Properties("memberof").Count > 0 Then
-                For Each group In result.Properties("memberof")
-                    adUsers.Last.memberOf.Add(group)
-                    'Console.WriteLine(group)
-                Next
-            End If
+            For Each result In queryResults
+                adUsers.Add(New user)
 
-            If result.Properties("userAccountControl").Count = 66048 Then
-                adUsers.Last.enabled = True
-            End If
-            If result.Properties("userAccountControl").Count = 66050 Then
-                adUsers.Last.enabled = False
-            End If
+                If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
+                If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
+                If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
+                If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
+                If result.Properties("samAccountName").Count > 0 Then adUsers.Last.username = result.Properties("samAccountName")(0)
+                If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
+                If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
+                If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
+                If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
+                If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
+                If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
 
-        Next
-        Return adUsers
+                If result.Properties("memberof").Count > 0 Then
+                    For Each group In result.Properties("memberof")
+                        adUsers.Last.memberOf.Add(group)
+
+                    Next
+                End If
+
+                If result.Properties("userAccountControl").Count = 66048 Then
+                    adUsers.Last.enabled = True
+                End If
+                If result.Properties("userAccountControl").Count = 66050 Then
+                    adUsers.Last.enabled = False
+                End If
+
+            Next
+            Return adUsers
+        End Using
     End Function
 
     Function getEdumateUsersNotInAD(ByVal edumateUsers As List(Of user), ByVal adUsers As List(Of user))
 
         Dim usersToAdd As New List(Of user)
 
+        Console.WriteLine("Evaluating users to create:")
+        Dim i As Integer = 1
+
         For Each edumateUser In edumateUsers
+
+            CONSOLE__WRITE(String.Format("Processed {0} of {1}", i, edumateUsers.Count))
             Dim found As Boolean = False
             For Each adUser In adUsers
+
                 If adUser.employeeID = edumateUser.employeeID Then
                     found = True
                 End If
@@ -339,21 +386,122 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             If found = False Then
                 usersToAdd.Add(edumateUser)
             End If
+            i = i + 1
         Next
-
+        CONSOLE__CLEAR_EOL()
         Return usersToAdd
     End Function
 
-    Function excludeUserOutsideEnrollDate(ByVal users As List(Of user))
+    Function excludeUserOutsideEnrollDate(ByVal users As List(Of user), config As configSettings)
 
         Dim ReturnUsers As New List(Of user)
 
         For Each user In users
-            If user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(0)) Then
+            If user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
                 ReturnUsers.Add(user)
+
             End If
         Next
         Return ReturnUsers
     End Function
+
+
+
+    Public Sub CONSOLE__WRITE(ByRef szText As String, Optional ByVal bClearEOL As Boolean = True)
+        'Output the text
+        Console.Write(szText)
+        'Optionally clear to end of line (EOL)
+        If bClearEOL Then CONSOLE__CLEAR_EOL()
+        'Move cursor back to where we started, using Backspaces
+        Console.Write(Microsoft.VisualBasic.StrDup(szText.Length(), Chr(8)))
+    End Sub
+
+    Public Sub CONSOLE__CLEAR_EOL()
+        'Clear to End of line (EOL)
+        'Save window and cursor positions
+        Dim x As Integer = Console.CursorLeft
+        Dim y As Integer = Console.CursorTop
+        Dim wx As Integer = Console.WindowLeft
+        Dim wy As Integer = Console.WindowTop
+        'Write spaces until end of buffer width
+        Console.Write(Space(Console.BufferWidth - x))
+        'Restore window and cursor position
+        Console.SetWindowPosition(wx, wy)
+        Console.SetCursorPosition(x, y)
+    End Sub
+
+
+    Function evaluateUsernames(users As List(Of user), adusers As List(Of user))
+        Console.WriteLine("Evaluating usernames for new users...")
+        Console.WriteLine("")
+        For Each user In users
+
+
+
+            Console.WriteLine("User:" & user.firstName & " " & user.surname)
+            Dim strUsername As String
+            Select Case user.userType
+                Case "Student"
+                    Dim rgx As New Regex("[^a-zA-Z ]")
+                    Dim availableNameFound As Boolean = False
+                    Dim i As Integer = 1
+
+                    While availableNameFound = False And i <= user.firstName.Length
+
+                        strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
+                        Console.WriteLine("Trying " & strUsername & "...")
+                        Dim duplicate As Boolean = False
+                        Dim a As Integer = 1
+                        For Each adUser In adusers
+
+                            CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
+                            Try
+                                adUser.username = adUser.username.ToLower
+                            Catch ex As Exception
+
+                            End Try
+
+                            If strUsername = adUser.username Then
+                                duplicate = True
+                            End If
+                            a = a + 1
+                        Next
+                        If duplicate = False Then
+                            availableNameFound = True
+                            user.username = strUsername
+                        End If
+
+                        i = i + 1
+                    End While
+
+                    If user.username = "" Then
+                        Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
+                    Else
+                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                    End If
+
+
+                Case "Staff"
+                'Do stuff
+
+
+                Case "Parent"
+                    'Do stuff
+
+
+                Case Else
+                    'Do Else
+            End Select
+        Next
+        Return users
+    End Function
+
+
+
+
+
+
+
+
 
 End Module
