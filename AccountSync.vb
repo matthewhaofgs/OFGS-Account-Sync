@@ -31,11 +31,12 @@ Module AccountSync
         Public ldapDirectoryEntry As String
         Public daysInAdvanceToCreateAccounts As Integer
         Public studentDomainName As String
+        Public studentProfilePath As String
     End Class
 
     Sub Main()
         Dim config As New configSettings()
-
+        Console.Clear()
         Console.WriteLine("Reading config...")
         config = readConfig()
 
@@ -98,6 +99,8 @@ Module AccountSync
                             config.daysInAdvanceToCreateAccounts = Mid(line, 31)
                         Case Left(line, 18) = "studentDomainName="
                             config.studentDomainName = Mid(line, 19)
+                        Case Left(line, 19) = "studentProfilePath="
+                            config.studentProfilePath = Mid(line, 20)
                     End Select
 
                 End While
@@ -244,12 +247,15 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             Dim strUser As String               ' User to create.
             Dim strUserPrincipalName As String  ' Principal name of user.
 
+            'common properties for all user types
             intEmployeeID = objUserToAdd.employeeID
             strDisplayName = objUserToAdd.displayName
 
+
+
             Select Case objUserToAdd.userType
                 Case "Student"
-                    strUser = "CN=" & objUserToAdd.username & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
+                    strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
                     strUserPrincipalName = objUserToAdd.username & config.studentDomainName
                 Case "Staff"
                 'Do stuff
@@ -259,6 +265,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                 Case Else
                     'Do Else
+
             End Select
 
             Console.WriteLine("Create:  {0}", strUser)
@@ -270,8 +277,16 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
                 objUser.Properties("EmployeeID").Add(intEmployeeID)
 
+                objUser.Properties("givenName").Add(objUserToAdd.firstName)
+                objUser.Properties("profilePath").Add(config.studentProfilePath)
+                objUser.Properties("samAccountName").Add(objUserToAdd.username)
+                objUser.Properties("sn").Add(objUserToAdd.surname)
+                objUser.Properties("mail").Add(strUserPrincipalName)
 
 
+                'objUser.Properties("employeeNumber")
+                'objUser.Properties("homeDirectory")
+                'objUser.Properties("homeDrive")
 
                 objUser.CommitChanges()
             Catch e As Exception
@@ -280,6 +295,15 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 Return
             End Try
 
+            objUser.Invoke("setPassword", New Object() {createPassword()})
+            objUser.CommitChanges()
+
+
+            Const ADS_UF_ACCOUNTDISABLE = &H10200
+            objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
+            objUser.CommitChanges()
+
+
             ' Output User attributes.
             Console.WriteLine("Success: Create succeeded.")
             Console.WriteLine("Name:    {0}", objUser.Name)
@@ -287,6 +311,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     objUser.Properties("displayName").Value)
             Console.WriteLine("         {0}",
                     objUser.Properties("userPrincipalName").Value)
+
+
             Return
 
         Next
@@ -353,12 +379,12 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     Next
                 End If
 
-                If result.Properties("userAccountControl").Count = 66048 Then
-                    adUsers.Last.enabled = True
-                End If
-                If result.Properties("userAccountControl").Count = 66050 Then
-                    adUsers.Last.enabled = False
-                End If
+                'If result.Properties("userAccountControl")(0) = 66048 Then
+                ' adUsers.Last.enabled = True
+                ' End If
+                ' If result.Properties("userAccountControl")(0) = 66050 Then
+                '  adUsers.Last.enabled = False
+                '  End If
 
             Next
             Return adUsers
@@ -497,7 +523,13 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     End Function
 
 
+    Function createPassword()
+        Dim strPassword As String
 
+        strPassword = "a"
+
+        Return strpassword
+    End Function
 
 
 
