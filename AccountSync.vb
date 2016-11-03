@@ -3,6 +3,7 @@ Imports System.DirectoryServices
 Imports System.Text.RegularExpressions
 
 
+
 Module AccountSync
 
     Class user
@@ -24,6 +25,7 @@ Module AccountSync
         Public memberOf As New List(Of String)
         Public userAccountControl
         Public userType
+        Public children As List(Of String)
     End Class
 
     Class configSettings
@@ -33,6 +35,8 @@ Module AccountSync
         Public studentDomainName As String
         Public studentProfilePath As String
     End Class
+
+
 
     Sub Main()
         Dim config As New configSettings()
@@ -132,7 +136,7 @@ YEAR(student_form_run.end_date) as EndYear
 
 
 FROM            
-OFGSODBC.STUDENT, 
+STUDENT, 
 contact, 
 view_student_start_exit_dates, 
 student_form_run, 
@@ -526,12 +530,158 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
     Function createPassword()
-        Dim strPassword As String
 
-        strPassword = "avgfh8p9435hgu9e5yhv8b648h6je584sjuy9-6jkh90e64hj5b8964hs[064y"
+        Dim wordlist As List(Of String)
+        wordlist = getWordList()
 
-        Return strpassword
+
+
+        Dim RandomClass As New Random(System.DateTime.Now.Millisecond)
+        Dim rndNumber As Integer = RandomClass.Next(10, 99)
+
+
+        'Dim PasswordPosition As Integer = RandomClass.Next(0, 5)
+        Dim PasswordPosition As Integer = 2
+        Select Case PasswordPosition
+            Case 0 : Return getWord(wordlist) & getWord(wordlist) & rndNumber
+            Case 1 : Return rndNumber & getWord(wordlist) & getWord(wordlist)
+            Case 2 : Return Mixedcase(getWord(wordlist)) & rndNumber & Mixedcase(getWord(wordlist))
+            Case 3 : Return getWord(wordlist) & getWord(wordlist) & rndNumber
+            Case 4 : Return rndNumber & getWord(wordlist) & getWord(wordlist)
+            Case 5 : Return getWord(wordlist) & rndNumber & getWord(wordlist)
+            Case Else : Return getWord(wordlist) & getWord(wordlist)
+        End Select
+
+
     End Function
+
+
+
+
+    Function getWordList()
+        Dim directory As String = My.Application.Info.DirectoryPath
+        Dim WordList As New List(Of String)
+        Dim word As String
+
+        If My.Computer.FileSystem.FileExists(directory & "\wordList.txt") Then
+            Dim fields As String()
+            Dim delimiter As String = ","
+            Using parser As New Microsoft.VisualBasic.FileIO.TextFieldParser(directory & "\wordList.txt")
+                parser.SetDelimiters(delimiter)
+                While Not parser.EndOfData
+                    fields = parser.ReadFields()
+                    For Each word In fields
+                        WordList.Add(word)
+                    Next
+                End While
+            End Using
+
+        Else
+            Throw New Exception(directory & "\wordList.txt" & " doesn't Exist!")
+        End If
+        Return WordList
+    End Function
+
+    Function getWord(wordlist As List(Of String))
+        System.Threading.Thread.CurrentThread.Sleep(1)
+        Dim Position As New Random(System.DateTime.Now.Millisecond)
+        Dim wordnumber As Integer = Position.Next(0, wordlist.Count - 1)
+        Return wordlist(wordnumber)
+        Position = Nothing
+        wordnumber = Nothing
+    End Function
+
+
+    Private Function Mixedcase(ByVal Word As String) As String
+        If Word.Length = 0 Then Return Word
+        If Word.Length = 1 Then Return UCase(Word)
+        Return Word.Substring(0, 1).ToUpper & Word.Substring(1).ToLower
+
+    End Function
+
+    Function getEdumateParents(config As configSettings)
+
+
+        Dim ConnectionString As String = config.edumateConnectionString
+        Dim commandString As String =
+"
+SELECT        
+contact.firstname, 
+contact.surname, 
+view_student_start_exit_dates.start_date, 
+view_student_start_exit_dates.exit_date, 
+student.student_id, 
+form.short_name AS grad_form,
+YEAR(student_form_run.end_date) as EndYear
+
+
+FROM            
+STUDENT, 
+contact, 
+view_student_start_exit_dates, 
+student_form_run, 
+form_run, 
+form
+
+
+WHERE (student.contact_id = contact.contact_id) 
+AND (student.student_id = view_student_start_exit_dates.student_id) 
+AND (student_form_run.student_id = student.student_id) 
+AND (form_run.form_id = form.form_id) 
+AND (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+AND (student_form_run.form_run_id = form_run.form_run_id)
+"
+
+
+        Dim users As New List(Of user)
+
+
+
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+                If Not dr.IsDBNull(0) Then
+                    users.Add(New user)
+
+                    users.Last.firstName = dr.GetValue(0)
+                    users.Last.surname = dr.GetValue(1)
+                    users.Last.startDate = dr.GetValue(2)
+                    users.Last.endDate = dr.GetValue(3)
+                    users.Last.employeeID = dr.GetValue(4)
+                    'users.Last.classOf = getYearOf(dr.GetValue(5), dr.GetValue(6))
+                    users.Last.userType = "Parent"
+                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+                End If
+            End While
+            conn.Close()
+        End Using
+        Return users
+    End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
