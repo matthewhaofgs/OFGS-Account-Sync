@@ -25,7 +25,7 @@ Module AccountSync
         Public memberOf As New List(Of String)
         Public userAccountControl
         Public userType
-        Public children As List(Of String)
+        Public children As New List(Of user)
     End Class
 
     Class configSettings
@@ -34,6 +34,8 @@ Module AccountSync
         Public daysInAdvanceToCreateAccounts As Integer
         Public studentDomainName As String
         Public studentProfilePath As String
+        Public parentOU As String
+        Public parentDomainName As String
     End Class
 
 
@@ -69,12 +71,28 @@ Module AccountSync
         usersToAdd = excludeUserOutsideEnrollDate(usersToAdd, config)
 
         Console.WriteLine("Found " & usersToAdd.Count & " users to add")
+        Console.WriteLine("")
 
         If usersToAdd.Count > 0 Then
             usersToAdd = evaluateUsernames(usersToAdd, adUsers)
             createUsers(dirEntry, usersToAdd, config)
         End If
 
+        Console.WriteLine("Getting Edumate parent data...")
+        Console.WriteLine("")
+        Dim edumateParents As List(Of user)
+        edumateParents = getEdumateParents(config, edumateStudents)
+
+        Dim parentsToAdd As List(Of user)
+        parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
+
+        parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
+
+        Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
+        If parentsToAdd.Count > 0 Then
+            parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
+            createUsers(dirEntry, parentsToAdd, config)
+        End If
 
 
     End Sub
@@ -105,6 +123,11 @@ Module AccountSync
                             config.studentDomainName = Mid(line, 19)
                         Case Left(line, 19) = "studentProfilePath="
                             config.studentProfilePath = Mid(line, 20)
+                        Case Left(line, 9) = "parentOU="
+                            config.parentOU = Mid(line, 10)
+                        Case Left(line, 17) = "parentDomainName="
+                            config.parentDomainName = Mid(line, 18)
+
                     End Select
 
                 End While
@@ -258,17 +281,20 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
 
+
             Select Case objUserToAdd.userType
                 Case "Student"
                     strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
                     strUserPrincipalName = objUserToAdd.username & config.studentDomainName
                     strDescription = "Class of " & objUserToAdd.classOf & " Barcode:"
                 Case "Staff"
-                'Do stuff
+                    'do stuff
 
                 Case "Parent"
-                    'Do stuff
-
+                    strUser = "CN=" & objUserToAdd.username & "," & config.parentOU
+                    strDescription = objUserToAdd.firstName & " " & objUserToAdd.surname
+                    strDisplayName = objUserToAdd.username
+                    strUserPrincipalName = objUserToAdd.username & config.parentDomainName
                 Case Else
                     'Do Else
 
@@ -284,7 +310,6 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 objUser.Properties("EmployeeID").Add(intEmployeeID)
 
                 objUser.Properties("givenName").Add(objUserToAdd.firstName)
-                objUser.Properties("profilePath").Add(config.studentProfilePath)
                 objUser.Properties("samAccountName").Add(objUserToAdd.username)
                 objUser.Properties("sn").Add(objUserToAdd.surname)
                 objUser.Properties("mail").Add(strUserPrincipalName)
@@ -474,7 +499,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             Dim strUsername As String
             Select Case user.userType
                 Case "Student"
-                    Dim rgx As New Regex("[^a-zA-Z ]")
+                    Dim rgx As New Regex("[^a-zA-Z]")
                     Dim availableNameFound As Boolean = False
                     Dim i As Integer = 1
 
@@ -518,9 +543,11 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
                 Case "Parent"
-                    'Do stuff
 
-
+                    Dim rgx As New Regex("[^a-zA-Z0-9]")
+                    user.username = rgx.Replace(Left(user.surname, 5) & user.employeeID, "").ToLower
+                    Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                    Console.WriteLine("")
                 Case Else
                     'Do Else
             End Select
@@ -599,37 +626,38 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
     End Function
 
-    Function getEdumateParents(config As configSettings)
+    Function getEdumateParents(config As configSettings, edumateStudents As List(Of user))
 
 
         Dim ConnectionString As String = config.edumateConnectionString
         Dim commandString As String =
 "
 SELECT        
-contact.firstname, 
-contact.surname, 
-view_student_start_exit_dates.start_date, 
-view_student_start_exit_dates.exit_date, 
-student.student_id, 
-form.short_name AS grad_form,
-YEAR(student_form_run.end_date) as EndYear
+parentcontact.firstname,
+parentcontact.surname,
+carer.carer_id,
+student.student_id
 
 
-FROM            
-STUDENT, 
-contact, 
-view_student_start_exit_dates, 
-student_form_run, 
-form_run, 
-form
+
+FROM            relationship
+
+INNER JOIN contact as ParentContact
+ON relationship.contact_id2 = Parentcontact.contact_id
+
+INNER JOIN contact as StudentContact 
+ON relationship.contact_id1 = studentContact.contact_id
+
+INNER JOIN student
+ON studentContact.contact_id = student.contact_id
+
+INNER JOIN carer 
+ON parentcontact.contact_id = carer.contact_id
 
 
-WHERE (student.contact_id = contact.contact_id) 
-AND (student.student_id = view_student_start_exit_dates.student_id) 
-AND (student_form_run.student_id = student.student_id) 
-AND (form_run.form_id = form.form_id) 
-AND (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
-AND (student_form_run.form_run_id = form_run.form_run_id)
+
+
+WHERE        (relationship.relationship_type_id IN (1, 15, 28, 33)) 
 "
 
 
@@ -650,39 +678,149 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
             Dim i As Integer = 0
             While dr.Read()
-                If Not dr.IsDBNull(0) Then
-                    users.Add(New user)
 
-                    users.Last.firstName = dr.GetValue(0)
-                    users.Last.surname = dr.GetValue(1)
-                    users.Last.startDate = dr.GetValue(2)
-                    users.Last.endDate = dr.GetValue(3)
-                    users.Last.employeeID = dr.GetValue(4)
-                    'users.Last.classOf = getYearOf(dr.GetValue(5), dr.GetValue(6))
-                    users.Last.userType = "Parent"
-                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+
+
+                If Not dr.IsDBNull(0) Then
+
+                    Dim existingParent As user
+                    Dim duplicate As Boolean = False
+
+                    For Each user In users
+                        If dr.GetValue(2) = user.employeeID Then
+                            existingParent = user
+                            duplicate = True
+                        End If
+                    Next
+
+                    If duplicate Then
+                        existingParent.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                    Else
+                        users.Add(New user)
+                        users.Last.firstName = dr.GetValue(0)
+                        users.Last.surname = dr.GetValue(1)
+                        users.Last.employeeID = dr.GetValue(2)
+                        users.Last.userType = "Parent"
+                        users.Last.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                    End If
                 End If
             End While
             conn.Close()
         End Using
+
+
+
+
+        commandString =
+"
+SELECT        
+parentcontact.firstname,
+parentcontact.surname,
+carer.carer_id,
+student.student_id
+
+
+
+FROM            relationship
+
+INNER JOIN contact as ParentContact
+ON relationship.contact_id1 = Parentcontact.contact_id
+
+INNER JOIN contact as StudentContact 
+ON relationship.contact_id2 = studentContact.contact_id
+
+INNER JOIN student
+ON studentContact.contact_id = student.contact_id
+
+INNER JOIN carer 
+ON parentcontact.contact_id = carer.contact_id
+
+
+
+
+WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34)) 
+"
+
+
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+
+
+
+                If Not dr.IsDBNull(0) Then
+
+                    Dim existingParent As user
+                    Dim duplicate As Boolean = False
+
+                    For Each user In users
+                        If dr.GetValue(2) = user.employeeID Then
+                            existingParent = user
+                            duplicate = True
+                        End If
+                    Next
+
+                    If duplicate Then
+                        existingParent.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                    Else
+                        users.Add(New user)
+                        users.Last.firstName = dr.GetValue(0)
+                        users.Last.surname = dr.GetValue(1)
+                        users.Last.employeeID = dr.GetValue(2)
+                        users.Last.userType = "Parent"
+                        users.Last.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                    End If
+                End If
+            End While
+            conn.Close()
+        End Using
+
         Return users
     End Function
 
 
+    Function getStudentFromID(ByVal student_id As String, edumateStudents As List(Of user))
+
+        For Each user In edumateStudents
+            If user.employeeID = student_id Then
+                Return user
+            End If
+        Next
+
+    End Function
+
+    Function excludeParentsOutsideEnrollDate(ByVal config As configSettings, users As List(Of user))
+
+        Dim ReturnUsers As New List(Of user)
 
 
+        For Each user In users
+            Dim current As Boolean = False
+            For Each student In user.children
+                Try
+                    If student.endDate > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                        current = True
+                    End If
+                Catch
+                End Try
+            Next
+            If current Then
+                ReturnUsers.Add(user)
+            End If
+        Next
 
-
-
-
-
-
-
-
-
-
-
-
+        Return ReturnUsers
+    End Function
 
 
 
