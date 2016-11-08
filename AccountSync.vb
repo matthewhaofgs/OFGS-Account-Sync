@@ -1,6 +1,7 @@
 ﻿Imports System.IO
 Imports System.DirectoryServices
 Imports System.Text.RegularExpressions
+Imports System.Net.Mail
 
 
 
@@ -18,7 +19,7 @@ Module AccountSync
         Public classOf As Integer
         Public employeeID As Integer
         Public employeeNumber
-        Public password As String
+        Public password
         Public startDate
         Public endDate
         Public enabled
@@ -26,6 +27,8 @@ Module AccountSync
         Public userAccountControl
         Public userType
         Public children As New List(Of user)
+        Public mailTo As New List(Of String)
+        Public currentYear As String
     End Class
 
     Class configSettings
@@ -36,17 +39,26 @@ Module AccountSync
         Public studentProfilePath As String
         Public parentOU As String
         Public parentDomainName As String
+        Public serverAddress As String
+        Public serverPort As String
+        Public enableSSL As Boolean
+        Public username As String
+        Public password As String
+        Public mailTo As New List(Of String)
+        Public displayName As String
+        Public applyChanges As Boolean
     End Class
 
-
+    Class emailNotification
+        Public mailTo
+        Public body
+    End Class
 
     Sub Main()
         Dim config As New configSettings()
         Console.Clear()
         Console.WriteLine("Reading config...")
         config = readConfig()
-
-
 
         Dim edumateStudents As List(Of user)
 
@@ -69,6 +81,7 @@ Module AccountSync
         usersToAdd = getEdumateUsersNotInAD(edumateStudents, adUsers)
 
         usersToAdd = excludeUserOutsideEnrollDate(usersToAdd, config)
+        usersToAdd = addMailTo(usersToAdd)
 
         Console.WriteLine("Found " & usersToAdd.Count & " users to add")
         Console.WriteLine("")
@@ -87,6 +100,7 @@ Module AccountSync
         parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
 
         parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
+        parentsToAdd = addMailTo(parentsToAdd)
 
         Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
         If parentsToAdd.Count > 0 Then
@@ -127,6 +141,25 @@ Module AccountSync
                             config.parentOU = Mid(line, 10)
                         Case Left(line, 17) = "parentDomainName="
                             config.parentDomainName = Mid(line, 18)
+                        Case Left(line, 14) = "serverAddress="
+                            config.serverAddress = Mid(line, 15)
+                        Case Left(line, 11) = "serverPort="
+                            config.serverPort = Mid(line, 12)
+                        Case Left(line, 10) = "enableSSL="
+                            config.enableSSL = Mid(line, 11)
+                        Case Left(line, 9) = "username="
+                            config.username = Mid(line, 10)
+                        Case Left(line, 9) = "password="
+                            config.password = Mid(line, 10)
+                        Case Left(line, 7) = "mailTo="
+                            config.mailTo.Add(Mid(line, 8))
+                        Case Left(line, 12) = "displayName="
+                            config.displayName = (Mid(line, 13))
+                        Case Left(line, 13) = "applyChanges="
+                            config.applyChanges = (Mid(line, 14))
+
+
+
 
                     End Select
 
@@ -265,6 +298,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
     Sub createUsers(dirEntry As DirectoryEntry, ByVal objUsersToAdd As List(Of user), ByVal config As configSettings)
 
+        Dim emailsToSend As New List(Of emailNotification)
+
         For Each objUserToAdd In objUsersToAdd
 
 
@@ -318,24 +353,51 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 'objUser.Properties("employeeNumber")
                 'objUser.Properties("homeDirectory")
                 'objUser.Properties("homeDrive")
+                If config.applyChanges Then
+                    objUser.CommitChanges()
+                End If
 
-                objUser.CommitChanges()
+
+
             Catch e As Exception
                 Console.WriteLine("Error:   Create failed.")
                 Console.WriteLine("         {0}", e.Message)
+                For Each mailTo In objUserToAdd.mailTo
+                    Dim duplicate As Boolean = False
+                    For Each message In emailsToSend
+                        If message.mailTo = mailTo Then
+                            duplicate = True
+                            message.body = message.body & "Error:   Create failed.  " & e.Message & vbCrLf
+                        End If
+                    Next
+                    If Not duplicate Then
+                        emailsToSend.Add(New emailNotification)
+                        emailsToSend.Last.mailTo = mailTo
+                        emailsToSend.Last.body = "Error:   Create failed.  " & e.Message & vbCrLf
+                    End If
+                Next
                 Return
             End Try
 
-            objUser.Invoke("setPassword", New Object() {createPassword()})
-            objUser.CommitChanges()
+            objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
+            If config.applyChanges Then
+                objUser.Invoke("setPassword", objUserToAdd.password)
+                objUser.CommitChanges()
+            End If
 
 
             Const ADS_UF_ACCOUNTDISABLE = &H10200
             objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
-            objUser.CommitChanges()
+            If config.applyChanges Then
+                objUser.CommitChanges()
+            End If
+
 
 
             ' Output User attributes.
+
+
+
             Console.WriteLine("Success: Create succeeded.")
             Console.WriteLine("Name:    {0}", objUser.Name)
             Console.WriteLine("         {0}",
@@ -343,10 +405,45 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             Console.WriteLine("         {0}",
                     objUser.Properties("userPrincipalName").Value)
 
+            For Each mailTo In objUserToAdd.mailTo
 
-            Return
+                Dim duplicate As Boolean = False
+                For Each message In emailsToSend
+                    If message.mailTo = mailTo Then
+                        duplicate = True
+                        Select Case objUserToAdd.userType
+                            Case "Student"
+                                message.body = message.body & "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & " Class Of:" & objUserToAdd.classOf & vbCrLf & vbCrLf
+                            Case "Parent"
+                                message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                        End Select
+
+                    End If
+                Next
+
+                If duplicate = False Then
+
+                    emailsToSend.Add(New emailNotification)
+                    emailsToSend.Last.mailTo = mailTo
+
+                    Select Case objUserToAdd.userType
+                        Case "Student"
+                            emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & " Class Of:" & objUserToAdd.classOf & vbCrLf & vbCrLf
+                        Case "Parent"
+                            emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                    End Select
+                End If
+            Next
 
         Next
+
+        For Each message In emailsToSend
+            Console.WriteLine("Sending email to: " & message.mailTo)
+        Next
+
+
+
+        sendEmails(config, emailsToSend)
     End Sub
 
 
@@ -822,8 +919,60 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Return ReturnUsers
     End Function
 
+    Sub sendMail(ByVal config As configSettings, ByVal subject As String, ByVal body As String, ByVal mailTo As String)
+
+        Dim mailClient = New SmtpClient(config.serverAddress)
+        mailClient.Port = config.serverPort
+        mailClient.EnableSsl = config.enableSSL
+
+        Dim cred = New System.Net.NetworkCredential(config.username, config.password)
+        mailClient.Credentials = cred
+
+        Dim Message = New MailMessage()
+
+        Message.From = New MailAddress(config.username, config.displayName)
+
+        Message.To.Add(mailTo)
+
+        Message.Subject = subject
+        Message.Body = body
+
+        If Not config.applyChanges Then
+            Message.Body = Message.Body & "---Test run only - no accounts created---"
+        End If
 
 
+        mailClient.Send(Message)
 
+
+    End Sub
+
+    Sub sendEmails(config As configSettings, ByVal emails As List(Of emailNotification))
+        For Each mail In emails
+            Console.WriteLine("Queueing email " & mail.mailTo)
+            sendMail(config, "Account Provisioning", mail.body, mail.mailTo)
+        Next
+    End Sub
+
+
+    Function addMailTo(users As List(Of user))
+
+        For Each user In users
+            user.mailTo.Add("it@ofgs.nsw.edu.au")
+        Next
+
+        Return users
+    End Function
+
+    Function calculateCurrentYears(users As List(Of user))
+        For Each user In users
+            Select Case user.classOf - Convert.ToInt32(Year(Date.Now))
+                Case 0
+                Case 1
+                Case 2
+
+            End Select
+        Next
+    End Function
 
 End Module
