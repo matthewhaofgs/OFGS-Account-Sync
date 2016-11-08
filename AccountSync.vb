@@ -82,6 +82,7 @@ Module AccountSync
 
         usersToAdd = excludeUserOutsideEnrollDate(usersToAdd, config)
         usersToAdd = addMailTo(usersToAdd)
+        usersToAdd = calculateCurrentYears(usersToAdd)
 
         Console.WriteLine("Found " & usersToAdd.Count & " users to add")
         Console.WriteLine("")
@@ -310,54 +311,140 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
             Dim strUserPrincipalName As String  ' Principal name of user.
             Dim strDescription As String
 
+            Dim strExt12 As String
+            Dim strExt11 As String
+            Dim strExt10 As String
+            Dim strExt9 As String
+            Dim strExt8 As String
+            Dim strExt7 As String
+            Dim strExt6 As String
+            Dim strExt5 As String
+            Dim strExt4 As String
+            Dim strExt3 As String
+            Dim strExt2 As String
+            Dim strExt1 As String
+            Dim strExt13 As String
+
+
             'common properties for all user types
             intEmployeeID = objUserToAdd.employeeID
             strDisplayName = objUserToAdd.displayName
 
 
+            Try
 
-
-            Select Case objUserToAdd.userType
-                Case "Student"
-                    strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
-                    strUserPrincipalName = objUserToAdd.username & config.studentDomainName
-                    strDescription = "Class of " & objUserToAdd.classOf & " Barcode:"
-                Case "Staff"
+                Select Case objUserToAdd.userType
+                    Case "Student"
+                        strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
+                        strUserPrincipalName = objUserToAdd.username & config.studentDomainName
+                        strDescription = "Class of " & objUserToAdd.classOf & " Barcode:"
+                    Case "Staff"
                     'do stuff
 
-                Case "Parent"
-                    strUser = "CN=" & objUserToAdd.username & "," & config.parentOU
-                    strDescription = objUserToAdd.firstName & " " & objUserToAdd.surname
-                    strDisplayName = objUserToAdd.username
-                    strUserPrincipalName = objUserToAdd.username & config.parentDomainName
-                Case Else
-                    'Do Else
+                    Case "Parent"
+                        strUser = "CN=" & objUserToAdd.username & "," & config.parentOU
+                        strDescription = objUserToAdd.firstName & " " & objUserToAdd.surname
+                        strDisplayName = objUserToAdd.username
+                        strUserPrincipalName = objUserToAdd.username & config.parentDomainName
 
-            End Select
 
-            Console.WriteLine("Create:  {0}", strUser)
 
-            ' Create User.
-            Try
+
+                        For Each child In objUserToAdd.children
+                            Select Case child.currentYear
+                                Case "12"
+                                    strExt12 = child.employeeID
+                                Case "11"
+                                    strExt11 = child.employeeID
+                                Case "10"
+                                    strExt10 = child.employeeID
+                                Case "9"
+                                    strExt9 = child.employeeID
+                                Case "8"
+                                    strExt8 = child.employeeID
+                                Case "7"
+                                    strExt7 = child.employeeID
+                                Case "6"
+                                    strExt6 = child.employeeID
+                                Case "5"
+                                    strExt5 = child.employeeID
+                                Case "4"
+                                    strExt4 = child.employeeID
+                                Case "3"
+                                    strExt3 = child.employeeID
+                                Case "2"
+                                    strExt2 = child.employeeID
+                                Case "1"
+                                    strExt1 = child.employeeID
+                                Case "K"
+                                    strExt13 = child.employeeID
+                            End Select
+                        Next
+
+                    Case Else
+                        'Do Else
+
+                End Select
+
+                Console.WriteLine("Create:  {0}", strUser)
+
+                ' Create User.
+
+
+
                 objUser = dirEntry.Children.Add(strUser, "user")
                 objUser.Properties("displayName").Add(strDisplayName)
                 objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
                 objUser.Properties("EmployeeID").Add(intEmployeeID)
-
                 objUser.Properties("givenName").Add(objUserToAdd.firstName)
                 objUser.Properties("samAccountName").Add(objUserToAdd.username)
                 objUser.Properties("sn").Add(objUserToAdd.surname)
                 objUser.Properties("mail").Add(strUserPrincipalName)
                 objUser.Properties("description").Add(strDescription)
 
-                'objUser.Properties("employeeNumber")
-                'objUser.Properties("homeDirectory")
-                'objUser.Properties("homeDrive")
+                If strExt12 <> "" Then
+                    objUser.Properties("extensionAttribute12").Add(strExt12)
+                End If
+                If strExt11 <> "" Then
+                    objUser.Properties("extensionAttribute11").Add(strExt11)
+                End If
+                If strExt10 <> "" Then
+                    objUser.Properties("extensionAttribute10").Add(strExt10)
+                End If
+                If strExt9 <> "" Then
+                    objUser.Properties("extensionAttribute9").Add(strExt9)
+                End If
+                If strExt8 <> "" Then
+                    objUser.Properties("extensionAttribute8").Add(strExt8)
+                End If
+                If strExt7 <> "" Then
+                    objUser.Properties("extensionAttribute7").Add(strExt7)
+                End If
+                If strExt6 <> "" Then
+                    objUser.Properties("extensionAttribute6").Add(strExt6)
+                End If
+                If strExt5 <> "" Then
+                    objUser.Properties("extensionAttribute5").Add(strExt5)
+                End If
+                If strExt4 <> "" Then
+                    objUser.Properties("extensionAttribute4").Add(strExt4)
+                End If
+                If strExt3 <> "" Then
+                    objUser.Properties("extensionAttribute3").Add(strExt3)
+                End If
+                If strExt2 <> "" Then
+                    objUser.Properties("extensionAttribute2").Add(strExt2)
+                End If
+                If strExt1 <> "" Then
+                    objUser.Properties("extensionAttribute1").Add(strExt1)
+                End If
+                If strExt13 <> "" Then
+                    objUser.Properties("extensionAttribute13").Add(strExt13)
+                End If
+
                 If config.applyChanges Then
                     objUser.CommitChanges()
                 End If
-
-
 
             Catch e As Exception
                 Console.WriteLine("Error:   Create failed.")
@@ -404,6 +491,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     objUser.Properties("displayName").Value)
             Console.WriteLine("         {0}",
                     objUser.Properties("userPrincipalName").Value)
+            Console.WriteLine("")
 
             For Each mailTo In objUserToAdd.mailTo
 
@@ -954,7 +1042,6 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Next
     End Sub
 
-
     Function addMailTo(users As List(Of user))
 
         For Each user In users
@@ -968,11 +1055,34 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         For Each user In users
             Select Case user.classOf - Convert.ToInt32(Year(Date.Now))
                 Case 0
+                    user.currentYear = "12"
                 Case 1
+                    user.currentYear = "11"
                 Case 2
-
+                    user.currentYear = "10"
+                Case 3
+                    user.currentYear = "9"
+                Case 4
+                    user.currentYear = "8"
+                Case 5
+                    user.currentYear = "7"
+                Case 6
+                    user.currentYear = "6"
+                Case 7
+                    user.currentYear = "5"
+                Case 8
+                    user.currentYear = "4"
+                Case 9
+                    user.currentYear = "3"
+                Case 10
+                    user.currentYear = "2"
+                Case 11
+                    user.currentYear = "1"
+                Case 12
+                    user.currentYear = "K"
             End Select
         Next
+        Return users
     End Function
 
 End Module
