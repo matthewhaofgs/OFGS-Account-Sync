@@ -44,9 +44,26 @@ Module AccountSync
         Public enableSSL As Boolean
         Public username As String
         Public password As String
-        Public mailTo As New List(Of String)
         Public displayName As String
         Public applyChanges As Boolean
+
+        Public mailToAll As New List(Of String)
+        Public mailToParent As New List(Of String)
+        Public mailToK As New List(Of String)
+        Public mailTo1 As New List(Of String)
+        Public mailTo2 As New List(Of String)
+        Public mailTo3 As New List(Of String)
+        Public mailTo4 As New List(Of String)
+        Public mailTo5 As New List(Of String)
+        Public mailTo6 As New List(Of String)
+        Public mailTo7 As New List(Of String)
+        Public mailTo8 As New List(Of String)
+        Public mailTo9 As New List(Of String)
+        Public mailTo10 As New List(Of String)
+        Public mailTo11 As New List(Of String)
+        Public mailTo12 As New List(Of String)
+
+
     End Class
 
     Class emailNotification
@@ -81,7 +98,7 @@ Module AccountSync
         usersToAdd = getEdumateUsersNotInAD(edumateStudents, adUsers)
 
         usersToAdd = excludeUserOutsideEnrollDate(usersToAdd, config)
-        usersToAdd = addMailTo(usersToAdd)
+        usersToAdd = addMailTo(config, usersToAdd)
         usersToAdd = calculateCurrentYears(usersToAdd)
 
         Console.WriteLine("Found " & usersToAdd.Count & " users to add")
@@ -101,7 +118,7 @@ Module AccountSync
         parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
 
         parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
-        parentsToAdd = addMailTo(parentsToAdd)
+        parentsToAdd = addMailTo(config, parentsToAdd)
 
         Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
         If parentsToAdd.Count > 0 Then
@@ -152,15 +169,40 @@ Module AccountSync
                             config.username = Mid(line, 10)
                         Case Left(line, 9) = "password="
                             config.password = Mid(line, 10)
-                        Case Left(line, 7) = "mailTo="
-                            config.mailTo.Add(Mid(line, 8))
                         Case Left(line, 12) = "displayName="
                             config.displayName = (Mid(line, 13))
                         Case Left(line, 13) = "applyChanges="
                             config.applyChanges = (Mid(line, 14))
-
-
-
+                        Case Left(line, 10) = "mailToAll="
+                            config.mailToAll.Add(Mid(line, 11))
+                        Case Left(line, 13) = "mailToParent="
+                            config.mailToParent.Add(Mid(line, 14))
+                        Case Left(line, 8) = "mailToK="
+                            config.mailToK.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo1="
+                            config.mailTo1.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo2="
+                            config.mailTo2.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo3="
+                            config.mailTo3.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo4="
+                            config.mailTo4.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo5="
+                            config.mailTo5.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo6="
+                            config.mailTo6.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo7="
+                            config.mailTo7.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo8="
+                            config.mailTo8.Add(Mid(line, 9))
+                        Case Left(line, 8) = "mailTo9="
+                            config.mailTo9.Add(Mid(line, 9))
+                        Case Left(line, 9) = "mailTo10="
+                            config.mailTo10.Add(Mid(line, 10))
+                        Case Left(line, 9) = "mailTo11="
+                            config.mailTo11.Add(Mid(line, 10))
+                        Case Left(line, 9) = "mailTo12="
+                            config.mailTo12.Add(Mid(line, 10))
 
                     End Select
 
@@ -501,7 +543,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         duplicate = True
                         Select Case objUserToAdd.userType
                             Case "Student"
-                                message.body = message.body & "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & " Class Of:" & objUserToAdd.classOf & vbCrLf & vbCrLf
+                                message.body = message.body & "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf & vbCrLf & "Start Date: " & objUserToAdd.startDate & vbCrLf & vbCrLf
                             Case "Parent"
                                 message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                         End Select
@@ -516,7 +558,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                     Select Case objUserToAdd.userType
                         Case "Student"
-                            emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & " Class Of:" & objUserToAdd.classOf & vbCrLf & vbCrLf
+                            emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf & "Start Date: " & objUserToAdd.startDate & vbCrLf & vbCrLf
                         Case "Parent"
                             emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                     End Select
@@ -1026,6 +1068,7 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Message.Body = body
 
         If Not config.applyChanges Then
+            Message.Body = "---Test run only - no accounts created---" & vbCrLf & "These are NOT real accounts. Do not give these details to parents or students. This is a test ONLY" & vbCrLf & Message.Body
             Message.Body = Message.Body & "---Test run only - no accounts created---"
         End If
 
@@ -1042,12 +1085,67 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Next
     End Sub
 
-    Function addMailTo(users As List(Of user))
+    Function addMailTo(config As configSettings, users As List(Of user))
 
         For Each user In users
-            user.mailTo.Add("it@ofgs.nsw.edu.au")
+            For Each emailAddress In config.mailToAll
+                user.mailTo.Add(emailAddress)
+            Next
+            Select Case user.currentYear
+                Case "K"
+                    For Each emailAddress In config.mailToK
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "1"
+                    For Each emailAddress In config.mailTo1
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "2"
+                    For Each emailAddress In config.mailTo2
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "3"
+                    For Each emailAddress In config.mailTo3
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "4"
+                    For Each emailAddress In config.mailTo4
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "5"
+                    For Each emailAddress In config.mailTo5
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "6"
+                    For Each emailAddress In config.mailTo6
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "7"
+                    For Each emailAddress In config.mailTo7
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "8"
+                    For Each emailAddress In config.mailTo8
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "9"
+                    For Each emailAddress In config.mailTo9
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "10"
+                    For Each emailAddress In config.mailTo10
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "11"
+                    For Each emailAddress In config.mailTo11
+                        user.mailTo.Add(emailAddress)
+                    Next
+                Case "12"
+                    For Each emailAddress In config.mailTo12
+                        user.mailTo.Add(emailAddress)
+                    Next
+            End Select
         Next
-
         Return users
     End Function
 
