@@ -106,7 +106,7 @@ Module AccountSync
 
         If usersToAdd.Count > 0 Then
             usersToAdd = evaluateUsernames(usersToAdd, adUsers)
-            createUsers(dirEntry, usersToAdd, config)
+            createUsers(usersToAdd, config)
         End If
 
         Console.WriteLine("Getting Edumate parent data...")
@@ -123,7 +123,7 @@ Module AccountSync
         Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
         If parentsToAdd.Count > 0 Then
             parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
-            createUsers(dirEntry, parentsToAdd, config)
+            createUsers(parentsToAdd, config)
         End If
 
 
@@ -249,6 +249,7 @@ AND (student_form_run.student_id = student.student_id)
 AND (form_run.form_id = form.form_id) 
 AND (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
 AND (student_form_run.form_run_id = form_run.form_run_id)
+
 "
 
 
@@ -339,47 +340,60 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     End Function
 
 
-    Sub createUsers(dirEntry As DirectoryEntry, ByVal objUsersToAdd As List(Of user), ByVal config As configSettings)
+    Sub createUsers(ByVal objUsersToAdd As List(Of user), ByVal config As configSettings)
 
         Dim emailsToSend As New List(Of emailNotification)
 
         For Each objUserToAdd In objUsersToAdd
+            If objUserToAdd.username <> "" Then
 
 
-            Dim objUser As DirectoryEntry
-            Dim strDisplayName As String        '
-            Dim intEmployeeID As Integer
-            Dim strUser As String               ' User to create.
-            Dim strUserPrincipalName As String  ' Principal name of user.
-            Dim strDescription As String
 
-            Dim strExt12 As String
-            Dim strExt11 As String
-            Dim strExt10 As String
-            Dim strExt9 As String
-            Dim strExt8 As String
-            Dim strExt7 As String
-            Dim strExt6 As String
-            Dim strExt5 As String
-            Dim strExt4 As String
-            Dim strExt3 As String
-            Dim strExt2 As String
-            Dim strExt1 As String
-            Dim strExt13 As String
+                Dim objUser As DirectoryEntry
+                Dim strDisplayName As String        '
+                Dim intEmployeeID As Integer
+                Dim strUser As String               ' User to create.
+                Dim strUserPrincipalName As String  ' Principal name of user.
+                Dim strDescription As String
 
-
-            'common properties for all user types
-            intEmployeeID = objUserToAdd.employeeID
-            strDisplayName = objUserToAdd.displayName
+                Dim strExt12 As String
+                Dim strExt11 As String
+                Dim strExt10 As String
+                Dim strExt9 As String
+                Dim strExt8 As String
+                Dim strExt7 As String
+                Dim strExt6 As String
+                Dim strExt5 As String
+                Dim strExt4 As String
+                Dim strExt3 As String
+                Dim strExt2 As String
+                Dim strExt1 As String
+                Dim strExt13 As String
 
 
-            Try
+                'common properties for all user types
+                Console.WriteLine("Creating: " & objUserToAdd.displayName)
+                strDisplayName = objUserToAdd.displayName
+
+                Console.WriteLine("EmployeeID: " & objUserToAdd.employeeID)
+                intEmployeeID = objUserToAdd.employeeID
+
+
+
+                '            Try
 
                 Select Case objUserToAdd.userType
                     Case "Student"
+
+                        Console.WriteLine("CN: " & "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users")
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
+
+                        Console.WriteLine("UPN: " & objUserToAdd.username & config.studentDomainName)
                         strUserPrincipalName = objUserToAdd.username & config.studentDomainName
-                        strDescription = "Class of " & objUserToAdd.classOf & " Barcode:"
+
+                        Console.WriteLine("Class of: " & "Class of " & objUserToAdd.classOf & " Barcode: ")
+                        strDescription = "Class of " & objUserToAdd.classOf & " Barcode: "
+
                     Case "Staff"
                     'do stuff
 
@@ -393,34 +407,50 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
                         For Each child In objUserToAdd.children
-                            Select Case child.currentYear
-                                Case "12"
-                                    strExt12 = child.employeeID
-                                Case "11"
-                                    strExt11 = child.employeeID
-                                Case "10"
-                                    strExt10 = child.employeeID
-                                Case "9"
-                                    strExt9 = child.employeeID
-                                Case "8"
-                                    strExt8 = child.employeeID
-                                Case "7"
-                                    strExt7 = child.employeeID
-                                Case "6"
-                                    strExt6 = child.employeeID
-                                Case "5"
-                                    strExt5 = child.employeeID
-                                Case "4"
-                                    strExt4 = child.employeeID
-                                Case "3"
-                                    strExt3 = child.employeeID
-                                Case "2"
-                                    strExt2 = child.employeeID
-                                Case "1"
-                                    strExt1 = child.employeeID
-                                Case "K"
-                                    strExt13 = child.employeeID
-                            End Select
+                            If child IsNot Nothing Then
+
+                                Select Case child.currentYear
+                                    Case "12"
+                                        Console.WriteLine("Child 12: " & child.employeeID)
+                                        strExt12 = child.employeeID
+                                    Case "11"
+                                        Console.WriteLine("Child 11: " & child.employeeID)
+                                        strExt11 = child.employeeID
+                                    Case "10"
+                                        Console.WriteLine("Child 10: " & child.employeeID)
+                                        strExt10 = child.employeeID
+                                    Case "9"
+                                        Console.WriteLine("Child 9: " & child.employeeID)
+                                        strExt9 = child.employeeID
+                                    Case "8"
+                                        Console.WriteLine("Child 8: " & child.employeeID)
+                                        strExt8 = child.employeeID
+                                    Case "7"
+                                        Console.WriteLine("Child 7: " & child.employeeID)
+                                        strExt7 = child.employeeID
+                                    Case "6"
+                                        Console.WriteLine("Child 6: " & child.employeeID)
+                                        strExt6 = child.employeeID
+                                    Case "5"
+                                        Console.WriteLine("Child 5: " & child.employeeID)
+                                        strExt5 = child.employeeID
+                                    Case "4"
+                                        Console.WriteLine("Child 4: " & child.employeeID)
+                                        strExt4 = child.employeeID
+                                    Case "3"
+                                        Console.WriteLine("Child 3: " & child.employeeID)
+                                        strExt3 = child.employeeID
+                                    Case "2"
+                                        Console.WriteLine("Child 2: " & child.employeeID)
+                                        strExt2 = child.employeeID
+                                    Case "1"
+                                        Console.WriteLine("Child 1: " & child.employeeID)
+                                        strExt1 = child.employeeID
+                                    Case "K"
+                                        Console.WriteLine("Child 13: " & child.employeeID)
+                                        strExt13 = child.employeeID
+                                End Select
+                            End If
                         Next
 
                     Case Else
@@ -433,138 +463,167 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 ' Create User.
 
 
+                Using dirEntry As DirectoryEntry = GetDirectoryEntry(config)
+                    dirEntry.RefreshCache()
 
-                objUser = dirEntry.Children.Add(strUser, "user")
-                objUser.Properties("displayName").Add(strDisplayName)
-                objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
-                objUser.Properties("EmployeeID").Add(intEmployeeID)
-                objUser.Properties("givenName").Add(objUserToAdd.firstName)
-                objUser.Properties("samAccountName").Add(objUserToAdd.username)
-                objUser.Properties("sn").Add(objUserToAdd.surname)
-                objUser.Properties("mail").Add(strUserPrincipalName)
-                objUser.Properties("description").Add(strDescription)
+                    objUser = dirEntry.Children.Add(strUser, "user")
+                    '      objUser.Properties("displayName").Add(strDisplayName)
 
-                If strExt12 <> "" Then
-                    objUser.Properties("extensionAttribute12").Add(strExt12)
-                End If
-                If strExt11 <> "" Then
-                    objUser.Properties("extensionAttribute11").Add(strExt11)
-                End If
-                If strExt10 <> "" Then
-                    objUser.Properties("extensionAttribute10").Add(strExt10)
-                End If
-                If strExt9 <> "" Then
-                    objUser.Properties("extensionAttribute9").Add(strExt9)
-                End If
-                If strExt8 <> "" Then
-                    objUser.Properties("extensionAttribute8").Add(strExt8)
-                End If
-                If strExt7 <> "" Then
-                    objUser.Properties("extensionAttribute7").Add(strExt7)
-                End If
-                If strExt6 <> "" Then
-                    objUser.Properties("extensionAttribute6").Add(strExt6)
-                End If
-                If strExt5 <> "" Then
-                    objUser.Properties("extensionAttribute5").Add(strExt5)
-                End If
-                If strExt4 <> "" Then
-                    objUser.Properties("extensionAttribute4").Add(strExt4)
-                End If
-                If strExt3 <> "" Then
-                    objUser.Properties("extensionAttribute3").Add(strExt3)
-                End If
-                If strExt2 <> "" Then
-                    objUser.Properties("extensionAttribute2").Add(strExt2)
-                End If
-                If strExt1 <> "" Then
-                    objUser.Properties("extensionAttribute1").Add(strExt1)
-                End If
-                If strExt13 <> "" Then
-                    objUser.Properties("extensionAttribute13").Add(strExt13)
-                End If
 
-                If config.applyChanges Then
-                    objUser.CommitChanges()
-                End If
 
-            Catch e As Exception
-                Console.WriteLine("Error:   Create failed.")
-                Console.WriteLine("         {0}", e.Message)
+
+
+
+
+
+                    If strUserPrincipalName <> "" Then
+                        objUser.Properties("mail").Add(strUserPrincipalName)
+                    End If
+                    If objUserToAdd.surname <> "" Then
+                        objUser.Properties("sn").Add(objUserToAdd.surname)
+                    End If
+                    If objUserToAdd.username <> "" Then
+                        objUser.Properties("samAccountName").Add(objUserToAdd.username)
+                    End If
+                    If objUserToAdd.firstName <> "" Then
+                        objUser.Properties("givenName").Add(objUserToAdd.firstName)
+                    End If
+
+                    objUser.Properties("EmployeeID").Add(intEmployeeID)
+
+                    If strUserPrincipalName <> "" Then
+                        objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
+                    End If
+                    If strDisplayName <> "" Then
+                        objUser.Properties("displayName").Add(strDisplayName)
+                    End If
+                    If strDescription <> "" Then
+                        objUser.Properties("description").Add(strDescription)
+                    End If
+                    If strExt12 <> "" Then
+                        objUser.Properties("extensionAttribute12").Add(strExt12)
+                    End If
+                    If strExt11 <> "" Then
+                        objUser.Properties("extensionAttribute11").Add(strExt11)
+                    End If
+                    If strExt10 <> "" Then
+                        objUser.Properties("extensionAttribute10").Add(strExt10)
+                    End If
+                    If strExt9 <> "" Then
+                        objUser.Properties("extensionAttribute9").Add(strExt9)
+                    End If
+                    If strExt8 <> "" Then
+                        objUser.Properties("extensionAttribute8").Add(strExt8)
+                    End If
+                    If strExt7 <> "" Then
+                        objUser.Properties("extensionAttribute7").Add(strExt7)
+                    End If
+                    If strExt6 <> "" Then
+                        objUser.Properties("extensionAttribute6").Add(strExt6)
+                    End If
+                    If strExt5 <> "" Then
+                        objUser.Properties("extensionAttribute5").Add(strExt5)
+                    End If
+                    If strExt4 <> "" Then
+                        objUser.Properties("extensionAttribute4").Add(strExt4)
+                    End If
+                    If strExt3 <> "" Then
+                        objUser.Properties("extensionAttribute3").Add(strExt3)
+                    End If
+                    If strExt2 <> "" Then
+                        objUser.Properties("extensionAttribute2").Add(strExt2)
+                    End If
+                    If strExt1 <> "" Then
+                        objUser.Properties("extensionAttribute1").Add(strExt1)
+                    End If
+                    If strExt13 <> "" Then
+                        objUser.Properties("extensionAttribute13").Add(strExt13)
+                    End If
+
+                    If config.applyChanges Then
+                        objUser.CommitChanges()
+                    End If
+
+                    '            Catch e As Exception
+                    '                Console.WriteLine("Error:   Create failed.")
+                    '                Console.WriteLine("         {0}", e.Message)
+                    '                For Each mailTo In objUserToAdd.mailTo
+                    '                Dim duplicate As Boolean = False
+                    '                For Each message In emailsToSend
+                    '                If message.mailTo = mailTo Then
+                    '                duplicate = True
+                    '                Message.body = message.body & "Error:   Create failed.  " & e.Message & vbCrLf
+                    '                End If
+                    '        Next
+                    '                If Not duplicate Then
+                    '                emailsToSend.Add(New emailNotification)
+                    '                emailsToSend.Last.mailTo = mailTo
+                    '                emailsToSend.Last.body = "Error:   Create failed.  " & e.Message & vbCrLf
+                    '                End If
+                    '        Next
+                    '                Return
+                    '            End Try
+
+                    objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
+                    If config.applyChanges Then
+                        objUser.Invoke("setPassword", objUserToAdd.password)
+                        objUser.CommitChanges()
+                    End If
+
+
+                    Const ADS_UF_ACCOUNTDISABLE = &H10200
+                    objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
+                    If config.applyChanges Then
+                        objUser.CommitChanges()
+                    End If
+
+
+
+                    ' Output User attributes.
+
+                End Using
+
+                Console.WriteLine("Success: Create succeeded.")
+                Console.WriteLine("Name:    {0}", objUser.Name)
+                Console.WriteLine("         {0}",
+                        objUser.Properties("displayName").Value)
+                Console.WriteLine("         {0}",
+                        objUser.Properties("userPrincipalName").Value)
+                Console.WriteLine("")
+
                 For Each mailTo In objUserToAdd.mailTo
+
                     Dim duplicate As Boolean = False
                     For Each message In emailsToSend
                         If message.mailTo = mailTo Then
                             duplicate = True
-                            message.body = message.body & "Error:   Create failed.  " & e.Message & vbCrLf
+                            Select Case objUserToAdd.userType
+                                Case "Student"
+                                    Dim strMessageBody As String
+                                    strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
+                                    message.body = message.body & strMessageBody
+                                Case "Parent"
+                                    message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                            End Select
+
                         End If
                     Next
-                    If Not duplicate Then
+
+                    If duplicate = False Then
+
                         emailsToSend.Add(New emailNotification)
                         emailsToSend.Last.mailTo = mailTo
-                        emailsToSend.Last.body = "Error:   Create failed.  " & e.Message & vbCrLf
-                    End If
-                Next
-                Return
-            End Try
 
-            objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
-            If config.applyChanges Then
-                objUser.Invoke("setPassword", objUserToAdd.password)
-                objUser.CommitChanges()
-            End If
-
-
-            Const ADS_UF_ACCOUNTDISABLE = &H10200
-            objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
-            If config.applyChanges Then
-                objUser.CommitChanges()
-            End If
-
-
-
-            ' Output User attributes.
-
-
-
-            Console.WriteLine("Success: Create succeeded.")
-            Console.WriteLine("Name:    {0}", objUser.Name)
-            Console.WriteLine("         {0}",
-                    objUser.Properties("displayName").Value)
-            Console.WriteLine("         {0}",
-                    objUser.Properties("userPrincipalName").Value)
-            Console.WriteLine("")
-
-            For Each mailTo In objUserToAdd.mailTo
-
-                Dim duplicate As Boolean = False
-                For Each message In emailsToSend
-                    If message.mailTo = mailTo Then
-                        duplicate = True
                         Select Case objUserToAdd.userType
                             Case "Student"
-                                message.body = message.body & "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf & vbCrLf & "Start Date: " & objUserToAdd.startDate & vbCrLf & vbCrLf
+                                emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
                             Case "Parent"
-                                message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                                emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                         End Select
-
                     End If
                 Next
 
-                If duplicate = False Then
-
-                    emailsToSend.Add(New emailNotification)
-                    emailsToSend.Last.mailTo = mailTo
-
-                    Select Case objUserToAdd.userType
-                        Case "Student"
-                            emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf & "Start Date: " & objUserToAdd.startDate & vbCrLf & vbCrLf
-                        Case "Parent"
-                            emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
-                    End Select
-                End If
-            Next
-
+            End If
         Next
 
         For Each message In emailsToSend
@@ -734,7 +793,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                         strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
                         Console.WriteLine("Trying " & strUsername & "...")
-                        Dim duplicate As Boolean = False
+                        Dim duplicate As Boolean
+                        duplicate = False
                         Dim a As Integer = 1
                         For Each adUser In adusers
 
@@ -747,6 +807,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                             If strUsername = adUser.username Then
                                 duplicate = True
+                            Else
+                                'duplicate = False
                             End If
                             a = a + 1
                         Next
@@ -758,7 +820,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         i = i + 1
                     End While
 
-                    If user.username = "" Then
+                    If user.username = Nothing Then
                         Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
                     Else
                         Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
@@ -1072,8 +1134,12 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
             Message.Body = Message.Body & "---Test run only - no accounts created---"
         End If
 
+        'mailClient.Timeout = 600000
 
         mailClient.Send(Message)
+
+        Message = Nothing
+        mailClient = Nothing
 
 
     End Sub
