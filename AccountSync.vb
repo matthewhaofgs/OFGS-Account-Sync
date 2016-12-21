@@ -46,6 +46,7 @@ Module AccountSync
         Public password As String
         Public displayName As String
         Public applyChanges As Boolean
+        Public staffDomainName As String
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -126,6 +127,21 @@ Module AccountSync
             createUsers(parentsToAdd, config)
         End If
 
+        Dim edumateStaff As List(Of user)
+        Console.WriteLine("Getting Edumate staff data...")
+        edumateStaff = getEdumateStaff(config)
+
+        Dim staffToAdd As List(Of user)
+        staffToAdd = getEdumateUsersNotInAD(edumateStaff, adUsers)
+        staffToAdd = excludeUserOutsideEnrollDate(staffToAdd, config)
+        staffToAdd = addMailTo(config, staffToAdd)
+        Console.WriteLine("Found " & staffToAdd.Count & " users to add")
+
+        If staffToAdd.Count > 0 Then
+            staffToAdd = evaluateUsernames(staffToAdd, adUsers)
+            createUsers(staffToAdd, config)
+
+        End If
 
     End Sub
 
@@ -177,6 +193,8 @@ Module AccountSync
                             config.mailToAll.Add(Mid(line, 11))
                         Case Left(line, 13) = "mailToParent="
                             config.mailToParent.Add(Mid(line, 14))
+                        Case Left(line, 16) = "staffDomainName="
+                            config.staffDomainName = (Mid(line, 17))
                         Case Left(line, 8) = "mailToK="
                             config.mailToK.Add(Mid(line, 9))
                         Case Left(line, 8) = "mailTo1="
@@ -395,7 +413,10 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         strDescription = "Class of " & objUserToAdd.classOf & " Barcode: "
 
                     Case "Staff"
-                    'do stuff
+                        Console.WriteLine("CN: " & "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users")
+                        strUser = "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users"
+                        Console.WriteLine("UPN: " & objUserToAdd.username & config.staffDomainName)
+                        strUserPrincipalName = objUserToAdd.username & config.staffDomainName
 
                     Case "Parent"
                         strUser = "CN=" & objUserToAdd.username & "," & config.parentOU
@@ -604,6 +625,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                                     message.body = message.body & strMessageBody
                                 Case "Parent"
                                     message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                                Case "Staff"
+                                    message.body = message.body & "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                             End Select
 
                         End If
@@ -619,6 +642,10 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                                 emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
                             Case "Parent"
                                 emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                            Case "Staff"
+                                emailsToSend.Last.body = "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+
+
                         End Select
                     End If
                 Next
@@ -740,9 +767,18 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
         Dim ReturnUsers As New List(Of user)
 
         For Each user In users
-            If user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
-                ReturnUsers.Add(user)
 
+
+            If IsDBNull(user.startDate) Then
+                'do nothing
+            Else
+                If IsDBNull(user.endDate) Then
+                    ReturnUsers.Add(user)
+                Else
+                    If user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                        ReturnUsers.Add(user)
+                    End If
+                End If
             End If
         Next
         Return ReturnUsers
@@ -828,7 +864,46 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
                 Case "Staff"
-                'Do stuff
+                    Dim rgx As New Regex("[^a-zA-Z]")
+                    Dim availableNameFound As Boolean = False
+                    Dim i As Integer = 1
+
+                    While availableNameFound = False And i <= user.surname.Length
+
+                        strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
+                        Console.WriteLine("Trying " & strUsername & "...")
+                        Dim duplicate As Boolean
+                        duplicate = False
+                        Dim a As Integer = 1
+                        For Each adUser In adusers
+
+                            CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
+                            Try
+                                adUser.username = adUser.username.ToLower
+                            Catch ex As Exception
+
+                            End Try
+
+                            If strUsername = adUser.username Then
+                                duplicate = True
+                            Else
+                                'duplicate = False
+                            End If
+                            a = a + 1
+                        Next
+                        If duplicate = False Then
+                            availableNameFound = True
+                            user.username = strUsername
+                        End If
+
+                        i = i + 1
+                    End While
+
+                    If user.username = Nothing Then
+                        Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
+                    Else
+                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                    End If
 
 
                 Case "Parent"
@@ -1248,5 +1323,66 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Next
         Return users
     End Function
+
+
+    Function getEdumateStaff(config As configSettings)
+        Dim ConnectionString As String = config.edumateConnectionString
+        Dim commandString As String =
+"
+SELECT        
+contact.firstname,
+contact.surname,
+staff_employment.start_date,
+staff_employment.end_date,
+staff.staff_id,
+staff.staff_number
+
+
+FROM            OFGSODBC.STAFF
+
+INNER JOIN Contact 
+  ON staff.contact_id = contact.contact_id 
+INNER JOIN staff_employment
+  ON staff.staff_id = staff_employment.staff_id
+
+"
+
+
+        Dim users As New List(Of user)
+
+
+
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+                If Not dr.IsDBNull(0) Then
+                    users.Add(New user)
+
+                    users.Last.firstName = dr.GetValue(0)
+                    users.Last.surname = dr.GetValue(1)
+                    users.Last.startDate = dr.GetValue(2)
+                    users.Last.endDate = dr.GetValue(3)
+                    users.Last.employeeID = dr.GetValue(4)
+                    users.Last.employeeNumber = dr.GetValue(5)
+                    users.Last.userType = "Staff"
+                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+                End If
+            End While
+            conn.Close()
+        End Using
+        Return users
+    End Function
+
+
 
 End Module
