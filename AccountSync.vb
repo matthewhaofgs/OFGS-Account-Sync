@@ -2,6 +2,7 @@
 Imports System.DirectoryServices
 Imports System.Text.RegularExpressions
 Imports System.Net.Mail
+Imports MySql.Data.MySqlClient
 
 
 
@@ -16,7 +17,7 @@ Module AccountSync
         Public profilePath As String
         Public HomePath As String
         Public HomeDriveLetter As String
-        Public classOf As Integer
+        Public classOf As String
         Public employeeID As Integer
         Public employeeNumber
         Public password
@@ -47,6 +48,7 @@ Module AccountSync
         Public displayName As String
         Public applyChanges As Boolean
         Public staffDomainName As String
+        Public domain As String
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -65,6 +67,12 @@ Module AccountSync
         Public mailTo12 As New List(Of String)
 
 
+        Public mySQLDatabaseName As String
+        Public mySQLserver As String
+        Public mySQLUserName As String
+        Public mySQLPassword As String
+
+
     End Class
 
     Class emailNotification
@@ -77,6 +85,9 @@ Module AccountSync
         Console.Clear()
         Console.WriteLine("Reading config...")
         config = readConfig()
+
+        Dim conn As New MySqlConnection
+        connect(conn, config)
 
         Dim edumateStudents As List(Of user)
 
@@ -107,7 +118,7 @@ Module AccountSync
 
         If usersToAdd.Count > 0 Then
             usersToAdd = evaluateUsernames(usersToAdd, adUsers)
-            createUsers(usersToAdd, config)
+            createUsers(usersToAdd, config, conn)
         End If
 
         Console.WriteLine("Getting Edumate parent data...")
@@ -124,7 +135,7 @@ Module AccountSync
         Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
         If parentsToAdd.Count > 0 Then
             parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
-            createUsers(parentsToAdd, config)
+            createUsers(parentsToAdd, config, conn)
         End If
 
         Dim edumateStaff As List(Of user)
@@ -139,9 +150,40 @@ Module AccountSync
 
         If staffToAdd.Count > 0 Then
             staffToAdd = evaluateUsernames(staffToAdd, adUsers)
-            createUsers(staffToAdd, config)
-
+            MsgBox("AddingStaff")
+            createUsers(staffToAdd, config, conn)
+            MsgBox("Done")
         End If
+
+
+
+        Dim mySQLStudents As List(Of user)
+        mySQLStudents = getMySQLStudents(conn)
+        mySQLStudents = removeInvalidPasswords(mySQLStudents, config.domain)
+
+
+        updatePasswordsInMysql(mySQLStudents, conn)
+
+        Dim currentEdumateStudents As List(Of user)
+        currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
+
+        Dim mysqlUsersToAdd As List(Of user)
+        mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
+
+
+        mysqlUsersToAdd = addUsernamesToUsers(mysqlUsersToAdd, adUsers)
+
+        For Each mySQLUserTOAdd In mysqlUsersToAdd
+            addUsertoMySQL(conn, mySQLUserTOAdd)
+        Next
+
+
+
+        updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
+
+        currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
+
+        updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
     End Sub
 
@@ -221,6 +263,18 @@ Module AccountSync
                             config.mailTo11.Add(Mid(line, 10))
                         Case Left(line, 9) = "mailTo12="
                             config.mailTo12.Add(Mid(line, 10))
+
+
+                        Case Left(line, 18) = "mySQLDatabaseName="
+                            config.mySQLDatabaseName = (Mid(line, 19))
+                        Case Left(line, 12) = "mySQLserver="
+                            config.mySQLserver = (Mid(line, 13))
+                        Case Left(line, 14) = "mySQLUserName="
+                            config.mySQLUserName = (Mid(line, 15))
+                        Case Left(line, 14) = "mySQLPassword="
+                            config.mySQLPassword = (Mid(line, 15))
+                        Case Left(line, 7) = "domain="
+                            config.domain = (Mid(line, 8))
 
                     End Select
 
@@ -358,7 +412,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
     End Function
 
 
-    Sub createUsers(ByVal objUsersToAdd As List(Of user), ByVal config As configSettings)
+    Sub createUsers(ByVal objUsersToAdd As List(Of user), ByVal config As configSettings, conn As MySqlConnection)
 
         Dim emailsToSend As New List(Of emailNotification)
 
@@ -651,6 +705,9 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 Next
 
             End If
+
+            addUsertoMySQL(conn, objUserToAdd)
+
         Next
 
         For Each message In emailsToSend
@@ -1382,6 +1439,217 @@ INNER JOIN staff_employment
         End Using
         Return users
     End Function
+
+
+
+    Sub addUsertoMySQL(conn As MySqlConnection, user As user)
+
+
+        Dim table As String = "student_details"
+        Dim studentID As String = user.employeeID
+        Dim firstname As String = user.firstName
+        Dim surname As String = user.surname
+        Dim username As String = user.username
+        Dim password As String = user.password
+        Dim gradYear As String = user.classOf
+        Dim current As String = "1"
+
+
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+
+
+
+
+
+        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`student_id` , `first_name` , `surname` , `username` , `password` , `grad_year` , `current` ) VALUES ('{1}' , '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", table, studentID, firstname, surname, username, password, gradYear, current), conn)
+        cmd.ExecuteNonQuery()
+
+
+
+
+
+
+        conn.Close()
+
+
+
+    End Sub
+
+
+    Public Sub connect(conn As MySqlConnection, config As configSettings)
+        Dim DatabaseName As String = config.mySQLDatabaseName
+        Dim server As String = config.mySQLserver
+        Dim userName As String = config.mySQLUserName
+        Dim password As String = config.mySQLPassword
+        If Not conn Is Nothing Then conn.Close()
+        conn.ConnectionString = String.Format("server={0}; user id={1}; password={2}; database={3}; pooling=false", server, userName, password, DatabaseName)
+        Try
+            conn.Open()
+
+            'MsgBox("Connected")
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+        conn.Close()
+
+    End Sub
+
+    Private Function ValidateActiveDirectoryLogin(ByVal Domain As String, ByVal Username As String, ByVal Password As String) As Boolean
+
+
+
+
+        Dim Success As Boolean = False
+        Dim Entry As New System.DirectoryServices.DirectoryEntry("LDAP://" & Domain, Username, Password)
+        Dim Searcher As New System.DirectoryServices.DirectorySearcher(Entry)
+        Searcher.SearchScope = DirectoryServices.SearchScope.OneLevel
+        Try
+            Dim Results As System.DirectoryServices.SearchResult = Searcher.FindOne
+            Success = Not (Results Is Nothing)
+        Catch
+            Success = False
+        End Try
+        Return Success
+    End Function
+
+    Private Function getMySQLStudents(conn)
+
+        Dim userTable As String = "student_details"
+
+        Dim users As New List(Of user)
+
+        Dim commandstring As String = ("SELECT student_id, first_name, surname, username, password, grad_year,current FROM " & userTable)
+        Dim command As New MySqlCommand(commandstring, conn)
+
+        conn.open
+
+        command.Connection = conn
+        command.CommandText = commandstring
+
+        Dim dr As MySqlDataReader
+        dr = command.ExecuteReader
+
+        Dim i As Integer = 0
+        While dr.Read()
+            If Not dr.IsDBNull(0) Then
+                users.Add(New user)
+
+                users.Last.employeeID = dr.GetValue(0)
+                users.Last.firstName = dr.GetValue(1)
+                users.Last.surname = dr.GetValue(2)
+                users.Last.username = dr.GetValue(3)
+                users.Last.password = dr.GetValue(4)
+
+                If Not dr.IsDBNull(5) Then users.Last.classOf = dr.GetValue(5)
+                users.Last.enabled = dr.GetValue(6)
+                users.Last.userType = "Student"
+                users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+            End If
+        End While
+        conn.Close()
+        Return users
+
+    End Function
+
+
+    Function removeInvalidPasswords(users As List(Of user), domain As String)
+
+        For Each user In users
+            If ValidateActiveDirectoryLogin(domain, user.username, user.password) Then
+
+            Else
+                user.password = "unknown"
+            End If
+        Next
+
+
+        Return users
+    End Function
+
+    Sub updatePasswordsInMysql(users As List(Of user), conn As MySqlConnection)
+
+        Dim userTable As String = "student_details"
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+        For Each user In users
+            Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET password  = '{1}' where student_id = '{2}' ", userTable, user.password, user.employeeID), conn)
+            cmd.ExecuteNonQuery()
+
+        Next
+        conn.Close()
+        For Each user In users
+        Next
+    End Sub
+
+    Sub updateCurrentFlags(mySQLUsers As List(Of user), edumateStudents As List(Of user), conn As MySqlConnection, adUsers As List(Of user))
+        Dim usertable As String = "student_details"
+
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+
+
+        For Each user In mySQLUsers
+            Dim current As String = 0
+            For Each student In edumateStudents
+                If user.employeeID = student.employeeID Then
+                    current = 1
+                End If
+            Next
+            If Not user.enabled = current Then
+                Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET current  = '{1}' where student_id = '{2}' ", usertable, current, user.employeeID), conn)
+                cmd.ExecuteNonQuery()
+            End If
+
+
+
+        Next
+
+    End Sub
+
+    Function addUsernamesToUsers(users As List(Of user), adUsers As List(Of user))
+
+        For Each user In users
+            For Each adUser In adUsers
+                If user.employeeID = adUser.employeeID Then
+                    user.username = adUser.username
+                End If
+            Next
+        Next
+        Return users
+
+    End Function
+
+    Sub updateMSQLDetails(usersToUpdate As List(Of user), mySQLUsers As List(Of user), conn As MySqlConnection)
+
+        Dim usertable As String = "student_details"
+
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+
+
+        For Each user In usersToUpdate
+            For Each mySQLUser In mySQLUsers
+                If user.employeeID = mySQLUser.employeeID Then
+                    If user.username = mySQLUser.username Then
+                    Else
+                        Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.username, user.employeeID), conn)
+                        cmd.ExecuteNonQuery()
+                    End If
+                End If
+            Next
+
+        Next
+
+    End Sub
 
 
 
