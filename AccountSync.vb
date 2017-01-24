@@ -30,6 +30,7 @@ Module AccountSync
         Public children As New List(Of user)
         Public mailTo As New List(Of String)
         Public currentYear As String
+        Public distinguishedName As String
     End Class
 
     Class configSettings
@@ -185,6 +186,9 @@ Module AccountSync
 
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
+        'updateEmployeeNumbers(adUsers, edumateStudents, config)
+
+
     End Sub
 
 
@@ -303,7 +307,8 @@ view_student_start_exit_dates.start_date,
 view_student_start_exit_dates.exit_date, 
 student.student_id, 
 form.short_name AS grad_form,
-YEAR(student_form_run.end_date) as EndYear
+YEAR(student_form_run.end_date) as EndYear,
+student.student_number
 
 
 FROM            
@@ -353,6 +358,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     users.Last.classOf = getYearOf(dr.GetValue(5), dr.GetValue(6))
                     users.Last.userType = "Student"
                     users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+                    users.Last.employeeNumber = dr.GetValue(7)
                 End If
             End While
             conn.Close()
@@ -427,6 +433,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 Dim strUser As String               ' User to create.
                 Dim strUserPrincipalName As String  ' Principal name of user.
                 Dim strDescription As String
+                Dim intEmployeeNumber As Integer
+
 
                 Dim strExt12 As String
                 Dim strExt11 As String
@@ -450,6 +458,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 Console.WriteLine("EmployeeID: " & objUserToAdd.employeeID)
                 intEmployeeID = objUserToAdd.employeeID
 
+                Console.WriteLine("EmployeeNumber: " & objUserToAdd.employeeNumber)
+                intEmployeeNumber = objUserToAdd.employeeNumber
 
 
                 '            Try
@@ -565,6 +575,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     End If
 
                     objUser.Properties("EmployeeID").Add(intEmployeeID)
+                    objUser.Properties("EmployeeNumber").Add(intEmployeeNumber)
 
                     If strUserPrincipalName <> "" Then
                         objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
@@ -772,6 +783,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
                 If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
                 If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
+                If result.Properties("distinguishedName").Count > 0 Then adUsers.Last.distinguishedName = result.Properties("distinguishedName")(0)
+
 
                 If result.Properties("memberof").Count > 0 Then
                     For Each group In result.Properties("memberof")
@@ -1648,6 +1661,41 @@ INNER JOIN staff_employment
             Next
 
         Next
+
+    End Sub
+
+    Sub updateEmployeeNumbers(adUsers As List(Of user), edumateStudents As List(Of user), config As configSettings)
+
+
+
+        For Each student In edumateStudents
+                For Each adUser In adUsers
+                If student.employeeID = adUser.employeeID Then
+
+                    If adUser.employeeNumber = "" Then
+
+                        Using user As New DirectoryEntry("LDAP://" & adUser.distinguishedName)
+                            'Setting username & password to Nothing forces
+                            'the connection to use your logon credentials
+                            user.Username = Nothing
+                            user.Password = Nothing
+                            'Always use a secure connection
+                            user.AuthenticationType = AuthenticationTypes.Secure
+                            ' user.RefreshCache()
+
+                            user.Properties("employeeNumber").Add(student.employeeNumber)
+
+
+
+                            user.CommitChanges()
+
+                        End Using
+
+                    End If
+                End If
+            Next
+            Next
+
 
     End Sub
 
