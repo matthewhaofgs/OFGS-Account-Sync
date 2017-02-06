@@ -99,7 +99,7 @@ Module AccountSync
         Dim dirEntry As DirectoryEntry
 
         Console.WriteLine("Connecting to AD...")
-        dirEntry = GetDirectoryEntry(config)
+        dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
 
         Dim adUsers As List(Of user)
         Console.WriteLine("Loading AD users...")
@@ -160,7 +160,7 @@ Module AccountSync
 
         Dim mySQLStudents As List(Of user)
         mySQLStudents = getMySQLStudents(conn)
-        mySQLStudents = removeInvalidPasswords(mySQLStudents, config.domain)
+        'mySQLStudents = removeInvalidPasswords(mySQLStudents, config.domain)
 
 
         updatePasswordsInMysql(mySQLStudents, conn)
@@ -188,6 +188,7 @@ Module AccountSync
 
         'updateEmployeeNumbers(adUsers, edumateStudents, config)
 
+        updateParentStudents(edumateParents, config)
 
     End Sub
 
@@ -403,9 +404,9 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
 
     ''' <returns>DirectoryEntry</returns>
-    Public Function GetDirectoryEntry(config As configSettings) As DirectoryEntry
+    Public Function GetDirectoryEntry(ldapDirectoryEntry As String) As DirectoryEntry
 
-        Dim dirEntry As New DirectoryEntry(config.ldapDirectoryEntry)
+        Dim dirEntry As New DirectoryEntry(ldapDirectoryEntry)
         'Setting username & password to Nothing forces
         'the connection to use your logon credentials
         dirEntry.Username = Nothing
@@ -548,7 +549,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 ' Create User.
 
 
-                Using dirEntry As DirectoryEntry = GetDirectoryEntry(config)
+                Using dirEntry As DirectoryEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
                     dirEntry.RefreshCache()
 
                     objUser = dirEntry.Children.Add(strUser, "user")
@@ -717,7 +718,9 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
             End If
 
-            addUsertoMySQL(conn, objUserToAdd)
+            If objUserToAdd.userType = "Student" Then
+                addUsertoMySQL(conn, objUserToAdd)
+            End If
 
         Next
 
@@ -1362,34 +1365,37 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
 
     Function calculateCurrentYears(users As List(Of user))
         For Each user In users
-            Select Case user.classOf - Convert.ToInt32(Year(Date.Now))
-                Case 0
-                    user.currentYear = "12"
-                Case 1
-                    user.currentYear = "11"
-                Case 2
-                    user.currentYear = "10"
-                Case 3
-                    user.currentYear = "9"
-                Case 4
-                    user.currentYear = "8"
-                Case 5
-                    user.currentYear = "7"
-                Case 6
-                    user.currentYear = "6"
-                Case 7
-                    user.currentYear = "5"
-                Case 8
-                    user.currentYear = "4"
-                Case 9
-                    user.currentYear = "3"
-                Case 10
-                    user.currentYear = "2"
-                Case 11
-                    user.currentYear = "1"
-                Case 12
-                    user.currentYear = "K"
-            End Select
+            If Not IsNothing(user) Then
+
+                Select Case user.classOf - Convert.ToInt32(Year(Date.Now))
+                    Case 0
+                        user.currentYear = "12"
+                    Case 1
+                        user.currentYear = "11"
+                    Case 2
+                        user.currentYear = "10"
+                    Case 3
+                        user.currentYear = "9"
+                    Case 4
+                        user.currentYear = "8"
+                    Case 5
+                        user.currentYear = "7"
+                    Case 6
+                        user.currentYear = "6"
+                    Case 7
+                        user.currentYear = "5"
+                    Case 8
+                        user.currentYear = "4"
+                    Case 9
+                        user.currentYear = "3"
+                    Case 10
+                        user.currentYear = "2"
+                    Case 11
+                        user.currentYear = "1"
+                    Case 12
+                        user.currentYear = "K"
+                End Select
+            End If
         Next
         Return users
     End Function
@@ -1699,6 +1705,267 @@ INNER JOIN staff_employment
 
     End Sub
 
+    Sub getStudentAccountsToDisable()
+
+    End Sub
+
+    Sub updateParentStudents(parents As List(Of user), config As configSettings)
+
+
+        Dim dirEntry As DirectoryEntry
+
+        Console.WriteLine("Connecting to AD...")
+        dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
+
+        Dim adUsers As List(Of user)
+        Console.WriteLine("Loading AD users...")
+        Console.WriteLine("")
+        Console.WriteLine("")
+        adUsers = getADUsers(dirEntry)
+
+
+        For Each parent In parents
+
+            Dim strExt12 As String
+            Dim strExt11 As String
+            Dim strExt10 As String
+            Dim strExt9 As String
+            Dim strExt8 As String
+            Dim strExt7 As String
+            Dim strExt6 As String
+            Dim strExt5 As String
+            Dim strExt4 As String
+            Dim strExt3 As String
+            Dim strExt2 As String
+            Dim strExt1 As String
+            Dim strExt13 As String
+
+            For Each adUser In adUsers
+                If parent.employeeID = adUser.employeeID Then
+                    strExt12 = getChildFromChildren(parent.children, "12")
+                    strExt11 = getChildFromChildren(parent.children, "11")
+                    strExt10 = getChildFromChildren(parent.children, "10")
+                    strExt9 = getChildFromChildren(parent.children, "9")
+                    strExt8 = getChildFromChildren(parent.children, "8")
+                    strExt7 = getChildFromChildren(parent.children, "7")
+                    strExt6 = getChildFromChildren(parent.children, "6")
+                    strExt5 = getChildFromChildren(parent.children, "5")
+                    strExt4 = getChildFromChildren(parent.children, "4")
+                    strExt3 = getChildFromChildren(parent.children, "3")
+                    strExt2 = getChildFromChildren(parent.children, "2")
+                    strExt1 = getChildFromChildren(parent.children, "1")
+                    strExt13 = getChildFromChildren(parent.children, "K")
+
+                    '[If CInt(strExt12 & strExt11 & strExt10 & strExt9 & strExt8 & strExt7 & strExt6 & strExt5 & strExt4 & strExt3 & strExt2 & strExt1 & strExt13) > 1 Then
+
+                    Using user As New DirectoryEntry("LDAP://" & adUser.distinguishedName)
+                        'MsgBox(adUser.distinguishedName)
+                        'Setting username & password to Nothing forces
+                        'the connection to use your logon credentials
+                        user.Username = Nothing
+                            user.Password = Nothing
+                            'Always use a secure connection
+                            user.AuthenticationType = AuthenticationTypes.Secure
+                        ' user.RefreshCache()
+
+                        If CInt(strExt12) > 1 Then
+                            If user.Properties("extensionAttribute12").Count > 0 Then
+                                user.Properties("extensionAttribute12")(0) = (strExt12)
+                            Else
+                                user.Properties("extensionAttribute12").Add(strExt12)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute12").Count > 0 Then
+                                user.Properties("extensionAttribute12").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt11) > 1 Then
+                            If user.Properties("extensionAttribute11").Count > 0 Then
+                                user.Properties("extensionAttribute11")(0) = (strExt11)
+                            Else
+                                user.Properties("extensionAttribute11").Add(strExt11)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute11").Count > 0 Then
+                                user.Properties("extensionAttribute11").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt10) > 1 Then
+                            If user.Properties("extensionAttribute10").Count > 0 Then
+                                user.Properties("extensionAttribute10")(0) = (strExt10)
+                            Else
+                                user.Properties("extensionAttribute10").Add(strExt10)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute10").Count > 0 Then
+                                user.Properties("extensionAttribute10").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt9) > 1 Then
+                            If user.Properties("extensionAttribute9").Count > 0 Then
+                                user.Properties("extensionAttribute9")(0) = (strExt9)
+                            Else
+                                user.Properties("extensionAttribute9").Add(strExt9)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute9").Count > 0 Then
+                                user.Properties("extensionAttribute9").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt8) > 1 Then
+                            If user.Properties("extensionAttribute8").Count > 0 Then
+                                user.Properties("extensionAttribute8")(0) = (strExt8)
+                            Else
+                                user.Properties("extensionAttribute8").Add(strExt8)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute8").Count > 0 Then
+                                user.Properties("extensionAttribute8").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt7) > 1 Then
+                            If user.Properties("extensionAttribute7").Count > 0 Then
+                                user.Properties("extensionAttribute7")(0) = (strExt7)
+                            Else
+                                user.Properties("extensionAttribute7").Add(strExt7)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute7").Count > 0 Then
+                                user.Properties("extensionAttribute7").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt6) > 1 Then
+                            If user.Properties("extensionAttribute6").Count > 0 Then
+                                user.Properties("extensionAttribute6")(0) = (strExt6)
+                            Else
+                                user.Properties("extensionAttribute6").Add(strExt6)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute6").Count > 0 Then
+                                user.Properties("extensionAttribute6").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt5) > 1 Then
+                            If user.Properties("extensionAttribute5").Count > 0 Then
+                                user.Properties("extensionAttribute5")(0) = (strExt5)
+                            Else
+                                user.Properties("extensionAttribute5").Add(strExt5)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute5").Count > 0 Then
+                                user.Properties("extensionAttribute5").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt4) > 1 Then
+                            If user.Properties("extensionAttribute4").Count > 0 Then
+                                user.Properties("extensionAttribute4")(0) = (strExt4)
+                            Else
+                                user.Properties("extensionAttribute4").Add(strExt4)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute4").Count > 0 Then
+                                user.Properties("extensionAttribute4").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt3) > 1 Then
+                            If user.Properties("extensionAttribute3").Count > 0 Then
+                                user.Properties("extensionAttribute3")(0) = (strExt3)
+                            Else
+                                user.Properties("extensionAttribute3").Add(strExt3)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute3").Count > 0 Then
+                                user.Properties("extensionAttribute3").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt2) > 1 Then
+                            If user.Properties("extensionAttribute2").Count > 0 Then
+                                user.Properties("extensionAttribute2")(0) = (strExt2)
+                            Else
+                                user.Properties("extensionAttribute2").Add(strExt2)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute2").Count > 0 Then
+                                user.Properties("extensionAttribute2").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt1) > 1 Then
+                            If user.Properties("extensionAttribute1").Count > 0 Then
+                                user.Properties("extensionAttribute1")(0) = (strExt1)
+                            Else
+                                user.Properties("extensionAttribute1").Add(strExt1)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute1").Count > 0 Then
+                                user.Properties("extensionAttribute1").Clear()
+                            End If
+                        End If
+
+                        If CInt(strExt13) > 1 Then
+                            If user.Properties("extensionAttribute13").Count > 0 Then
+                                user.Properties("extensionAttribute13")(0) = (strExt13)
+                            Else
+                                user.Properties("extensionAttribute13").Add(strExt13)
+                            End If
+                        Else
+                            If user.Properties("extensionAttribute13").Count > 0 Then
+                                user.Properties("extensionAttribute13").Clear()
+                            End If
+                        End If
+
+
+
+
+
+                        user.CommitChanges()
+
+                        End Using
+                    End If
+                ' End If
+
+            Next
+        Next
+
+
+
+
+    End Sub
+
+
+    Function getChildFromChildren(children As List(Of user), yearToFind As String)
+
+        children = calculateCurrentYears(children)
+
+        Dim found As Boolean = False
+
+        For Each child In children
+            '  MsgBox("CY: " & child.currentYear & "YTF: " & yearToFind)
+
+            Try
+                If child.currentYear = yearToFind Then
+                    Return child.employeeID
+                    found = True
+                    '    MsgBox("FoundMatch")
+                End If
+            Catch
+            End Try
+        Next
+
+        If found = False Then
+            Return "0"
+        End If
+    End Function
 
 
 End Module
