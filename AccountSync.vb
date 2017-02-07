@@ -3,10 +3,7 @@ Imports System.DirectoryServices
 Imports System.Text.RegularExpressions
 Imports System.Net.Mail
 Imports MySql.Data.MySqlClient
-Imports System.Data
-Imports System.Data.OleDb
 Imports System.Text
-Imports System.Object
 Imports WinSCP
 
 
@@ -81,10 +78,66 @@ Module AccountSync
 
     End Class
 
+
     Class emailNotification
         Public mailTo
         Public body
     End Class
+
+
+    Class studentParent
+        Public student_id As Integer
+        Public parent_id As Integer
+    End Class
+
+    Class SchoolBoxUser
+        Public Delete As String
+        Public SchoolboxUserID As String
+        Public Username As String
+        Public ExternalID As String
+        Public Title As String
+        Public FirstName As String
+        Public Surname As String
+        Public Role As String
+        Public Campus As String
+        Public Password As String
+        Public AltEmail As String
+        Public Year As String
+        Public House As String
+        Public ResidentialHouse As String
+        Public EPortfolio As String
+        Public HideContactDetails As String
+        Public HideTimetable As String
+        Public EmailAddressFromUsername As String
+        Public UseExternalMailClient As String
+        Public EnableWebmailTab As String
+        Public Superuser As String
+        Public AccountEnabled As String
+        Public ChildExternalIDs As String
+        Public DateOfBirth As String
+        Public HomePhone As String
+        Public MobilePhone As String
+        Public WorkPhone As String
+        Public Address As String
+        Public Suburb As String
+        Public Postcode As String
+    End Class
+
+    Class uploadServer
+        Public host As String
+        Public userName As String
+        Public pass As String
+        Public rsa As String
+    End Class
+
+    Class schoolboxConfigSettings
+        Public connectionString As String
+        Public uploadServers As List(Of uploadServer)
+        Public studentEmailDomain As String
+    End Class
+
+
+
 
     Sub Main()
         Dim config As New configSettings()
@@ -194,6 +247,8 @@ Module AccountSync
         'updateEmployeeNumbers(adUsers, edumateStudents, config)
 
         updateParentStudents(edumateParents, config)
+
+        SchoolboxMain(config)
 
     End Sub
 
@@ -1973,74 +2028,13 @@ INNER JOIN staff_employment
     End Function
 
 
-End Module
+    Public Sub SchoolboxMain(adconfig As configSettings)
 
 
+        Dim config As schoolboxConfigSettings
+        config = SchoolboxReadConfig()
 
-
-
-
-
-Class studentParent
-    Public student_id As Integer
-    Public parent_id As Integer
-End Class
-
-Class user
-    Public Delete As String
-    Public SchoolboxUserID As String
-    Public Username As String
-    Public ExternalID As String
-    Public Title As String
-    Public FirstName As String
-    Public Surname As String
-    Public Role As String
-    Public Campus As String
-    Public Password As String
-    Public AltEmail As String
-    Public Year As String
-    Public House As String
-    Public ResidentialHouse As String
-    Public EPortfolio As String
-    Public HideContactDetails As String
-    Public HideTimetable As String
-    Public EmailAddressFromUsername As String
-    Public UseExternalMailClient As String
-    Public EnableWebmailTab As String
-    Public Superuser As String
-    Public AccountEnabled As String
-    Public ChildExternalIDs As String
-    Public DateOfBirth As String
-    Public HomePhone As String
-    Public MobilePhone As String
-    Public WorkPhone As String
-    Public Address As String
-    Public Suburb As String
-    Public Postcode As String
-End Class
-
-Class uploadServer
-    Public host As String
-    Public userName As String
-    Public pass As String
-    Public rsa As String
-End Class
-
-Class configSettings
-    Public connectionString As String
-    Public uploadServers As List(Of uploadServer)
-    Public studentEmailDomain As String
-End Class
-
-Module Schoolbox
-
-    Public Sub Main(ByVal sArgs() As String)
-
-
-        Dim config As configSettings
-        config = readConfig()
-
-        Call user(config)
+        Call writeUserCSV(config, adconfig)
         Call timetableStructure(config)
         Call timetable(config)
         Call enrollment(config)
@@ -2048,21 +2042,36 @@ Module Schoolbox
     End Sub
 
 
-    Sub user(config As configSettings)
+    Sub writeUserCSV(config As schoolboxConfigSettings, adconfig As configSettings)
+
+
+        Dim dirEntry As DirectoryEntry
+
+        Console.WriteLine("Connecting to AD...")
+        dirEntry = GetDirectoryEntry(adconfig.ldapDirectoryEntry)
+
+        Dim adUsers As List(Of user)
+        Console.WriteLine("Loading AD users...")
+        Console.WriteLine("")
+        Console.WriteLine("")
+        adUsers = getADUsers(dirEntry)
+
 
         ' Students ****************
         Dim ConnectionString As String = config.connectionString
         Dim commandString As String = "
 select
-username,
-student_number,
-firstname,
-surname,
-birthdate,
-form_name
+schoolbox_students.username,
+schoolbox_students.student_number,
+schoolbox_students.firstname,
+schoolbox_students.surname,
+schoolbox_students.birthdate,
+schoolbox_students.form_name,
+student.student_id
 from schoolbox_students
+inner join student on schoolbox_students.student_number = student.student_number
 "
-        Dim users As New List(Of user)
+        Dim users As New List(Of SchoolBoxUser)
 
 
 
@@ -2080,7 +2089,7 @@ from schoolbox_students
             Dim i As Integer = 0
             While dr.Read()
                 If Not dr.IsDBNull(0) Then
-                    users.Add(New user)
+                    users.Add(New SchoolBoxUser)
 
                     users.Last.Delete = ""
                     users.Last.SchoolboxUserID = ""
@@ -2123,12 +2132,24 @@ from schoolbox_students
                     users.Last.Postcode = ""
 
 
+                    ' REPLACE CODE HERE FOR USERNAME ========================================================================================================
+                    'If Not dr.IsDBNull(0) Then users.Last.Username = Replace(dr.GetValue(0), "noSAML", "")
 
-                    If Not dr.IsDBNull(0) Then users.Last.Username = Replace(dr.GetValue(0), "noSAML", "")
+                    If Not dr.IsDBNull(0) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
+
+
+
+
+
+                    '========================================================================================================================================
                     If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                     If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
                     If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
                     If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
+
+
+                    MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
+
 
                 End If
 
@@ -2164,7 +2185,7 @@ from schoolbox_staff
 
             While dr.Read()
 
-                users.Add(New user)
+                users.Add(New SchoolBoxUser)
 
                 users.Last.Delete = ""
                 users.Last.SchoolboxUserID = ""
@@ -2279,7 +2300,7 @@ WHERE  (schoolbox_parents.email LIKE '%ofgsfamily.com' OR
 
             Dim i As Integer = 0
             While dr.Read()
-                users.Add(New user)
+                users.Add(New SchoolBoxUser)
 
                 users.Last.Delete = ""
                 users.Last.SchoolboxUserID = ""
@@ -2361,7 +2382,7 @@ left join contact on carer.contact_id = contact.contact_id
             Dim i As Integer = 0
             While dr.Read()
                 If Not dr.IsDBNull(0) Then
-                    users.Add(New user)
+                    users.Add(New SchoolBoxUser)
 
                     users.Last.Delete = ""
                     users.Last.SchoolboxUserID = ""
@@ -2451,7 +2472,7 @@ left join contact on carer.contact_id = contact.contact_id
 
 
 
-    Sub timetableStructure(config As configSettings)
+    Sub timetableStructure(config As schoolboxConfigSettings)
 
         Dim sep As String = ","
         Dim commandString As String
@@ -2507,7 +2528,7 @@ WHERE        (start_date > '01/01/2017') AND (end_date < '12/31/2018') AND (term
     End Sub
 
 
-    Sub timetable(config As configSettings)
+    Sub timetable(config As schoolboxConfigSettings)
         Dim commandstring As String
         commandstring = "
 SELECT DISTINCT
@@ -2594,7 +2615,7 @@ AND
         sw.Close()
     End Sub
 
-    Sub enrollment(config As configSettings)
+    Sub enrollment(config As schoolboxConfigSettings)
         Dim commandstring As String
         commandstring = "
 SELECT DISTINCT CONCAT(course.code, class.identifier) AS CLASS_CODE, class.class, student.student_number
@@ -2687,14 +2708,14 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     End Sub
 
-    Sub uploadFiles(config As configSettings)
+    Sub uploadFiles(config As schoolboxConfigSettings)
         For Each i In config.uploadServers
             upload(i.host, i.userName, i.pass, i.rsa)
         Next
     End Sub
 
-    Private Function readConfig()
-        Dim config As New configSettings()
+    Private Function SchoolboxReadConfig()
+        Dim config As New schoolboxConfigSettings()
         config.uploadServers = New List(Of uploadServer)
 
         Try
@@ -2725,7 +2746,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
                 End While
 
-                readConfig = config
+                SchoolboxReadConfig = config
             End Using
 
         Catch e As Exception
@@ -2734,6 +2755,13 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
     End Function
 
 
+    Function getUsernameFromID(userID As String, adusers As List(Of user))
+        For Each user In adusers
+            If user.employeeID = userID Then
+                Return user.username
+            End If
+        Next
+    End Function
 
 End Module
 
