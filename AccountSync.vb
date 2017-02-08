@@ -2148,7 +2148,7 @@ inner join student on schoolbox_students.student_number = student.student_number
                     If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
 
 
-                    MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
+                    'MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
 
 
                 End If
@@ -2163,13 +2163,15 @@ inner join student on schoolbox_students.student_number = student.student_number
         'Staff **********************
         commandString = "
 select
-username,
-staff_number,
-salutation,
-firstname,
-surname,
-house
+schoolbox_staff.username,
+schoolbox_staff.staff_number,
+schoolbox_staff.salutation,
+schoolbox_staff.firstname,
+schoolbox_staff.surname,
+schoolbox_staff.house,
+staff.staff_id
 from schoolbox_staff
+inner join staff on schoolbox_staff.staff_number = staff.staff_number
 "
 
         Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
@@ -2214,7 +2216,11 @@ from schoolbox_staff
                 users.Last.DateOfBirth = ""
 
 
-                If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
+
+                'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
+                If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
+
+
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
                 If Not dr.IsDBNull(3) Then users.Last.FirstName = """" & dr.GetValue(3) & """"
@@ -2761,6 +2767,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
                 Return user.username
             End If
         Next
+        Return "noUsername"
     End Function
 
 End Module
