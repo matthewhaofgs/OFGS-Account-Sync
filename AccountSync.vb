@@ -2060,16 +2060,29 @@ INNER JOIN staff_employment
         ' Students ****************
         Dim ConnectionString As String = config.connectionString
         Dim commandString As String = "
-select
-schoolbox_students.username,
-schoolbox_students.student_number,
-schoolbox_students.firstname,
-schoolbox_students.surname,
-schoolbox_students.birthdate,
-schoolbox_students.form_name,
+SELECT        
+'blank' AS Expr1, 
+student.student_number, 
+contact.firstname, 
+contact.surname, 
+contact.birthdate, 
+form_run.form_run, 
 student.student_id
-from schoolbox_students
-inner join student on schoolbox_students.student_number = student.student_number
+
+
+FROM            student
+
+INNER JOIN contact 
+ON student.contact_id = contact.contact_id
+
+INNER JOIN student_form_run
+ON student.student_id = student_form_run.student_id
+
+INNER JOIN form_run 
+ON form_run.form_run_id = student_form_run.form_run_id
+
+
+WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start_date AND student_form_run.end_date  
 "
         Dim users As New List(Of SchoolBoxUser)
 
@@ -2111,7 +2124,7 @@ inner join student on schoolbox_students.student_number = student.student_number
                     End If
 
                     users.Last.Password = ""
-                    users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
+                    'users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
                     users.Last.Year = ""
                     users.Last.House = ""
                     users.Last.ResidentialHouse = ""
@@ -2137,7 +2150,7 @@ inner join student on schoolbox_students.student_number = student.student_number
 
                     If Not dr.IsDBNull(0) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
 
-
+                    users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
 
 
 
