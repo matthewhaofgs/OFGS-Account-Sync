@@ -2621,13 +2621,15 @@ AND
 
                 Dim outLine As String
                 Dim tempStr As String
+                Dim campus As String
 
                 tempStr = dr.GetValue(5)
                 tempStr = Replace(tempStr, "&#039;", "'")
                 tempStr = Replace(tempStr, "&amp;", "&")
 
+                campus = Replace(dr.GetValue(0), "Year 1", "Senior")
 
-                outLine = (dr.GetValue(0) & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
+                outLine = (campus & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
                 sw.WriteLine(outLine)
             End While
         End Using
