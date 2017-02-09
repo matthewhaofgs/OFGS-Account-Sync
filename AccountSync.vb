@@ -2640,8 +2640,11 @@ AND
         Dim commandstring As String
         commandstring = "
 SELECT DISTINCT CONCAT(course.code, class.identifier) AS CLASS_CODE, class.class, student.student_number
-FROM            OFGSODBC.CLASS_ENROLLMENT, OFGSODBC.STUDENT, class, course, academic_year, schoolbox_students
-WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrollment.class_id = class.class_id) AND (student.student_number = schoolbox_students.student_number ) AND (class.course_id = course.course_id) AND (class.academic_year_id = academic_year.academic_year_id) AND academic_year.academic_year = '" & Date.Today.Year & "'"
+FROM            OFGSODBC.CLASS_ENROLLMENT, OFGSODBC.STUDENT, class, course, academic_year
+WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrollment.class_id = class.class_id) AND (class.course_id = course.course_id) AND (class.academic_year_id = academic_year.academic_year_id) AND academic_year.academic_year ='" & Date.Today.Year & "' AND ((SELECT current date FROM sysibm.sysdummy1) between class_enrollment.start_date AND class_enrollment.end_date)
+"
+
+
 
 
         Dim sw As New StreamWriter(".\enrollment.csv")
