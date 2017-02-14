@@ -2173,80 +2173,7 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
 
 
 
-        'Staff **********************
-        commandString = "
-select
-schoolbox_staff.username,
-schoolbox_staff.staff_number,
-schoolbox_staff.salutation,
-schoolbox_staff.firstname,
-schoolbox_staff.surname,
-schoolbox_staff.house,
-staff.staff_id
-from schoolbox_staff
-inner join staff on schoolbox_staff.staff_number = staff.staff_number
-"
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
-            conn.Open()
-
-            'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
-            command.Connection = conn
-            command.CommandText = commandString
-
-            Dim dr As System.Data.Odbc.OdbcDataReader
-            dr = command.ExecuteReader
-
-            While dr.Read()
-
-                users.Add(New SchoolBoxUser)
-
-                users.Last.Delete = ""
-                users.Last.SchoolboxUserID = ""
-                users.Last.Title = ""
-                users.Last.Role = "Staff"
-                users.Last.Campus = "Senior"
-                users.Last.Password = ""
-                users.Last.AltEmail = ""
-                users.Last.Year = ""
-                users.Last.ResidentialHouse = ""
-                users.Last.EPortfolio = "Y"
-                users.Last.HideContactDetails = "Y"
-                users.Last.HideTimetable = "N"
-                users.Last.EmailAddressFromUsername = "Y"
-                users.Last.UseExternalMailClient = "Y"
-                users.Last.EnableWebmailTab = "N"
-                users.Last.Superuser = "N"
-                users.Last.AccountEnabled = "Y"
-                users.Last.ChildExternalIDs = ""
-                users.Last.HomePhone = ""
-                users.Last.MobilePhone = ""
-                users.Last.WorkPhone = ""
-                users.Last.Address = ""
-                users.Last.Suburb = ""
-                users.Last.Postcode = ""
-                users.Last.DateOfBirth = ""
-
-
-
-                'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
-                If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
-
-
-                If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
-                If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
-                If Not dr.IsDBNull(3) Then users.Last.FirstName = """" & dr.GetValue(3) & """"
-                If Not dr.IsDBNull(4) Then users.Last.Surname = """" & dr.GetValue(4) & """"
-                If Not dr.IsDBNull(5) Then users.Last.House = dr.GetValue(5)
-
-
-
-
-
-            End While
-            conn.Close()
-        End Using
 
 
 
@@ -2466,6 +2393,82 @@ left join contact on carer.contact_id = contact.contact_id
             End While
 
         End Using
+
+        'Staff **********************
+        commandString = "
+select
+schoolbox_staff.username,
+schoolbox_staff.staff_number,
+schoolbox_staff.salutation,
+schoolbox_staff.firstname,
+schoolbox_staff.surname,
+schoolbox_staff.house,
+staff.staff_id
+from schoolbox_staff
+inner join staff on schoolbox_staff.staff_number = staff.staff_number
+"
+
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            While dr.Read()
+
+                users.Add(New SchoolBoxUser)
+
+                users.Last.Delete = ""
+                users.Last.SchoolboxUserID = ""
+                users.Last.Title = ""
+                users.Last.Role = "Staff"
+                users.Last.Campus = "Senior"
+                users.Last.Password = ""
+                users.Last.AltEmail = ""
+                users.Last.Year = ""
+                users.Last.ResidentialHouse = ""
+                users.Last.EPortfolio = "Y"
+                users.Last.HideContactDetails = "Y"
+                users.Last.HideTimetable = "N"
+                users.Last.EmailAddressFromUsername = "Y"
+                users.Last.UseExternalMailClient = "Y"
+                users.Last.EnableWebmailTab = "N"
+                users.Last.Superuser = "N"
+                users.Last.AccountEnabled = "Y"
+                users.Last.ChildExternalIDs = ""
+                users.Last.HomePhone = ""
+                users.Last.MobilePhone = ""
+                users.Last.WorkPhone = ""
+                users.Last.Address = ""
+                users.Last.Suburb = ""
+                users.Last.Postcode = ""
+                users.Last.DateOfBirth = ""
+
+
+
+                'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
+                If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
+
+
+                If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
+                If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
+                If Not dr.IsDBNull(3) Then users.Last.FirstName = """" & dr.GetValue(3) & """"
+                If Not dr.IsDBNull(4) Then users.Last.Surname = """" & dr.GetValue(4) & """"
+                If Not dr.IsDBNull(5) Then users.Last.House = dr.GetValue(5)
+
+
+
+
+
+            End While
+            conn.Close()
+        End Using
+
 
 
 
