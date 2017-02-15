@@ -1474,7 +1474,7 @@ staff.staff_id,
 staff.staff_number
 
 
-FROM            OFGSODBC.STAFF
+FROM            STAFF
 
 INNER JOIN Contact 
   ON staff.contact_id = contact.contact_id 
@@ -2455,7 +2455,7 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
                 If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
 
-                users.Last.AltEmail = users.Last.Username & "@ofgs.nsw.edu.au"
+                users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
 
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
@@ -2509,7 +2509,7 @@ SELECT DISTINCT
                          CASE WHEN substr(timetable.timetable, 6, 6) = 'Year 1' THEN 'Senior' ELSE substr(timetable.timetable, 6, 6) END AS Expr1, 
                          REPLACE(CONCAT(CONCAT(term.term, ' '), substr(timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, term.start_date, term.end_date, term.cycle_start_day, 
                          cycle_day.day_index, period.period, period.start_time, period.end_time
-FROM            OFGSODBC.TERM_GROUP, cycle_day, period_cycle_day, period, term, timetable
+FROM            TERM_GROUP, cycle_day, period_cycle_day, period, term, timetable
 WHERE        (start_date > '01/01/2017') AND (end_date < '12/31/2018') AND (term_group.cycle_id = cycle_day.cycle_id) AND 
                          (cycle_day.cycle_day_id = period_cycle_day.cycle_day_id) AND (period_cycle_day.period_id = period.period_id) AND (term_group.term_id = term.term_id) AND 
                          (term.timetable_id = timetable.timetable_id)"
@@ -2649,7 +2649,7 @@ AND
         Dim commandstring As String
         commandstring = "
 SELECT DISTINCT CONCAT(course.code, class.identifier) AS CLASS_CODE, class.class, student.student_number
-FROM            OFGSODBC.CLASS_ENROLLMENT, OFGSODBC.STUDENT, class, course, academic_year
+FROM            CLASS_ENROLLMENT, STUDENT, class, course, academic_year
 WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrollment.class_id = class.class_id) AND (class.course_id = course.course_id) AND (class.academic_year_id = academic_year.academic_year_id) AND academic_year.academic_year ='" & Date.Today.Year & "' AND ((SELECT current date FROM sysibm.sysdummy1) between class_enrollment.start_date AND class_enrollment.end_date)
 "
 
