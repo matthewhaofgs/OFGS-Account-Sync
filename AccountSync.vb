@@ -2219,17 +2219,13 @@ select
 schoolbox_parents.email,
 schoolbox_parents.carer_number,
 contact.firstname,
-contact.surname
-
+contact.surname,
+carer.carer_id
 
 
 from schoolbox_parents
 inner join carer on schoolbox_parents.carer_number = carer.carer_number
 inner join contact on carer.contact_id = contact.contact_id
-
-WHERE  (schoolbox_parents.email LIKE '%ofgsfamily.com' OR
-                         schoolbox_parents.email LIKE '%ofgs.nsw.edu.au')
-
 
 "
 
@@ -2271,7 +2267,9 @@ WHERE  (schoolbox_parents.email LIKE '%ofgsfamily.com' OR
                 users.Last.Address = ""
                 users.Last.Suburb = ""
                 users.Last.Postcode = ""
-                If Not dr.IsDBNull(0) Then users.Last.Username = Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1)
+                'If Not dr.IsDBNull(0) Then users.Last.Username = Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1)
+                users.Last.Username = getUsernameFromID(dr.GetValue(4), adUsers)
+
                 If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
@@ -2304,7 +2302,8 @@ select
 schoolbox_parents.spouse_email,
 schoolbox_parents.spouse_carer_number,
 contact.firstname,
-contact.surname
+contact.surname,
+carer.carer_id
 
 
 
@@ -2358,14 +2357,16 @@ left join contact on carer.contact_id = contact.contact_id
                         Dim duplicateUser As Boolean
                         duplicateUser = False
                         For Each z In users
-                            If Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1) = z.Username Then
+                            'If Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1) = z.Username Then
+                            If getUsernameFromID(dr.GetValue(4), adUsers) = z.Username Then
                                 duplicateUser = True
                             End If
                         Next
                         If duplicateUser = False Then
-                            users.Last.Username = Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1)
+                            users.Last.Username = getUsernameFromID(dr.GetValue(4), adUsers)
                         Else
-                            users.Last.Username = Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1) & "_parent"
+                            'MsgBox("Duplicate check fail")
+                            users.Last.Username = getUsernameFromID(dr.GetValue(4), adUsers) & "_parent"
                         End If
                     End If
 
@@ -2468,6 +2469,10 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
             End While
             conn.Close()
         End Using
+
+
+
+
 
 
 
