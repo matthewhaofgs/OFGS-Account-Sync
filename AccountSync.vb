@@ -2430,7 +2430,7 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 users.Last.Role = "Staff"
                 users.Last.Campus = "Senior"
                 users.Last.Password = ""
-                users.Last.AltEmail = ""
+
                 users.Last.Year = ""
                 users.Last.ResidentialHouse = ""
                 users.Last.EPortfolio = "Y"
@@ -2455,6 +2455,7 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
                 If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
 
+                users.Last.AltEmail = users.Last.Username & "@ofgs.nsw.edu.au"
 
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
