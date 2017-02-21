@@ -15,7 +15,7 @@ Module AccountSync
         Public surname As String
         Public displayName As String
         Public email As String
-        Public username As String
+        Public ad_username As String
         Public profilePath As String
         Public HomePath As String
         Public HomeDriveLetter As String
@@ -33,6 +33,11 @@ Module AccountSync
         Public mailTo As New List(Of String)
         Public currentYear As String
         Public distinguishedName As String
+        Public edumateUsername As String
+        Public edumateCurrent As String
+        Public edumateEmail As String
+        Public smtpProxy As String
+
     End Class
 
     Class configSettings
@@ -484,7 +489,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
         Dim emailsToSend As New List(Of emailNotification)
 
         For Each objUserToAdd In objUsersToAdd
-            If objUserToAdd.username <> "" Then
+            If objUserToAdd.ad_username <> "" Then
 
 
 
@@ -531,8 +536,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         Console.WriteLine("CN: " & "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users")
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
 
-                        Console.WriteLine("UPN: " & objUserToAdd.username & config.studentDomainName)
-                        strUserPrincipalName = objUserToAdd.username & config.studentDomainName
+                        Console.WriteLine("UPN: " & objUserToAdd.ad_username & config.studentDomainName)
+                        strUserPrincipalName = objUserToAdd.ad_username & config.studentDomainName
 
                         Console.WriteLine("Class of: " & "Class of " & objUserToAdd.classOf & " Barcode: ")
                         strDescription = "Class of " & objUserToAdd.classOf & " Barcode: "
@@ -540,14 +545,14 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     Case "Staff"
                         Console.WriteLine("CN: " & "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users")
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users"
-                        Console.WriteLine("UPN: " & objUserToAdd.username & config.staffDomainName)
-                        strUserPrincipalName = objUserToAdd.username & config.staffDomainName
+                        Console.WriteLine("UPN: " & objUserToAdd.ad_username & config.staffDomainName)
+                        strUserPrincipalName = objUserToAdd.ad_username & config.staffDomainName
 
                     Case "Parent"
-                        strUser = "CN=" & objUserToAdd.username & "," & config.parentOU
+                        strUser = "CN=" & objUserToAdd.ad_username & "," & config.parentOU
                         strDescription = objUserToAdd.firstName & " " & objUserToAdd.surname
-                        strDisplayName = objUserToAdd.username
-                        strUserPrincipalName = objUserToAdd.username & config.parentDomainName
+                        strDisplayName = objUserToAdd.ad_username
+                        strUserPrincipalName = objUserToAdd.ad_username & config.parentDomainName
 
 
 
@@ -628,8 +633,8 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     If objUserToAdd.surname <> "" Then
                         objUser.Properties("sn").Add(objUserToAdd.surname)
                     End If
-                    If objUserToAdd.username <> "" Then
-                        objUser.Properties("samAccountName").Add(objUserToAdd.username)
+                    If objUserToAdd.ad_username <> "" Then
+                        objUser.Properties("samAccountName").Add(objUserToAdd.ad_username)
                     End If
                     If objUserToAdd.firstName <> "" Then
                         objUser.Properties("givenName").Add(objUserToAdd.firstName)
@@ -839,7 +844,7 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                 If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
                 If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
                 If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
-                If result.Properties("samAccountName").Count > 0 Then adUsers.Last.username = result.Properties("samAccountName")(0)
+                If result.Properties("samAccountName").Count > 0 Then adUsers.Last.ad_username = result.Properties("samAccountName")(0)
                 If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
                 If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
                 If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
@@ -969,12 +974,12 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                             CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
                             Try
-                                adUser.username = adUser.username.ToLower
+                                adUser.ad_username = adUser.ad_username.ToLower
                             Catch ex As Exception
 
                             End Try
 
-                            If strUsername = adUser.username Then
+                            If strUsername = adUser.ad_username Then
                                 duplicate = True
                             Else
                                 'duplicate = False
@@ -983,16 +988,16 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         Next
                         If duplicate = False Then
                             availableNameFound = True
-                            user.username = strUsername
+                            user.ad_username = strUsername
                         End If
 
                         i = i + 1
                     End While
 
-                    If user.username = Nothing Then
+                    If user.ad_username = Nothing Then
                         Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
                     Else
-                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.ad_username)
                     End If
 
 
@@ -1012,12 +1017,12 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
 
                             CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
                             Try
-                                adUser.username = adUser.username.ToLower
+                                adUser.ad_username = adUser.ad_username.ToLower
                             Catch ex As Exception
 
                             End Try
 
-                            If strUsername = adUser.username Then
+                            If strUsername = adUser.ad_username Then
                                 duplicate = True
                             Else
                                 'duplicate = False
@@ -1026,24 +1031,24 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         Next
                         If duplicate = False Then
                             availableNameFound = True
-                            user.username = strUsername
+                            user.ad_username = strUsername
                         End If
 
                         i = i + 1
                     End While
 
-                    If user.username = Nothing Then
+                    If user.ad_username = Nothing Then
                         Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
                     Else
-                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.ad_username)
                     End If
 
 
                 Case "Parent"
 
                     Dim rgx As New Regex("[^a-zA-Z0-9]")
-                    user.username = rgx.Replace(Left(user.surname, 5) & user.employeeID, "").ToLower
-                    Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.username)
+                    user.ad_username = rgx.Replace(Left(user.surname, 5) & user.employeeID, "").ToLower
+                    Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.ad_username)
                     Console.WriteLine("")
                 Case Else
                     'Do Else
@@ -1528,7 +1533,7 @@ INNER JOIN staff_employment
         Dim studentID As String = user.employeeID
         Dim firstname As String = user.firstName
         Dim surname As String = user.surname
-        Dim username As String = user.username
+        Dim username As String = user.ad_username
         Dim password As String = user.password
         Dim gradYear As String = user.classOf
         Dim current As String = "1"
@@ -1619,7 +1624,7 @@ INNER JOIN staff_employment
                 users.Last.employeeID = dr.GetValue(0)
                 users.Last.firstName = dr.GetValue(1)
                 users.Last.surname = dr.GetValue(2)
-                users.Last.username = dr.GetValue(3)
+                users.Last.ad_username = dr.GetValue(3)
                 users.Last.password = dr.GetValue(4)
 
                 If Not dr.IsDBNull(5) Then users.Last.classOf = dr.GetValue(5)
@@ -1637,7 +1642,7 @@ INNER JOIN staff_employment
     Function removeInvalidPasswords(users As List(Of user), domain As String)
 
         For Each user In users
-            If ValidateActiveDirectoryLogin(domain, user.username, user.password) Then
+            If ValidateActiveDirectoryLogin(domain, user.ad_username, user.password) Then
 
             Else
                 user.password = "unknown"
@@ -1697,7 +1702,7 @@ INNER JOIN staff_employment
         For Each user In users
             For Each adUser In adUsers
                 If user.employeeID = adUser.employeeID Then
-                    user.username = adUser.username
+                    user.ad_username = adUser.ad_username
                 End If
             Next
         Next
@@ -1718,9 +1723,9 @@ INNER JOIN staff_employment
         For Each user In usersToUpdate
             For Each mySQLUser In mySQLUsers
                 If user.employeeID = mySQLUser.employeeID Then
-                    If user.username = mySQLUser.username Then
+                    If user.ad_username = mySQLUser.ad_username Then
                     Else
-                        Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.username, user.employeeID), conn)
+                        Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.ad_username, user.employeeID), conn)
                         cmd.ExecuteNonQuery()
                     End If
                 End If
@@ -2791,11 +2796,109 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
     Function getUsernameFromID(userID As String, adusers As List(Of user))
         For Each user In adusers
             If user.employeeID = userID Then
-                Return user.username
+                Return user.ad_username
             End If
         Next
         Return "noUsername"
     End Function
+
+
+
+
+    Private Function getMySQLStaff(conn)
+
+        Dim userTable As String = "staff_details"
+
+        Dim users As New List(Of user)
+
+        Dim commandstring As String = ("SELECT staff_id, surname, firstname, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, smtp_proxy_set, init_password, staff_number, distinguished_name FROM " & userTable)
+        Dim command As New MySqlCommand(commandstring, conn)
+
+        conn.open
+
+        command.Connection = conn
+        command.CommandText = commandstring
+
+        Dim dr As MySqlDataReader
+        dr = command.ExecuteReader
+
+        Dim i As Integer = 0
+        While dr.Read()
+            If Not dr.IsDBNull(0) Then
+                users.Add(New user)
+                users.Last.employeeID = dr.GetValue(0)
+                users.Last.surname = dr.GetValue(1)
+                users.Last.firstName = dr.GetValue(2)
+                users.Last.ad_username = dr.GetValue(3)
+                users.Last.edumateUsername = dr.GetValue(4)
+                users.Last.edumateCurrent = dr.GetValue(5)
+                users.Last.enabled = dr.GetValue(6)
+                users.Last.email = dr.GetValue(7)
+                users.Last.edumateEmail = dr.GetValue(8)
+                users.Last.smtpProxy = dr.GetValue(9)
+                users.Last.password = dr.GetValue(10)
+                users.Last.employeeNumber = dr.GetValue(11)
+                users.Last.distinguishedName = dr.GetValue(12)
+                users.Last.userType = "Staff"
+            End If
+        End While
+        conn.Close()
+        Return users
+
+    End Function
+
+
+
+    Function addUserTypeToAdUsers(users As List(Of user))
+        For Each user In users
+            If user.distinguishedName.Contains("OU=Admin") Then
+                user.userType = "Staff"
+            End If
+            If user.distinguishedName.Contains("OU=Current Staff") Then
+                user.userType = "Staff"
+            End If
+            If user.distinguishedName.Contains("OU=Former Staff") Then
+                user.userType = "Former Staff"
+            End If
+            If user.distinguishedName.Contains("OU=Grounds") Then
+                user.userType = "Staff"
+            End If
+            If user.distinguishedName.Contains("OU=Teachers") Then
+                user.userType = "Staff"
+            End If
+            If user.distinguishedName.Contains("OU=Student Users") Then
+                user.userType = "Student"
+            End If
+            If user.distinguishedName.Contains("OU=@ofgsfamily.com") Then
+                user.userType = "Parent"
+            End If
+        Next
+
+        Return users
+    End Function
+
+
+    Sub updateStaffDatabase(config As configSettings)
+
+        Dim dirEntry As DirectoryEntry
+
+        Console.WriteLine("Connecting to AD...")
+        dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
+        Dim adUsers As List(Of user)
+        Console.WriteLine("Loading AD users...")
+        Console.WriteLine("")
+        Console.WriteLine("")
+        adUsers = getADUsers(dirEntry)
+        adUsers = addUserTypeToAdUsers(adUsers)
+
+
+
+
+    End Sub
+
+
+
+
 
 End Module
 
