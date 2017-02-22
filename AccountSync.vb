@@ -37,6 +37,7 @@ Module AccountSync
         Public edumateCurrent As String
         Public edumateEmail As String
         Public smtpProxy As String
+        Public edumateLoginActive As String
 
     End Class
 
@@ -254,6 +255,9 @@ Module AccountSync
         updateParentStudents(edumateParents, config)
 
         SchoolboxMain(config)
+
+        updateStaffDatabase(config)
+
 
     End Sub
 
@@ -1476,8 +1480,9 @@ contact.surname,
 staff_employment.start_date,
 staff_employment.end_date,
 staff.staff_id,
-staff.staff_number
-
+staff.staff_number,
+sys_user.username,
+contact.email_address
 
 FROM            STAFF
 
@@ -1485,6 +1490,8 @@ INNER JOIN Contact
   ON staff.contact_id = contact.contact_id 
 INNER JOIN staff_employment
   ON staff.staff_id = staff_employment.staff_id
+LEFT JOIN sys_user 
+  ON contact.contact_id = sys_user.contact_id
 
 "
 
@@ -1517,6 +1524,15 @@ INNER JOIN staff_employment
                     users.Last.employeeNumber = dr.GetValue(5)
                     users.Last.userType = "Staff"
                     users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+                    users.Last.edumateCurrent = 0
+                    users.Last.edumateUsername = dr.GetValue(6)
+                    users.Last.edumateEmail = dr.GetValue(7)
+
+                    If users.Last.startDate < Date.Now() Then
+                        If IsDBNull(users.Last.endDate) Or users.Last.endDate > Date.Now() Then
+                            users.Last.edumateCurrent = 1
+                        End If
+                    End If
                 End If
             End While
             conn.Close()
@@ -2811,7 +2827,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
         Dim users As New List(Of user)
 
-        Dim commandstring As String = ("SELECT staff_id, surname, firstname, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, smtp_proxy_set, init_password, staff_number, distinguished_name FROM " & userTable)
+        Dim commandstring As String = ("SELECT staff_id, surname, firstname, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, smtp_proxy_set, init_password, staff_number, distinguished_name, edumate_login_active, edumate_start_date, edumate_end_date FROM " & userTable)
         Dim command As New MySqlCommand(commandstring, conn)
 
         conn.open
@@ -2839,6 +2855,9 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
                 users.Last.password = dr.GetValue(10)
                 users.Last.employeeNumber = dr.GetValue(11)
                 users.Last.distinguishedName = dr.GetValue(12)
+                users.Last.edumateLoginActive = dr.GetValue(13)
+                users.Last.startDate = dr.GetValue(14)
+                users.Last.endDate = dr.GetValue(15)
                 users.Last.userType = "Staff"
             End If
         End While
@@ -2880,7 +2899,11 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     Sub updateStaffDatabase(config As configSettings)
 
+        Dim conn As New MySqlConnection
+        connect(conn, config)
         Dim dirEntry As DirectoryEntry
+
+
 
         Console.WriteLine("Connecting to AD...")
         dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
@@ -2891,14 +2914,66 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         adUsers = getADUsers(dirEntry)
         adUsers = addUserTypeToAdUsers(adUsers)
 
+        Dim mySQLUsers As List(Of user)
+        mySQLUsers = getMySQLStaff(conn)
 
+        Dim edumateUsers As List(Of user)
+        edumateUsers = getEdumateStaff(config)
+
+        adUsers = addEdumateDetailsToAdUsers(adUsers, edumateUsers)
+
+        For Each aduser In adUsers
+            Dim found As Boolean = False
+            For Each mysqlUser In mySQLUsers
+                If aduser.employeeID = mysqlUser.employeeID Then
+                    found = True
+                End If
+            Next
+            If found = False Then
+                insertUserToStaffDB(conn, aduser)
+            End If
+        Next
 
 
     End Sub
 
 
+    Function addEdumateDetailsToAdUsers(adUsers As List(Of user), edumateUsers As List(Of user))
+        For Each aduser In adUsers
+            For Each edumateUser In edumateUsers
+                If aduser.employeeID = edumateUser.employeeID Then
+                    aduser.edumateCurrent = edumateUser.edumateCurrent
+                    aduser.edumateEmail = edumateUser.edumateEmail
+                    aduser.edumateLoginActive = edumateUser.edumateLoginActive
+                    aduser.edumateUsername = edumateUser.edumateUsername
+                End If
+            Next
+        Next
+
+    End Function
 
 
+    Sub insertUserToStaffDB(conn As MySqlConnection, user As user)
+
+        Dim table As String = "staff_details"
+
+
+
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+
+        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,	` surname`,	` firstname`,	` ad_username`,	` edumate_username`,	` edumate_current`,	` ad_active`,	` ad_email`,	` edumate_email`,	` smtp_proxy_set`,	` init_password`,	` staff_number`,	` distinguished_name`,	` edumate_login_active`,	` edumate_start_date`,	` edumate_end_date`) VALUES ('{1}' , '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}', '{16}')", table, user.employeeID, user.surname, user.ad_username, user.edumateUsername, user.edumateCurrent, user.userAccountControl, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, user.distinguishedName, user.startDate, user.endDate), conn)
+        cmd.ExecuteNonQuery()
+
+        conn.Close()
+
+    End Sub
+
+    Sub updateUserInStaffDB(conn As MySqlConnection, user As user)
+
+    End Sub
 
 End Module
 
