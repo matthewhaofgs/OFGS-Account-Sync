@@ -35,9 +35,11 @@ Module AccountSync
         Public distinguishedName As String
         Public edumateUsername As String
         Public edumateCurrent As String
-        Public edumateEmail As String
+        Public edumateEmail
         Public smtpProxy As String
         Public edumateLoginActive As String
+        Public employmentType
+        Public edumateStaffNumber
 
     End Class
 
@@ -215,9 +217,9 @@ Module AccountSync
 
         If staffToAdd.Count > 0 Then
             staffToAdd = evaluateUsernames(staffToAdd, adUsers)
-            MsgBox("AddingStaff")
+            'MsgBox("AddingStaff")
             createUsers(staffToAdd, config, conn)
-            MsgBox("Done")
+            'MsgBox("Done")
         End If
 
 
@@ -254,7 +256,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        SchoolboxMain(config)
+        'SchoolboxMain(config)
 
         updateStaffDatabase(config)
 
@@ -725,6 +727,25 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                         objUser.Invoke("setPassword", objUserToAdd.password)
                         objUser.CommitChanges()
                     End If
+
+
+                    '512	Enabled Account
+                    '514	Disabled Account
+                    '544	Enabled, Password Not Required
+                    '546	Disabled, Password Not Required
+                    '66048	Enabled, Password Doesn't Expire
+                    '66050	Disabled, Password Doesn't Expire
+                    '66080	Enabled, Password Doesn't Expire & Not Required
+                    '66082	Disabled, Password Doesn't Expire & Not Required
+                    '262656	Enabled, Smartcard Required
+                    '262658	Disabled, Smartcard Required
+                    '262688	Enabled, Smartcard Required, Password Not Required
+                    '262690	Disabled, Smartcard Required, Password Not Required
+                    '328192	Enabled, Smartcard Required, Password Doesn't Expire
+                    '328194	Disabled, Smartcard Required, Password Doesn't Expire
+                    '328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
+                    '328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+
 
 
                     Const ADS_UF_ACCOUNTDISABLE = &H10200
@@ -1482,7 +1503,9 @@ staff_employment.end_date,
 staff.staff_id,
 staff.staff_number,
 sys_user.username,
-contact.email_address
+contact.email_address,
+staff_employment.employment_type_id
+
 
 FROM            STAFF
 
@@ -1492,7 +1515,6 @@ INNER JOIN staff_employment
   ON staff.staff_id = staff_employment.staff_id
 LEFT JOIN sys_user 
   ON contact.contact_id = sys_user.contact_id
-
 "
 
 
@@ -1521,19 +1543,28 @@ LEFT JOIN sys_user
                     users.Last.startDate = dr.GetValue(2)
                     users.Last.endDate = dr.GetValue(3)
                     users.Last.employeeID = dr.GetValue(4)
-                    users.Last.employeeNumber = dr.GetValue(5)
+                    'users.Last.employeeNumber = dr.GetValue(5) (this should be print code, not staff number)
                     users.Last.userType = "Staff"
                     users.Last.displayName = users.Last.firstName & " " & users.Last.surname
                     users.Last.edumateCurrent = 0
-                    users.Last.edumateUsername = dr.GetValue(6)
-                    users.Last.edumateEmail = dr.GetValue(7)
+                    If Not IsDBNull(dr.GetValue(6)) Then users.Last.edumateUsername = dr.GetValue(6)
+                    If Not IsDBNull(dr.GetValue(7)) Then users.Last.edumateEmail = dr.GetValue(7)
+                    If Not IsDBNull(dr.GetValue(8)) Then users.Last.employmentType = dr.GetValue(8)
+                    users.Last.edumateStaffNumber = dr.GetValue(5)
 
-                    If users.Last.startDate < Date.Now() Then
-                        If IsDBNull(users.Last.endDate) Or users.Last.endDate > Date.Now() Then
-                            users.Last.edumateCurrent = 1
+                    If Not IsDBNull(users.Last.startDate) Then
+
+                            If users.Last.startDate < Date.Now() Then
+                                If IsDBNull(users.Last.endDate) Then
+                                    users.Last.edumateCurrent = 1
+                                Else
+                                    If users.Last.endDate > Date.Now() Then
+                                        users.Last.edumateCurrent = 1
+                                    End If
+                                End If
+                            End If
                         End If
                     End If
-                End If
             End While
             conn.Close()
         End Using
@@ -2051,7 +2082,7 @@ LEFT JOIN sys_user
 
     Public Sub SchoolboxMain(adconfig As configSettings)
 
-
+        Console.WriteLine("Doing Schoolbox stuff")
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
@@ -2060,6 +2091,8 @@ LEFT JOIN sys_user
         Call timetable(config)
         Call enrollment(config)
         Call uploadFiles(config)
+
+        Console.WriteLine("Schoolbox stuff done")
     End Sub
 
 
@@ -2907,31 +2940,44 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
         Console.WriteLine("Connecting to AD...")
         dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
+        Console.WriteLine(Chr(8) & "Done")
         Dim adUsers As List(Of user)
-        Console.WriteLine("Loading AD users...")
-        Console.WriteLine("")
-        Console.WriteLine("")
+        Console.WriteLine("Loading AD users for staff DB...")
         adUsers = getADUsers(dirEntry)
+        Console.WriteLine(Chr(8) & "Done")
+        Console.WriteLine("Adding user types to AD Users...")
         adUsers = addUserTypeToAdUsers(adUsers)
+        Console.WriteLine(Chr(8) & "Done")
 
+        Console.WriteLine("Loading mySQL Staff...")
         Dim mySQLUsers As List(Of user)
         mySQLUsers = getMySQLStaff(conn)
+        Console.WriteLine(Chr(8) & "Done")
 
+        Console.WriteLine("Loading edumate Staff...")
         Dim edumateUsers As List(Of user)
         edumateUsers = getEdumateStaff(config)
+        Console.WriteLine(Chr(8) & "Done")
 
+        Console.WriteLine("Adding edumate details to AD staff...")
         adUsers = addEdumateDetailsToAdUsers(adUsers, edumateUsers)
+        Console.WriteLine(Chr(8) & "Done")
 
+        Console.WriteLine("Inserting staff to mySQL database...")
         For Each aduser In adUsers
-            Dim found As Boolean = False
-            For Each mysqlUser In mySQLUsers
-                If aduser.employeeID = mysqlUser.employeeID Then
-                    found = True
+            If aduser.userType = "Staff" Then
+
+                Dim found As Boolean = False
+                For Each mysqlUser In mySQLUsers
+                    If aduser.employeeID = mysqlUser.employeeID Then
+                        found = True
+                    End If
+                Next
+                If found = False Then
+                    insertUserToStaffDB(conn, aduser)
                 End If
-            Next
-            If found = False Then
-                insertUserToStaffDB(conn, aduser)
             End If
+
         Next
 
 
@@ -2946,10 +2992,12 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
                     aduser.edumateEmail = edumateUser.edumateEmail
                     aduser.edumateLoginActive = edumateUser.edumateLoginActive
                     aduser.edumateUsername = edumateUser.edumateUsername
+                    aduser.edumateStaffNumber = edumateUser.edumateStaffNumber
+                    aduser.employmentType = edumateUser.employmentType
                 End If
             Next
         Next
-
+        Return adUsers
     End Function
 
 
@@ -2958,13 +3006,56 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         Dim table As String = "staff_details"
 
 
+        '512	Enabled Account
+        '514	Disabled Account
+        '544	Enabled, Password Not Required
+        '546	Disabled, Password Not Required
+        '66048	Enabled, Password Doesn't Expire
+        '66050	Disabled, Password Doesn't Expire
+        '66080	Enabled, Password Doesn't Expire & Not Required
+        '66082	Disabled, Password Doesn't Expire & Not Required
+        '262656	Enabled, Smartcard Required
+        '262658	Disabled, Smartcard Required
+        '262688	Enabled, Smartcard Required, Password Not Required
+        '262690	Disabled, Smartcard Required, Password Not Required
+        '328192	Enabled, Smartcard Required, Password Doesn't Expire
+        '328194	Disabled, Smartcard Required, Password Doesn't Expire
+        '328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
+        '328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+
+        Dim accountStatus As String
+
+        Select Case user.userAccountControl
+            Case 512
+                accountStatus = "Enabled Account"
+            Case 514
+                accountStatus = "Disabled Account"
+            Case 544
+                accountStatus = "Enabled, Password Not Required"
+            Case 546
+                accountStatus = "Disabled, Password Not Required"
+            Case 66048
+                accountStatus = "Enabled, Password Doesnt Expire"
+            Case 66050
+                accountStatus = "Disabled, Password Doesnt Expire"
+            Case 66080
+                accountStatus = "Enabled, Password Doesnt Expire + Not Required"
+            Case 66082
+                accountStatus = "Disabled, Password Doesnt Expire + Not Required"
+
+
+        End Select
 
         Try
             conn.Open()
         Catch ex As Exception
         End Try
+        Dim sanitizedSurname As String
+        sanitizedSurname = Replace(user.surname, "'", "\'")
+        Dim sanitizedDn
+        sanitizedDn = Replace(user.distinguishedName, "'", "\'")
 
-        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,	` surname`,	` firstname`,	` ad_username`,	` edumate_username`,	` edumate_current`,	` ad_active`,	` ad_email`,	` edumate_email`,	` smtp_proxy_set`,	` init_password`,	` staff_number`,	` distinguished_name`,	` edumate_login_active`,	` edumate_start_date`,	` edumate_end_date`) VALUES ('{1}' , '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}', '{16}')", table, user.employeeID, user.surname, user.ad_username, user.edumateUsername, user.edumateCurrent, user.userAccountControl, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, user.distinguishedName, user.startDate, user.endDate), conn)
+        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,`surname`,`firstname`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`smtp_proxy_set`,`init_password`,`staff_number`,`distinguished_name`,`edumate_login_active`,`edumate_start_date`,`edumate_end_date`,`employment_type`,`edumate_staff_number`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, sanitizedDn, user.edumateLoginActive, user.startDate, user.endDate, user.employmentType, user.edumateStaffNumber), conn)
         cmd.ExecuteNonQuery()
 
         conn.Close()
