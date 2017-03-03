@@ -256,7 +256,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        'SchoolboxMain(config)
+        SchoolboxMain(config)
 
         updateStaffDatabase(config)
 
