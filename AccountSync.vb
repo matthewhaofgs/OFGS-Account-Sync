@@ -40,6 +40,10 @@ Module AccountSync
         Public edumateLoginActive As String
         Public employmentType
         Public edumateStaffNumber
+        Public dob
+        Public libraryCard
+        Public rollClass
+        Public bosNumber
 
     End Class
 
@@ -234,6 +238,7 @@ Module AccountSync
         Dim currentEdumateStudents As List(Of user)
         currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
 
+
         Dim mysqlUsersToAdd As List(Of user)
         mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
 
@@ -249,6 +254,7 @@ Module AccountSync
         updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
 
         currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
+        currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
 
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
@@ -256,7 +262,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        SchoolboxMain(config)
+        'SchoolboxMain(config)
 
         updateStaffDatabase(config)
 
@@ -372,6 +378,7 @@ Module AccountSync
         Dim ConnectionString As String = config.edumateConnectionString
         Dim commandString As String =
 "
+
 SELECT        
 contact.firstname, 
 contact.surname, 
@@ -380,8 +387,11 @@ view_student_start_exit_dates.exit_date,
 student.student_id, 
 form.short_name AS grad_form,
 YEAR(student_form_run.end_date) as EndYear,
-student.student_number
-
+student.student_number,
+contact.birthdate,
+stu_school.library_card,
+view_student_class_enrolment.class,
+stu_school.bos
 
 FROM            
 STUDENT, 
@@ -389,7 +399,10 @@ contact,
 view_student_start_exit_dates, 
 student_form_run, 
 form_run, 
-form
+form,
+stu_school,
+view_student_class_enrolment
+
 
 
 WHERE (student.contact_id = contact.contact_id) 
@@ -398,6 +411,10 @@ AND (student_form_run.student_id = student.student_id)
 AND (form_run.form_id = form.form_id) 
 AND (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
 AND (student_form_run.form_run_id = form_run.form_run_id)
+AND (student.student_id = stu_school.student_id)
+AND (student.student_id = view_student_class_enrolment.student_id)
+AND (view_student_class_enrolment.class_type_id = 2)
+AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
 
 "
 
@@ -431,6 +448,11 @@ AND (student_form_run.form_run_id = form_run.form_run_id)
                     users.Last.userType = "Student"
                     users.Last.displayName = users.Last.firstName & " " & users.Last.surname
                     users.Last.employeeNumber = dr.GetValue(7)
+                    users.Last.dob = dr.GetValue(8)
+                    users.Last.libraryCard = dr.GetValue(9)
+                    users.Last.rollClass = dr.GetValue(10)
+                    users.Last.bosNumber = dr.GetValue(11)
+
                 End If
             End While
             conn.Close()
@@ -1770,11 +1792,33 @@ LEFT JOIN sys_user
         For Each user In usersToUpdate
             For Each mySQLUser In mySQLUsers
                 If user.employeeID = mySQLUser.employeeID Then
+                    Dim cmd As MySqlCommand
                     If user.ad_username = mySQLUser.ad_username Then
                     Else
-                        Dim cmd As New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.ad_username, user.employeeID), conn)
+                        cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.ad_username, user.employeeID), conn)
                         cmd.ExecuteNonQuery()
+
+
                     End If
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET student_number  = '{1}' where student_id = '{2}' ", usertable, user.employeeNumber, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET current_year  = '{1}' where student_id = '{2}' ", usertable, user.currentYear, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET dob  = '{1}' where student_id = '{2}' ", usertable, user.dob, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET barcode  = '{1}' where student_id = '{2}' ", usertable, user.libraryCard, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET roll_class  = '{1}' where student_id = '{2}' ", usertable, user.rollClass, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET bos  = '{1}' where student_id = '{2}' ", usertable, user.bosNumber, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+
                 End If
             Next
 
