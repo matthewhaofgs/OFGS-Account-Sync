@@ -87,15 +87,28 @@ Module AccountSync
         Public mySQLUserName As String
         Public mySQLPassword As String
 
+        Public sg_k As String
+        Public sg_1 As String
+        Public sg_2 As String
+        Public sg_3 As String
+        Public sg_4 As String
+        Public sg_5 As String
+        Public sg_6 As String
+        Public sg_7 As String
+        Public sg_8 As String
+        Public sg_9 As String
+        Public sg_10 As String
+        Public sg_11 As String
+        Public sg_12 As String
+
+
 
     End Class
-
 
     Class emailNotification
         Public mailTo
         Public body
     End Class
-
 
     Class studentParent
         Public student_id As Integer
@@ -147,9 +160,6 @@ Module AccountSync
         Public uploadServers As List(Of uploadServer)
         Public studentEmailDomain As String
     End Class
-
-
-
 
     Sub Main()
         Dim config As New configSettings()
@@ -237,24 +247,19 @@ Module AccountSync
 
         Dim currentEdumateStudents As List(Of user)
         currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
-
+        currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
 
         Dim mysqlUsersToAdd As List(Of user)
         mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
-
-
-        mysqlUsersToAdd = addUsernamesToUsers(mysqlUsersToAdd, adUsers)
 
         For Each mySQLUserTOAdd In mysqlUsersToAdd
             addUsertoMySQL(conn, mySQLUserTOAdd)
         Next
 
-
-
         updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
-
-        currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
         currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
+        AddStudentsToYearGroups(currentEdumateStudents, config)
+
 
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
@@ -268,7 +273,6 @@ Module AccountSync
 
 
     End Sub
-
 
     Private Function readConfig()
         Dim config As New configSettings()
@@ -358,6 +362,42 @@ Module AccountSync
                         Case Left(line, 7) = "domain="
                             config.domain = (Mid(line, 8))
 
+                        Case Left(line, 5) = "sg_k="
+                            config.sg_k = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_1="
+                            config.sg_1 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_2="
+                            config.sg_2 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_3="
+                            config.sg_3 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_4="
+                            config.sg_4 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_5="
+                            config.sg_5 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_6="
+                            config.sg_6 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_7="
+                            config.sg_7 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_8="
+                            config.sg_8 = (Mid(line, 6))
+                        Case Left(line, 5) = "sg_9="
+                            config.sg_9 = (Mid(line, 6))
+                        Case Left(line, 6) = "sg_10="
+                            config.sg_10 = (Mid(line, 7))
+                        Case Left(line, 6) = "sg_11="
+                            config.sg_11 = (Mid(line, 7))
+                        Case Left(line, 6) = "sg_12="
+                            config.sg_12 = (Mid(line, 7))
+
+
+
+
+
+
+
+
+
+
                     End Select
 
                 End While
@@ -369,8 +409,6 @@ Module AccountSync
             MsgBox(e.Message)
         End Try
     End Function
-
-
 
     Function getEdumateStudents(config As configSettings)
 
@@ -494,8 +532,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         End Select
     End Function
 
-
-
     ''' <returns>DirectoryEntry</returns>
     Public Function GetDirectoryEntry(ldapDirectoryEntry As String) As DirectoryEntry
 
@@ -511,6 +547,73 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
 
     End Function
 
+    Function getADUsers(dirEntry As DirectoryEntry)
+        Using searcher As New DirectorySearcher(dirEntry)
+            Dim adUsers As New List(Of user)
+
+            searcher.PropertiesToLoad.Add("cn")
+            searcher.PropertiesToLoad.Add("employeeID")
+            searcher.PropertiesToLoad.Add("distinguishedName")
+            searcher.PropertiesToLoad.Add("employeeNumber")
+            searcher.PropertiesToLoad.Add("givenName")
+            searcher.PropertiesToLoad.Add("homeDirectory")
+            searcher.PropertiesToLoad.Add("homeDrive")
+            searcher.PropertiesToLoad.Add("mail")
+            searcher.PropertiesToLoad.Add("profilePath")
+            searcher.PropertiesToLoad.Add("samAccountName")
+            searcher.PropertiesToLoad.Add("sn")
+            searcher.PropertiesToLoad.Add("userPrincipalName")
+            searcher.PropertiesToLoad.Add("memberof")
+            searcher.PropertiesToLoad.Add("userAccountControl")
+
+
+            searcher.Filter = "(objectCategory=person)"
+            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.SizeLimit = 100000000
+            searcher.Asynchronous = False
+            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.PageSize = 10000
+
+            Dim queryResults As SearchResultCollection
+            queryResults = searcher.FindAll
+
+            Dim result As SearchResult
+
+            For Each result In queryResults
+                adUsers.Add(New user)
+
+                If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
+                If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
+                If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
+                If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
+                If result.Properties("samAccountName").Count > 0 Then adUsers.Last.ad_username = result.Properties("samAccountName")(0)
+                If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
+                If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
+                If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
+                If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
+                If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
+                If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
+                If result.Properties("distinguishedName").Count > 0 Then adUsers.Last.distinguishedName = result.Properties("distinguishedName")(0)
+
+
+                If result.Properties("memberof").Count > 0 Then
+                    For Each group In result.Properties("memberof")
+                        adUsers.Last.memberOf.Add(group)
+
+                    Next
+                End If
+
+                'If result.Properties("userAccountControl")(0) = 66048 Then
+                ' adUsers.Last.enabled = True
+                ' End If
+                ' If result.Properties("userAccountControl")(0) = 66050 Then
+                '  adUsers.Last.enabled = False
+                '  End If
+
+            Next
+            Return adUsers
+        End Using
+    End Function
 
     Sub createUsers(ByVal objUsersToAdd As List(Of user), ByVal config As configSettings, conn As MySqlConnection)
 
@@ -845,81 +948,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         sendEmails(config, emailsToSend)
     End Sub
 
-
-
-
-
-
-
-
-    Function getADUsers(dirEntry As DirectoryEntry)
-        Using searcher As New DirectorySearcher(dirEntry)
-            Dim adUsers As New List(Of user)
-
-            searcher.PropertiesToLoad.Add("cn")
-            searcher.PropertiesToLoad.Add("employeeID")
-            searcher.PropertiesToLoad.Add("distinguishedName")
-            searcher.PropertiesToLoad.Add("employeeNumber")
-            searcher.PropertiesToLoad.Add("givenName")
-            searcher.PropertiesToLoad.Add("homeDirectory")
-            searcher.PropertiesToLoad.Add("homeDrive")
-            searcher.PropertiesToLoad.Add("mail")
-            searcher.PropertiesToLoad.Add("profilePath")
-            searcher.PropertiesToLoad.Add("samAccountName")
-            searcher.PropertiesToLoad.Add("sn")
-            searcher.PropertiesToLoad.Add("userPrincipalName")
-            searcher.PropertiesToLoad.Add("memberof")
-            searcher.PropertiesToLoad.Add("userAccountControl")
-
-
-            searcher.Filter = "(objectCategory=person)"
-            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
-            searcher.SizeLimit = 100000000
-            searcher.Asynchronous = False
-            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
-            searcher.PageSize = 10000
-
-            Dim queryResults As SearchResultCollection
-            queryResults = searcher.FindAll
-
-            Dim result As SearchResult
-
-            For Each result In queryResults
-                adUsers.Add(New user)
-
-                If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
-                If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
-                If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
-                If result.Properties("mail").Count > 0 Then adUsers.Last.email = result.Properties("mail")(0)
-                If result.Properties("samAccountName").Count > 0 Then adUsers.Last.ad_username = result.Properties("samAccountName")(0)
-                If result.Properties("profilePath").Count > 0 Then adUsers.Last.profilePath = result.Properties("profilePath")(0)
-                If result.Properties("homeDirectory").Count > 0 Then adUsers.Last.HomePath = result.Properties("homeDirectory")(0)
-                If result.Properties("homeDrive").Count > 0 Then adUsers.Last.HomeDriveLetter = result.Properties("homeDrive")(0)
-                If result.Properties("employeeID").Count > 0 Then adUsers.Last.employeeID = result.Properties("employeeID")(0)
-                If result.Properties("employeeNumber").Count > 0 Then adUsers.Last.employeeNumber = result.Properties("employeeNumber")(0)
-                If result.Properties("userAccountControl").Count > 0 Then adUsers.Last.userAccountControl = result.Properties("userAccountControl")(0)
-                If result.Properties("distinguishedName").Count > 0 Then adUsers.Last.distinguishedName = result.Properties("distinguishedName")(0)
-
-
-                If result.Properties("memberof").Count > 0 Then
-                    For Each group In result.Properties("memberof")
-                        adUsers.Last.memberOf.Add(group)
-
-                    Next
-                End If
-
-                'If result.Properties("userAccountControl")(0) = 66048 Then
-                ' adUsers.Last.enabled = True
-                ' End If
-                ' If result.Properties("userAccountControl")(0) = 66050 Then
-                '  adUsers.Last.enabled = False
-                '  End If
-
-            Next
-            Return adUsers
-        End Using
-    End Function
-
     Function getEdumateUsersNotInAD(ByVal edumateUsers As List(Of user), ByVal adUsers As List(Of user))
 
         Dim usersToAdd As New List(Of user)
@@ -969,8 +997,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         Return ReturnUsers
     End Function
 
-
-
     Public Sub CONSOLE__WRITE(ByRef szText As String, Optional ByVal bClearEOL As Boolean = True)
         'Output the text
         Console.Write(szText)
@@ -993,7 +1019,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         Console.SetWindowPosition(wx, wy)
         Console.SetCursorPosition(x, y)
     End Sub
-
 
     Function evaluateUsernames(users As List(Of user), adusers As List(Of user))
         Console.WriteLine("Evaluating usernames for new users...")
@@ -1104,7 +1129,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         Return users
     End Function
 
-
     Function createPassword()
 
         Dim wordlist As List(Of String)
@@ -1130,9 +1154,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
 
 
     End Function
-
-
-
 
     Function getWordList()
         Dim directory As String = My.Application.Info.DirectoryPath
@@ -1166,7 +1187,6 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         Position = Nothing
         wordnumber = Nothing
     End Function
-
 
     Private Function Mixedcase(ByVal Word As String) As String
         If Word.Length = 0 Then Return Word
@@ -1336,7 +1356,6 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
 
         Return users
     End Function
-
 
     Function getStudentFromID(ByVal student_id As String, edumateStudents As List(Of user))
 
@@ -1512,7 +1531,6 @@ WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34))
         Return users
     End Function
 
-
     Function getEdumateStaff(config As configSettings)
         Dim ConnectionString As String = config.edumateConnectionString
         Dim commandString As String =
@@ -1576,24 +1594,22 @@ LEFT JOIN sys_user
 
                     If Not IsDBNull(users.Last.startDate) Then
 
-                            If users.Last.startDate < Date.Now() Then
-                                If IsDBNull(users.Last.endDate) Then
+                        If users.Last.startDate < Date.Now() Then
+                            If IsDBNull(users.Last.endDate) Then
+                                users.Last.edumateCurrent = 1
+                            Else
+                                If users.Last.endDate > Date.Now() Then
                                     users.Last.edumateCurrent = 1
-                                Else
-                                    If users.Last.endDate > Date.Now() Then
-                                        users.Last.edumateCurrent = 1
-                                    End If
                                 End If
                             End If
                         End If
                     End If
+                End If
             End While
             conn.Close()
         End Using
         Return users
     End Function
-
-
 
     Sub addUsertoMySQL(conn As MySqlConnection, user As user)
 
@@ -1630,7 +1646,6 @@ LEFT JOIN sys_user
 
 
     End Sub
-
 
     Public Sub connect(conn As MySqlConnection, config As configSettings)
         Dim DatabaseName As String = config.mySQLDatabaseName
@@ -1707,7 +1722,6 @@ LEFT JOIN sys_user
 
     End Function
 
-
     Function removeInvalidPasswords(users As List(Of user), domain As String)
 
         For Each user In users
@@ -1772,6 +1786,7 @@ LEFT JOIN sys_user
             For Each adUser In adUsers
                 If user.employeeID = adUser.employeeID Then
                     user.ad_username = adUser.ad_username
+                    user.distinguishedName = adUser.distinguishedName
                 End If
             Next
         Next
@@ -1797,8 +1812,6 @@ LEFT JOIN sys_user
                     Else
                         cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET username  = '{1}' where student_id = '{2}' ", usertable, user.ad_username, user.employeeID), conn)
                         cmd.ExecuteNonQuery()
-
-
                     End If
                     cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET student_number  = '{1}' where student_id = '{2}' ", usertable, user.employeeNumber, user.employeeID), conn)
                     cmd.ExecuteNonQuery()
@@ -1831,7 +1844,7 @@ LEFT JOIN sys_user
 
 
         For Each student In edumateStudents
-                For Each adUser In adUsers
+            For Each adUser In adUsers
                 If student.employeeID = adUser.employeeID Then
 
                     If adUser.employeeNumber = "" Then
@@ -1856,7 +1869,7 @@ LEFT JOIN sys_user
                     End If
                 End If
             Next
-            Next
+        Next
 
 
     End Sub
@@ -1919,9 +1932,9 @@ LEFT JOIN sys_user
                         'Setting username & password to Nothing forces
                         'the connection to use your logon credentials
                         user.Username = Nothing
-                            user.Password = Nothing
-                            'Always use a secure connection
-                            user.AuthenticationType = AuthenticationTypes.Secure
+                        user.Password = Nothing
+                        'Always use a secure connection
+                        user.AuthenticationType = AuthenticationTypes.Secure
                         ' user.RefreshCache()
 
                         If CInt(strExt12) > 1 Then
@@ -2086,8 +2099,8 @@ LEFT JOIN sys_user
 
                         user.CommitChanges()
 
-                        End Using
-                    End If
+                    End Using
+                End If
                 ' End If
 
             Next
@@ -2097,7 +2110,6 @@ LEFT JOIN sys_user
 
 
     End Sub
-
 
     Function getChildFromChildren(children As List(Of user), yearToFind As String)
 
@@ -2123,7 +2135,6 @@ LEFT JOIN sys_user
         End If
     End Function
 
-
     Public Sub SchoolboxMain(adconfig As configSettings)
 
         Console.WriteLine("Doing Schoolbox stuff")
@@ -2138,7 +2149,6 @@ LEFT JOIN sys_user
 
         Console.WriteLine("Schoolbox stuff done")
     End Sub
-
 
     Sub writeUserCSV(config As schoolboxConfigSettings, adconfig As configSettings)
 
@@ -2589,14 +2599,10 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
 
     End Sub
 
-
     Function ddMMYYYY_to_yyyyMMdd(inString As String)
         ddMMYYYY_to_yyyyMMdd = Strings.Right(inString, 4) & "-" & Left(Mid(inString, Strings.InStr(inString, "/") + 1), 2) & "-" & Left(inString, InStr(inString, "/") - 1)
 
     End Function
-
-
-
 
     Sub timetableStructure(config As schoolboxConfigSettings)
 
@@ -2652,7 +2658,6 @@ WHERE        (start_date > '01/01/2017') AND (end_date < '12/31/2018') AND (term
 
 
     End Sub
-
 
     Sub timetable(config As schoolboxConfigSettings)
         Dim commandstring As String
@@ -2798,7 +2803,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     End Sub
 
-
     Sub upload(host As String, userName As String, pass As String, rsa As String)
         Try
             ' Setup session options
@@ -2885,7 +2889,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         End Try
     End Function
 
-
     Function getUsernameFromID(userID As String, adusers As List(Of user))
         For Each user In adusers
             If user.employeeID = userID Then
@@ -2894,9 +2897,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         Next
         Return "noUsername"
     End Function
-
-
-
 
     Private Function getMySQLStaff(conn)
 
@@ -2943,8 +2943,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     End Function
 
-
-
     Function addUserTypeToAdUsers(users As List(Of user))
         For Each user In users
             If user.distinguishedName.Contains("OU=Admin") Then
@@ -2972,7 +2970,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
         Return users
     End Function
-
 
     Sub updateStaffDatabase(config As configSettings)
 
@@ -3027,7 +3024,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     End Sub
 
-
     Function addEdumateDetailsToAdUsers(adUsers As List(Of user), edumateUsers As List(Of user))
         For Each aduser In adUsers
             For Each edumateUser In edumateUsers
@@ -3043,7 +3039,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         Next
         Return adUsers
     End Function
-
 
     Sub insertUserToStaffDB(conn As MySqlConnection, user As user)
 
@@ -3109,6 +3104,140 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
     Sub updateUserInStaffDB(conn As MySqlConnection, user As user)
 
     End Sub
+
+    Function getADGroups(dirEntry As DirectoryEntry)
+        Using searcher As New DirectorySearcher(dirEntry)
+            Dim adUsers As New List(Of user)
+
+            searcher.PropertiesToLoad.Add("cn")
+            searcher.PropertiesToLoad.Add("employeeID")
+            searcher.PropertiesToLoad.Add("distinguishedName")
+            searcher.PropertiesToLoad.Add("mail")
+            searcher.PropertiesToLoad.Add("memberof")
+            searcher.PropertiesToLoad.Add("userAccountControl")
+
+
+            searcher.Filter = "(objectCategory=group)"
+            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.SizeLimit = 100000000
+            searcher.Asynchronous = False
+            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.PageSize = 10000
+
+            Dim queryResults As SearchResultCollection
+            queryResults = searcher.FindAll
+
+            Dim result As SearchResult
+
+            For Each result In queryResults
+
+                If result.Properties("members").Count > 0 Then
+                    For Each user In result.Properties("members")
+                        adUsers.Last.memberOf.Add(user)
+
+                    Next
+                End If
+            Next
+            Return queryResults
+        End Using
+    End Function
+
+
+
+    Sub AddStudentsToYearGroups(users As List(Of user), config As configSettings)
+
+        Dim kindyUsers As New List(Of user)
+        Dim Year01Users As New List(Of user)
+        Dim Year02Users As New List(Of user)
+        Dim Year03Users As New List(Of user)
+        Dim Year04Users As New List(Of user)
+        Dim Year05Users As New List(Of user)
+        Dim Year06Users As New List(Of user)
+        Dim Year07Users As New List(Of user)
+        Dim Year08Users As New List(Of user)
+        Dim Year09Users As New List(Of user)
+        Dim Year10Users As New List(Of user)
+        Dim Year11Users As New List(Of user)
+        Dim Year12Users As New List(Of user)
+
+        For Each user In users
+            Select Case user.currentYear
+                Case "K"
+                    kindyUsers.Add(user)
+                Case "1"
+                    Year01Users.Add(user)
+                Case "2"
+                    Year02Users.Add(user)
+                Case "3"
+                    Year03Users.Add(user)
+                Case "4"
+                    Year04Users.Add(user)
+                Case "5"
+                    Year05Users.Add(user)
+                Case "6"
+                    Year06Users.Add(user)
+                Case "7"
+                    Year07Users.Add(user)
+                Case "8"
+                    Year08Users.Add(user)
+                Case "9"
+                    Year09Users.Add(user)
+                Case "10"
+                    Year10Users.Add(user)
+                Case "11"
+                    Year11Users.Add(user)
+                Case "12"
+                    Year12Users.Add(user)
+            End Select
+        Next
+
+        addUsersToGroup(kindyUsers, config.sg_k)    '<================================================================
+        addUsersToGroup(Year01Users, config.sg_1)
+        addUsersToGroup(Year02Users, config.sg_2)
+        addUsersToGroup(Year03Users, config.sg_3)
+        addUsersToGroup(Year04Users, config.sg_4)
+        addUsersToGroup(Year05Users, config.sg_5)
+        addUsersToGroup(Year06Users, config.sg_6)
+        addUsersToGroup(Year07Users, config.sg_7)
+        addUsersToGroup(Year08Users, config.sg_8)
+        addUsersToGroup(Year09Users, config.sg_9)
+        addUsersToGroup(Year10Users, config.sg_10)
+        addUsersToGroup(Year11Users, config.sg_11)
+        addUsersToGroup(Year12Users, config.sg_12)
+
+
+    End Sub
+
+    Sub addUsersToGroup(users As List(Of user), group As String)
+
+
+
+        Using ADgroup As New DirectoryEntry("LDAP://" & group)
+            'Setting username & password to Nothing forces
+            'the connection to use your logon credentials
+            ADgroup.Username = Nothing
+            ADgroup.Password = Nothing
+            'Always use a secure connection
+            ADgroup.AuthenticationType = AuthenticationTypes.Secure
+            ADgroup.RefreshCache()
+
+
+            ADgroup.Properties("member").Clear()
+            ADgroup.CommitChanges()
+            For Each user In users
+                ADgroup.Properties("member").Add(user.distinguishedName)
+            Next
+            ADgroup.CommitChanges()
+
+        End Using
+
+
+
+
+
+
+    End Sub
+
 
 End Module
 
