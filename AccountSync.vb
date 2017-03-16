@@ -44,6 +44,8 @@ Module AccountSync
         Public libraryCard
         Public rollClass
         Public bosNumber
+        Public edumateGroupMemberships As List(Of String)
+        Public contact_id As String
 
     End Class
 
@@ -64,6 +66,9 @@ Module AccountSync
         Public applyChanges As Boolean
         Public staffDomainName As String
         Public domain As String
+        Public studentAlumOU As String
+        Public tutorGroupID As Integer
+        Public danceTutorGroupID As Integer
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -100,6 +105,7 @@ Module AccountSync
         Public sg_10 As String
         Public sg_11 As String
         Public sg_12 As String
+
 
 
 
@@ -268,8 +274,11 @@ Module AccountSync
         updateParentStudents(edumateParents, config)
 
         'SchoolboxMain(config)
-
+        purgeStaffDB(config)
         updateStaffDatabase(config)
+
+        adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
+        moveUsersToOUs(adUsers, config)
 
 
     End Sub
@@ -349,6 +358,14 @@ Module AccountSync
                             config.mailTo11.Add(Mid(line, 10))
                         Case Left(line, 9) = "mailTo12="
                             config.mailTo12.Add(Mid(line, 10))
+                        Case Left(line, 14) = "studentAlumOU="
+                            config.studentAlumOU = (Mid(line, 15))
+                        Case Left(line, 13) = "tutorGroupId="
+                            config.tutorGroupID = (Mid(line, 14))
+                        Case Left(line, 18) = "danceTutorGroupId="
+                            config.tutorGroupID = (Mid(line, 19))
+
+
 
 
                         Case Left(line, 18) = "mySQLDatabaseName="
@@ -1544,7 +1561,8 @@ staff.staff_id,
 staff.staff_number,
 sys_user.username,
 contact.email_address,
-staff_employment.employment_type_id
+staff_employment.employment_type_id,
+contact.contact_id
 
 
 FROM            STAFF
@@ -1591,6 +1609,7 @@ LEFT JOIN sys_user
                     If Not IsDBNull(dr.GetValue(7)) Then users.Last.edumateEmail = dr.GetValue(7)
                     If Not IsDBNull(dr.GetValue(8)) Then users.Last.employmentType = dr.GetValue(8)
                     users.Last.edumateStaffNumber = dr.GetValue(5)
+                    users.Last.contact_id = dr.GetValue(9)
 
                     If Not IsDBNull(users.Last.startDate) Then
 
@@ -2175,7 +2194,8 @@ contact.firstname,
 contact.surname, 
 contact.birthdate, 
 form_run.form_run, 
-student.student_id
+student.student_id,
+form.short_name
 
 
 FROM            student
@@ -2188,6 +2208,9 @@ ON student.student_id = student_form_run.student_id
 
 INNER JOIN form_run 
 ON form_run.form_run_id = student_form_run.form_run_id
+
+INNER JOIN form 
+ON form_run.form_id = form.form_id
 
 
 WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start_date AND student_form_run.end_date  
@@ -2233,7 +2256,7 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
 
                     users.Last.Password = ""
                     'users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
-                    users.Last.Year = ""
+                    users.Last.Year = dr.GetValue(7)
                     users.Last.House = ""
                     users.Last.ResidentialHouse = ""
                     users.Last.EPortfolio = "Y"
@@ -3002,6 +3025,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
         Console.WriteLine("Adding edumate details to AD staff...")
         adUsers = addEdumateDetailsToAdUsers(adUsers, edumateUsers)
+        adUsers = getEdumateGroups(adUsers, config)
         Console.WriteLine(Chr(8) & "Done")
 
         Console.WriteLine("Inserting staff to mySQL database...")
@@ -3015,7 +3039,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
                     End If
                 Next
                 If found = False Then
-                    insertUserToStaffDB(conn, aduser)
+                    insertUserToStaffDB(conn, aduser, config.tutorGroupID, config.danceTutorGroupID)
                 End If
             End If
 
@@ -3034,13 +3058,14 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
                     aduser.edumateUsername = edumateUser.edumateUsername
                     aduser.edumateStaffNumber = edumateUser.edumateStaffNumber
                     aduser.employmentType = edumateUser.employmentType
+                    aduser.contact_id = edumateUser.contact_id
                 End If
             Next
         Next
         Return adUsers
     End Function
 
-    Sub insertUserToStaffDB(conn As MySqlConnection, user As user)
+    Sub insertUserToStaffDB(conn As MySqlConnection, user As user, tutorGroupID As String, danceTutorGroupID As Integer)
 
         Dim table As String = "staff_details"
 
@@ -3085,6 +3110,18 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
         End Select
 
+        Dim musicTutor As Integer = 0
+        If Not IsNothing(user.edumateGroupMemberships) Then
+            For Each group In user.edumateGroupMemberships
+                If group = tutorGroupID Then
+                    musicTutor = 1
+                End If
+                If group = danceTutorGroupID Then
+                    musicTutor = 1
+                End If
+
+            Next
+        End If
         Try
             conn.Open()
         Catch ex As Exception
@@ -3094,7 +3131,7 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         Dim sanitizedDn
         sanitizedDn = Replace(user.distinguishedName, "'", "\'")
 
-        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,`surname`,`firstname`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`smtp_proxy_set`,`init_password`,`staff_number`,`distinguished_name`,`edumate_login_active`,`edumate_start_date`,`edumate_end_date`,`employment_type`,`edumate_staff_number`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, sanitizedDn, user.edumateLoginActive, user.startDate, user.endDate, user.employmentType, user.edumateStaffNumber), conn)
+        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,`surname`,`firstname`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`smtp_proxy_set`,`init_password`,`staff_number`,`distinguished_name`,`edumate_login_active`,`edumate_start_date`,`edumate_end_date`,`employment_type`,`edumate_staff_number`,`tutor`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, sanitizedDn, user.edumateLoginActive, user.startDate, user.endDate, user.employmentType, user.edumateStaffNumber, musicTutor), conn)
         cmd.ExecuteNonQuery()
 
         conn.Close()
@@ -3141,8 +3178,6 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
             Return queryResults
         End Using
     End Function
-
-
 
     Sub AddStudentsToYearGroups(users As List(Of user), config As configSettings)
 
@@ -3237,6 +3272,178 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
 
     End Sub
+
+    Sub moveUserToOU(user As user, targetOU As String)
+
+        Using ADuser As New DirectoryEntry("LDAP://" & user.distinguishedName)
+            'Setting username & password to Nothing forces
+            'the connection to use your logon credentials
+            ADuser.Username = Nothing
+            ADuser.Password = Nothing
+            'Always use a secure connection
+            ADuser.AuthenticationType = AuthenticationTypes.Secure
+            ADuser.RefreshCache()
+
+            ADuser.MoveTo(New DirectoryEntry(("LDAP://" & targetOU)))
+
+        End Using
+
+    End Sub
+
+    Sub moveStudentToAlum(user As user, alumOU As String)
+
+        Dim targetOU As String
+        targetOU = "OU=Class of " & user.classOf & "," & alumOU
+
+        moveUserToOU(user, targetOU)
+
+    End Sub
+
+    Sub moveUsersToOUs(adUsers As List(Of user), config As configSettings)
+        For Each adUser In adUsers
+            Select Case adUser.userAccountControl
+                Case 512
+                    'enabled
+                Case 514
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 544
+                    'enabled
+                Case 546
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 66048
+                    'enabled
+                Case 66050
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 66080
+                    'enabled
+                Case 66082
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 262656
+                    'enabled
+                Case 262658
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 262688
+                    'enabled
+                Case 262690
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 328192
+                    'enabled
+                Case 328194
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+                Case 328224
+                    'enabled
+                Case 328226
+                    If adUser.userType = "Student" Then
+                        moveStudentToAlum(adUser, config.studentAlumOU)
+                    End If
+            End Select
+
+
+
+        Next
+    End Sub
+
+
+    Function addUserTypeToADUSersFromEdumate(adUsers As List(Of user), edumateUsers As List(Of user))
+        For Each adUser In adUsers
+            For Each edumateUser In edumateUsers
+                If adUser.employeeID = edumateUser.employeeID Then
+                    adUser.userType = edumateUser.userType
+                End If
+            Next
+        Next
+        Return adUsers
+    End Function
+
+
+    Function getEdumateGroups(users As List(Of user), config As configSettings)
+
+        Dim ConnectionString As String = config.edumateConnectionString
+        Dim commandString As String =
+"
+SELECT        
+group_membership.groups_id,
+group_membership.contact_id
+
+
+FROM            group_membership
+"
+
+
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+                If Not dr.IsDBNull(0) Then
+
+                    For Each user In users
+
+
+                        If user.contact_id = dr.GetValue(1) Then
+                            If IsNothing(user.edumateGroupMemberships) Then
+                                user.edumateGroupMemberships = New List(Of String)
+                            End If
+                            user.edumateGroupMemberships.Add(dr.GetValue(0))
+                        End If
+                    Next
+
+
+
+                End If
+            End While
+            conn.Close()
+        End Using
+        Return users
+    End Function
+
+
+
+    Sub purgeStaffDB(config As configSettings)
+        Dim conn As New MySqlConnection
+        connect(conn, config)
+
+        Try
+            conn.Open()
+        Catch ex As Exception
+        End Try
+
+        Dim cmd As New MySqlCommand(String.Format("DELETE FROM `staff_details` WHERE 1"), conn)
+        cmd.ExecuteNonQuery()
+
+        conn.Close()
+
+    End Sub
+
+
+
+
+
+
+
+
 
 
 End Module
