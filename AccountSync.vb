@@ -273,7 +273,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        'SchoolboxMain(config)
+        SchoolboxMain(config)
         purgeStaffDB(config)
         updateStaffDatabase(config)
 
@@ -2381,7 +2381,7 @@ inner join contact on carer.contact_id = contact.contact_id
                 users.Last.Role = "Parents"
                 users.Last.Campus = "Senior"
                 users.Last.Password = ""
-                users.Last.Year = ""
+                users.Last.Year = "Parent"
                 users.Last.ResidentialHouse = ""
                 users.Last.EPortfolio = "N"
                 users.Last.HideContactDetails = "Y"
@@ -2466,7 +2466,7 @@ left join contact on carer.contact_id = contact.contact_id
                     users.Last.Role = "Parents"
                     users.Last.Campus = "Senior"
                     users.Last.Password = ""
-                    users.Last.Year = ""
+                    users.Last.Year = "Parent"
                     users.Last.ResidentialHouse = ""
                     users.Last.EPortfolio = "N"
                     users.Last.HideContactDetails = "Y"
