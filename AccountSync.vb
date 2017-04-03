@@ -2558,7 +2558,10 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 users.Last.Delete = ""
                 users.Last.SchoolboxUserID = ""
                 users.Last.Title = ""
+
+
                 users.Last.Role = "Staff"
+
                 users.Last.Campus = "Senior"
                 users.Last.Password = ""
 
@@ -2585,6 +2588,20 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
 
                 'If Not dr.IsDBNull(0) Then users.Last.Username = dr.GetValue(0)
                 If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
+
+                If users.Last.Username.ToLower = "jenniferlu" Then
+                    users.Last.Role = ""
+                End If
+                If users.Last.Username.ToLower = "juliet" Then
+                    users.Last.Role = ""
+                End If
+                If users.Last.Username.ToLower = "lugsd340188" Then
+                    users.Last.Role = ""
+                End If
+                If users.Last.Username.ToLower = "lugsd319293" Then
+                    users.Last.Role = ""
+                End If
+
 
                 users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
 
