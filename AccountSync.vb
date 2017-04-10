@@ -69,6 +69,8 @@ Module AccountSync
         Public studentAlumOU As String
         Public tutorGroupID As Integer
         Public danceTutorGroupID As Integer
+        Public staffHomePath As String
+
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -405,9 +407,8 @@ Module AccountSync
                             config.sg_11 = (Mid(line, 7))
                         Case Left(line, 6) = "sg_12="
                             config.sg_12 = (Mid(line, 7))
-
-
-
+                        Case Left(line, 14) = "staffHomePath="
+                            config.staffHomePath = (Mid(line, 15))
 
 
 
@@ -648,6 +649,7 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                 Dim strUserPrincipalName As String  ' Principal name of user.
                 Dim strDescription As String
                 Dim intEmployeeNumber As Integer
+                Dim strHomeDirectory As String
 
 
                 Dim strExt12 As String
@@ -695,6 +697,8 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users"
                         Console.WriteLine("UPN: " & objUserToAdd.ad_username & config.staffDomainName)
                         strUserPrincipalName = objUserToAdd.ad_username & config.staffDomainName
+                        strHomeDirectory = config.staffHomePath & objUserToAdd.ad_username
+
 
                     Case "Parent"
                         strUser = "CN=" & objUserToAdd.ad_username & "," & config.parentOU
@@ -771,13 +775,25 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
 
 
 
-
+                    If strUserPrincipalName <> "" Then
+                        objUser.Properties("mail").Add(strUserPrincipalName)
+                    End If
 
 
 
                     If strUserPrincipalName <> "" Then
-                        objUser.Properties("mail").Add(strUserPrincipalName)
+                        objUser.Properties("homeDrive").Add("H:")
                     End If
+
+                    If strHomeDirectory <> "" Then
+                        objUser.Properties("homeDirectory").Add(strHomeDirectory)
+                    End If
+
+
+                    If strUserPrincipalName <> "" Then
+                        objUser.Properties("proxyAddresses").Add("SMTP:" & strUserPrincipalName)
+                    End If
+
                     If objUserToAdd.surname <> "" Then
                         objUser.Properties("sn").Add(objUserToAdd.surname)
                     End If
@@ -840,12 +856,14 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                         objUser.Properties("extensionAttribute13").Add(strExt13)
                     End If
 
+
+
                     If config.applyChanges Then
                         objUser.CommitChanges()
                     End If
 
                     '            Catch e As Exception
-                    '                Console.WriteLine("Error:   Create failed.")
+                    '                Console.WriteLine("Error: Create failed.")
                     '                Console.WriteLine("         {0}", e.Message)
                     '                For Each mailTo In objUserToAdd.mailTo
                     '                Dim duplicate As Boolean = False
