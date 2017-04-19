@@ -46,7 +46,25 @@ Module AccountSync
         Public bosNumber
         Public edumateGroupMemberships As List(Of String)
         Public contact_id As String
+        Public adObject As SearchResult
+        Public edumateProperties As New EdumateProperties
 
+    End Class
+
+    Class EdumateProperties
+        Public firstName As String
+        Public surname As String
+        Public startDate As String
+        Public endDate As String
+        Public employeeID As String
+        Public classOf As String
+        Public userType As String 'student etc..
+        Public displayName As String
+        Public employeeNumber As String
+        Public dob As String
+        Public libraryCard As String
+        Public rollClass As String
+        Public bosNumber As String
     End Class
 
     Class configSettings
@@ -107,9 +125,6 @@ Module AccountSync
         Public sg_10 As String
         Public sg_11 As String
         Public sg_12 As String
-
-
-
 
     End Class
 
@@ -275,11 +290,12 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        SchoolboxMain(config)
+        'SchoolboxMain(config)
         purgeStaffDB(config)
         updateStaffDatabase(config)
 
         adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
+        'MsgBox("Break before moving")
         moveUsersToOUs(adUsers, config)
 
 
@@ -600,6 +616,8 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
             For Each result In queryResults
                 adUsers.Add(New user)
 
+                adUsers.Last.adObject = result
+
                 If result.Properties("givenName").Count > 0 Then adUsers.Last.firstName = result.Properties("givenName")(0)
                 If result.Properties("sn").Count > 0 Then adUsers.Last.surname = result.Properties("sn")(0)
                 If result.Properties("cn").Count > 0 Then adUsers.Last.displayName = result.Properties("cn")(0)
@@ -632,6 +650,66 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
             Return adUsers
         End Using
     End Function
+
+    Function GetADStudents(ldapDirectoryEntry As String)
+
+        Dim dirEntry As New DirectoryEntry(ldapDirectoryEntry)
+        'Setting username & password to Nothing forces
+        'the connection to use your logon credentials
+        dirEntry.Username = Nothing
+        dirEntry.Password = Nothing
+        'Always use a secure connection
+        dirEntry.AuthenticationType = AuthenticationTypes.Secure
+        dirEntry.RefreshCache()
+        Return dirEntry
+
+
+
+
+
+
+        Using searcher As New DirectorySearcher(dirEntry)
+            Dim adUsers As New List(Of user)
+
+            searcher.PropertiesToLoad.Add("cn")
+            searcher.PropertiesToLoad.Add("employeeID")
+            searcher.PropertiesToLoad.Add("distinguishedName")
+            searcher.PropertiesToLoad.Add("employeeNumber")
+            searcher.PropertiesToLoad.Add("givenName")
+            searcher.PropertiesToLoad.Add("homeDirectory")
+            searcher.PropertiesToLoad.Add("homeDrive")
+            searcher.PropertiesToLoad.Add("mail")
+            searcher.PropertiesToLoad.Add("profilePath")
+            searcher.PropertiesToLoad.Add("samAccountName")
+            searcher.PropertiesToLoad.Add("sn")
+            searcher.PropertiesToLoad.Add("userPrincipalName")
+            searcher.PropertiesToLoad.Add("memberof")
+            searcher.PropertiesToLoad.Add("userAccountControl")
+
+
+            searcher.Filter = "(objectCategory=person)"
+            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.SizeLimit = 100000000
+            searcher.Asynchronous = False
+            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.PageSize = 10000
+
+            Dim queryResults As SearchResultCollection
+            queryResults = searcher.FindAll
+
+            Dim result As SearchResult
+
+            For Each result In queryResults
+                adUsers.Add(New user)
+
+                adUsers.Last.adObject = result
+
+            Next
+            Return adUsers
+        End Using
+    End Function
+
+
 
     Sub createUsers(ByVal objUsersToAdd As List(Of user), ByVal config As configSettings, conn As MySqlConnection)
 
@@ -3326,9 +3404,12 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
     End Sub
 
     Sub moveStudentToAlum(user As user, alumOU As String)
+        'MsgBox("move fired")
 
         Dim targetOU As String
-        targetOU = "OU=Class of " & user.classOf & "," & alumOU
+        targetOU = user.distinguishedName.Substring(user.distinguishedName.IndexOf(",") + 1).Replace("OU=Student Users", "OU=Alumni,OU=Student Users")
+
+
 
         moveUserToOU(user, targetOU)
 
@@ -3336,57 +3417,43 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
 
     Sub moveUsersToOUs(adUsers As List(Of user), config As configSettings)
         For Each adUser In adUsers
-            Select Case adUser.userAccountControl
-                Case 512
+            'MsgBox(adUser.userAccountControl)
+            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") Then
+                Select Case adUser.userAccountControl
+                    Case Is = 512
                     'enabled
-                Case 514
-                    If adUser.userType = "Student" Then
+                    Case Is = 514
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 544
+                    Case Is = 544
                     'enabled
-                Case 546
-                    If adUser.userType = "Student" Then
+                    Case Is = 546
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 66048
+                    Case Is = 66048
                     'enabled
-                Case 66050
-                    If adUser.userType = "Student" Then
+                    Case Is = 66050
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 66080
+                    Case Is = 66080
                     'enabled
-                Case 66082
-                    If adUser.userType = "Student" Then
+                    Case Is = 66082
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 262656
+                    Case Is = 262656
                     'enabled
-                Case 262658
-                    If adUser.userType = "Student" Then
+                    Case Is = 262658
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 262688
+                    Case Is = 262688
                     'enabled
-                Case 262690
-                    If adUser.userType = "Student" Then
+                    Case Is = 262690
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 328192
+                    Case Is = 328192
                     'enabled
-                Case 328194
-                    If adUser.userType = "Student" Then
+                    Case Is = 328194
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-                Case 328224
+                    Case Is = 328224
                     'enabled
-                Case 328226
-                    If adUser.userType = "Student" Then
+                    Case Is = 328226
                         moveStudentToAlum(adUser, config.studentAlumOU)
-                    End If
-            End Select
-
+                End Select
+            End If
 
 
         Next
@@ -3471,14 +3538,6 @@ FROM            group_membership
         conn.Close()
 
     End Sub
-
-
-
-
-
-
-
-
 
 
 End Module
