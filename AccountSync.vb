@@ -290,7 +290,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        'SchoolboxMain(config)
+        SchoolboxMain(config)
         purgeStaffDB(config)
         updateStaffDatabase(config)
 
@@ -572,8 +572,8 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
         Dim dirEntry As New DirectoryEntry(ldapDirectoryEntry)
         'Setting username & password to Nothing forces
         'the connection to use your logon credentials
-        dirEntry.Username = Nothing
-        dirEntry.Password = Nothing
+        'dirEntry.Username = Nothing
+        'dirEntry.Password = Nothing
         'Always use a secure connection
         dirEntry.AuthenticationType = AuthenticationTypes.Secure
         dirEntry.RefreshCache()
@@ -2042,7 +2042,7 @@ LEFT JOIN sys_user
 
                     '[If CInt(strExt12 & strExt11 & strExt10 & strExt9 & strExt8 & strExt7 & strExt6 & strExt5 & strExt4 & strExt3 & strExt2 & strExt1 & strExt13) > 1 Then
 
-                    Using user As New DirectoryEntry("LDAP://" & adUser.distinguishedName)
+                    Using user As New DirectoryEntry("LDAP://xerath.internal.ofgs.nsw.edu.au/" & adUser.distinguishedName)
                         'MsgBox(adUser.distinguishedName)
                         'Setting username & password to Nothing forces
                         'the connection to use your logon credentials
