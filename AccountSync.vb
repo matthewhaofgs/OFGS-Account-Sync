@@ -2506,9 +2506,9 @@ inner join contact on carer.contact_id = contact.contact_id
                 For Each a In studentParents
                     If users.Last.ExternalID = a.parent_id Then
                         If users.Last.ChildExternalIDs = "" Then
-                            users.Last.ChildExternalIDs = a.student_id
+                            users.Last.ChildExternalIDs = a.student_id.ToString
                         Else
-                            users.Last.ChildExternalIDs = users.Last.ChildExternalIDs & "," & a.student_id
+                            users.Last.ChildExternalIDs = users.Last.ChildExternalIDs.ToString & ", " & a.student_id.ToString
                         End If
                     End If
 
@@ -2606,9 +2606,9 @@ left join contact on carer.contact_id = contact.contact_id
                     For Each a In studentParents
                         If users.Last.ExternalID = a.parent_id Then
                             If users.Last.ChildExternalIDs = "" Then
-                                users.Last.ChildExternalIDs = a.student_id
+                                users.Last.ChildExternalIDs = a.student_id.ToString
                             Else
-                                users.Last.ChildExternalIDs = users.Last.ChildExternalIDs & "," & a.student_id
+                                users.Last.ChildExternalIDs = users.Last.ChildExternalIDs.ToString & ", " & a.student_id.ToString
                             End If
                         End If
 
@@ -2686,16 +2686,16 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 If Not dr.IsDBNull(6) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
 
                 If users.Last.Username.ToLower = "jenniferlu" Then
-                    users.Last.Role = ""
+                    users.Last.Role = "Administration"
                 End If
                 If users.Last.Username.ToLower = "juliet" Then
-                    users.Last.Role = ""
+                    users.Last.Role = "Administration"
                 End If
                 If users.Last.Username.ToLower = "lugsd340188" Then
-                    users.Last.Role = ""
+                    users.Last.Role = "Administration"
                 End If
                 If users.Last.Username.ToLower = "lugsd319293" Then
-                    users.Last.Role = ""
+                    users.Last.Role = "Administration"
                 End If
 
 
