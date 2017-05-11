@@ -2256,11 +2256,13 @@ LEFT JOIN sys_user
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
-        Call writeUserCSV(config, adconfig)
+        'Call writeUserCSV(config, adconfig)
         Call timetableStructure(config)
         Call timetable(config)
         Call enrollment(config)
+        Call events(config)
         Call uploadFiles(config)
+
 
         Console.WriteLine("Schoolbox stuff done")
     End Sub
@@ -2938,6 +2940,113 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         sw.Close()
 
     End Sub
+
+
+    Sub events(config As schoolboxConfigSettings)
+        Dim commandstring As String
+        commandstring = "
+
+
+
+SELECT 
+DATE(event.start_date) as ""Start Date"", 
+varchar_format(event.start_date, 'HH24:MI')  ""Start Time"",
+DATE(event.end_date) as ""Finish Date"",
+varchar_format(event.end_date, 'HH24:MI')  ""Finish Time"",
+0 as ""All Day"",
+event.event as ""Name"",
+event.description as ""Detail"",
+event.location as ""Location"",
+1 as ""Type"",
+NULL as ""Publish Date"",
+0 as ""Attendance""
+FROM
+  event
+WHERE
+event.start_date >  '01/01/2017' 
+AND event.end_date < '12/31/2017' 
+AND event.publish_flag = 1
+AND event.recurring_id is not null and event.recurring_id > 0
+AND event.event_id = (select min(event_id) from event e2
+                                     where e2.recurring_id = event.recurring_id)
+
+
+UNION
+
+
+
+SELECT 
+DATE(event.start_date) as ""Start Date"", 
+varchar_format(event.start_date, 'HH24:MI')  ""Start Time"",
+DATE(event.end_date) as ""Finish Date"",
+varchar_format(event.end_date, 'HH24:MI')  ""Finish Time"",
+0 as ""All Day"",
+event.event as ""Name"",
+event.description as ""Detail"",
+event.location as ""Location"",
+1 as ""Type"",
+NULL as ""Publish Date"",
+0 as ""Attendance""
+FROM
+  event
+WHERE
+event.start_date >  '01/01/2017' 
+AND event.end_date < '12/31/2017' 
+AND event.publish_flag = 1
+AND event.recurring_id is null
+
+"
+
+
+        Dim sw As New StreamWriter(".\calendar.csv")
+        Dim ConnectionString As String = config.connectionString
+        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New System.Data.Odbc.OdbcCommand(commandstring, conn)
+            command.Connection = conn
+            command.CommandText = commandstring
+
+            Dim dr As System.Data.Odbc.OdbcDataReader
+            dr = command.ExecuteReader
+
+            sw.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
+
+            While dr.Read()
+
+
+                Dim outLine As String
+
+
+                Dim a As String
+                If Not dr.IsDBNull(5) Then a = dr.GetValue(5)
+                Dim b As String
+                If Not dr.IsDBNull(6) Then b = dr.GetValue(6)
+                Dim c As String
+                If Not dr.IsDBNull(7) Then c = dr.GetValue(7)
+
+                a = Replace(a, "&#039;", "'")
+                a = Replace(a, "&amp;", "&")
+
+                b = Replace(b, "&#039;", "'")
+                b = Replace(b, "&amp;", "&")
+
+                c = Replace(c, "&#039;", "'")
+                c = Replace(c, "&amp;", "&")
+
+
+
+                outLine = (dr.GetValue(0) & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & a & """,""" & b & """,""" & c & """," & dr.GetValue(8) & "," & dr.GetValue(9) & "," & dr.GetValue(10))
+
+
+
+                sw.WriteLine(outLine)
+            End While
+        End Using
+        sw.Close()
+    End Sub
+
 
     Sub upload(host As String, userName As String, pass As String, rsa As String)
         Try
