@@ -2256,7 +2256,7 @@ LEFT JOIN sys_user
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
-        'Call writeUserCSV(config, adconfig)
+        Call writeUserCSV(config, adconfig)
         Call timetableStructure(config)
         Call timetable(config)
         Call enrollment(config)
@@ -2956,12 +2956,28 @@ varchar_format(event.end_date, 'HH24:MI')  ""Finish Time"",
 0 as ""All Day"",
 event.event as ""Name"",
 event.description as ""Detail"",
-event.location as ""Location"",
+CASE
+	when event.location IS NOT NULL then (event.location)
+	when (event_rooms.room_count > 1) then	('Various')
+	when (event_rooms.room_count = 1) then  (room.room)
+end as Location,
+
 1 as ""Type"",
 NULL as ""Publish Date"",
 0 as ""Attendance""
 FROM
   event
+left join
+	( select event_id, max(room_id) as max_room_id, count(room_id) as room_count
+	from event_room
+	group by event_id
+	)  event_rooms
+on event.event_id = event_rooms.event_id
+
+left join room on event_rooms.max_room_id = room.room_id
+
+
+
 WHERE
 event.start_date >  '01/01/2017' 
 AND event.end_date < '12/31/2017' 
@@ -2983,12 +2999,28 @@ varchar_format(event.end_date, 'HH24:MI')  ""Finish Time"",
 0 as ""All Day"",
 event.event as ""Name"",
 event.description as ""Detail"",
-event.location as ""Location"",
+CASE
+	when event.location IS NOT NULL then (event.location)
+	when (event_rooms.room_count > 1) then	('Various')
+	when (event_rooms.room_count = 1) then  (room.room)
+end as Location,
+
 1 as ""Type"",
 NULL as ""Publish Date"",
 0 as ""Attendance""
 FROM
   event
+
+left join
+	( 
+	select event_id, max(room_id) as max_room_id, count(room_id) as room_count
+	from event_room
+	group by event_id
+	)  event_rooms
+on event.event_id = event_rooms.event_id
+
+left join room on event_rooms.max_room_id = room.room_id
+
 WHERE
 event.start_date >  '01/01/2017' 
 AND event.end_date < '12/31/2017' 
