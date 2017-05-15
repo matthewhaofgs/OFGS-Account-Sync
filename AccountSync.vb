@@ -3047,29 +3047,30 @@ AND event.recurring_id is null
 
             While dr.Read()
 
-
+                Dim output(10) As String
                 Dim outLine As String
 
+                outLine = """"
 
-                Dim a As String
-                If Not dr.IsDBNull(5) Then a = dr.GetValue(5)
-                Dim b As String
-                If Not dr.IsDBNull(6) Then b = dr.GetValue(6)
-                Dim c As String
-                If Not dr.IsDBNull(7) Then c = dr.GetValue(7)
+                For i = 0 To 10
+                    If IsDBNull(dr.GetValue(i)) Then
+                        If i = 9 Then
+                        Else
+                            output(i) = "."
+                        End If
+                    Else
+                        output(i) = dr.GetValue(i)
+                    End If
+                    output(i) = Replace(output(i), "&#039;", "'")
+                    output(i) = Replace(output(i), "&amp;", "&")
 
-                a = Replace(a, "&#039;", "'")
-                a = Replace(a, "&amp;", "&")
+                    outLine = outLine & output(i) & ""","""
+                Next
 
-                b = Replace(b, "&#039;", "'")
-                b = Replace(b, "&amp;", "&")
-
-                c = Replace(c, "&#039;", "'")
-                c = Replace(c, "&amp;", "&")
+                outLine = Left(outLine, outLine.Length - 2)
 
 
 
-                outLine = (dr.GetValue(0) & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & a & """,""" & b & """,""" & c & """," & dr.GetValue(8) & "," & dr.GetValue(9) & "," & dr.GetValue(10))
 
 
 
