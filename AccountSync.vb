@@ -41,7 +41,7 @@ Module AccountSync
         Public employmentType
         Public edumateStaffNumber
         Public dob
-        Public libraryCard
+        Public libraryCard As String
         Public rollClass
         Public bosNumber
         Public edumateGroupMemberships As List(Of String)
@@ -2561,7 +2561,7 @@ left join contact on carer.contact_id = contact.contact_id
                     users.Last.Delete = ""
                     users.Last.SchoolboxUserID = ""
                     users.Last.Title = ""
-                    users.Last.Role = "Parents"
+                    users.Last.Role = "limited access"
                     users.Last.Campus = "Senior"
                     users.Last.Password = ""
                     users.Last.Year = "Parent"
