@@ -2879,8 +2879,10 @@ AND
 
                 campus = Replace(dr.GetValue(0), "Year 1", "Senior")
 
-                outLine = (campus & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
-                sw.WriteLine(outLine)
+                If campus = "Senior" Then
+                    outLine = (campus & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
+                    sw.WriteLine(outLine)
+                End If
             End While
         End Using
         sw.Close()
