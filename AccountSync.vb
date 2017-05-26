@@ -2819,6 +2819,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
                 If dr.GetValue(7) = "true" Then
                     users.Last.AltEmail = "donotemail@ofgs.nsw.edu.au"
+                    users.Last.EmailAddressFromUsername = "N"
                 Else
                     users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
                 End If
