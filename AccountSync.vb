@@ -2627,15 +2627,130 @@ left join contact on carer.contact_id = contact.contact_id
         'Staff **********************
         commandString = "
 select
-schoolbox_staff.username,
-schoolbox_staff.staff_number,
-schoolbox_staff.salutation,
-schoolbox_staff.firstname,
-schoolbox_staff.surname,
-schoolbox_staff.house,
-staff.staff_id
-from schoolbox_staff
-inner join staff on schoolbox_staff.staff_number = staff.staff_number
+schoolbox_staff2.username1,
+schoolbox_staff2.staff_number,
+schoolbox_staff2.salutation,
+schoolbox_staff2.firstname,
+schoolbox_staff2.surname,
+schoolbox_staff2.house,
+staff.staff_id,
+
+case when staff.staff_number in (
+
+select distinct
+schoolbox_staff1.staff_number
+
+from
+(
+select
+staff.staff_number,
+salutation.salutation,
+coalesce(replace(contact.preferred_name,'&#0'||'39;',''''), replace(contact.firstname,'&#0'||'39;','''')) as firstname,
+replace(contact.surname,'&#039;','''') as surname,
+sys_user.username as username1,
+contact.email_address,
+house.house,
+campus.campus,
+replace(work_detail.title,'&#039;','''') as title
+from staff
+inner join contact on contact.contact_id = staff.contact_id
+inner join staff_employment on staff_employment.staff_id = staff.staff_id
+inner join work_detail on work_detail.contact_id=contact.contact_id
+left join salutation on salutation.salutation_id = contact.salutation_id
+left join sys_user on sys_user.contact_id = contact.contact_id
+left join house on house.house_id = staff.house_id
+left join campus on campus.campus_id = staff.campus_id
+where (staff_employment.end_date is null or staff_employment.end_date >= current date)
+and staff_employment.start_date <= current date
+and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
+
+) schoolbox_staff1
+
+inner join staff on schoolbox_staff1.staff_number = staff.staff_number
+
+inner join contact on staff.contact_id = contact.contact_id
+
+left join teacher on contact.contact_id = teacher.contact_id
+
+left join class_teacher on class_teacher.teacher_id = teacher.teacher_id
+
+left join class on class.class_id = class_teacher.class_id
+
+
+left join 
+(
+	select max_student_class.class_id, form.short_name
+
+	from 
+	(
+		select max(student_id) as randomStudentNumber, class_id
+
+		from class_enrollment
+
+		where 
+
+		(SELECT current date FROM sysibm.sysdummy1) between class_enrollment.start_date and class_enrollment.end_date
+
+		group by class_id
+	) max_student_class
+
+
+	INNER JOIN 
+	(
+		select student_id, max(form_run_id) as max_form_run_id
+
+		from student_form_run 
+
+		where  
+		(SELECT current date FROM sysibm.sysdummy1) between student_form_run.start_date and student_form_run.end_date
+	
+		group by student_id
+	) max_form_run
+	ON max_form_run.student_id = max_student_class.randomStudentNumber
+
+	INNER JOIN form_run on max_form_run.max_form_run_id = form_run.form_run_id
+
+	INNER JOIN form on form_run.form_id = form.form_id
+
+) class_short_names
+
+on class.class_id = class_short_names.class_id
+
+
+where class_short_names.short_name = 'K'
+and class.class_type_id = '2'
+
+) then 'true' else 'false' END AS kindy
+
+
+from (
+
+select
+staff.staff_number,
+salutation.salutation,
+coalesce(replace(contact.preferred_name,'&#0'||'39;',''''), replace(contact.firstname,'&#0'||'39;','''')) as firstname,
+replace(contact.surname,'&#039;','''') as surname,
+sys_user.username as username1,
+contact.email_address,
+house.house,
+campus.campus,
+replace(work_detail.title,'&#039;','''') as title
+from staff
+inner join contact on contact.contact_id = staff.contact_id
+inner join staff_employment on staff_employment.staff_id = staff.staff_id
+inner join work_detail on work_detail.contact_id=contact.contact_id
+inner join salutation on salutation.salutation_id = contact.salutation_id
+left join sys_user on sys_user.contact_id = contact.contact_id
+left join house on house.house_id = staff.house_id
+left join campus on campus.campus_id = staff.campus_id
+where (staff_employment.end_date is null or staff_employment.end_date >= current date)
+and staff_employment.start_date <= current date
+and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
+
+)  schoolbox_staff2
+
+inner join staff on schoolbox_staff2.staff_number = staff.staff_number
+
 "
 
         Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
@@ -2701,7 +2816,18 @@ inner join staff on schoolbox_staff.staff_number = staff.staff_number
                 End If
 
 
-                users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
+
+                If dr.GetValue(7) = "true" Then
+                    users.Last.AltEmail = "donotemail@ofgs.nsw.edu.au"
+                Else
+                    users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
+                End If
+
+
+
+
+
+
 
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.Title = dr.GetValue(2)
