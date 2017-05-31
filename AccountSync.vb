@@ -2814,6 +2814,32 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                 If users.Last.Username.ToLower = "lugsd319293" Then
                     users.Last.Role = "Administration"
                 End If
+                If users.Last.Username.ToLower = "selinam" Then
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.Username.ToLower = "kathys" Then
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.Username.ToLower = "katrinaj" Then
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.Username.ToLower = "fionar" Then
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.Username.ToLower = "jacquib" Then
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.Username.ToLower = "matthewha" Then
+                    users.Last.Role = "Administration"
+                End If
+                If users.Last.Username.ToLower = "michaelp" Then
+                    users.Last.Role = "Administration"
+                End If
 
 
 
