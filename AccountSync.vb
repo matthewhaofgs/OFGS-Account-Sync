@@ -3190,7 +3190,9 @@ end as Location,
 
 1 as ""Type"",
 NULL as ""Publish Date"",
-0 as ""Attendance""
+0 as ""Attendance"",
+event.audience_type_id as ""Audience Type""
+
 FROM
   event
 left join
@@ -3233,7 +3235,8 @@ end as Location,
 
 1 as ""Type"",
 NULL as ""Publish Date"",
-0 as ""Attendance""
+0 as ""Attendance"",
+event.audience_type_id as ""Audience Type""
 FROM
   event
 
@@ -3256,7 +3259,12 @@ AND event.recurring_id is null
 "
 
 
-        Dim sw As New StreamWriter(".\calendar.csv")
+
+        Dim swAll As New StreamWriter(".\calendarAll.csv")
+        Dim swJnr As New StreamWriter(".\calendarJnr.csv")
+        Dim swSnr As New StreamWriter(".\calendarSnr.csv")
+
+
         Dim ConnectionString As String = config.connectionString
         Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
             conn.Open()
@@ -3269,7 +3277,9 @@ AND event.recurring_id is null
             Dim dr As System.Data.Odbc.OdbcDataReader
             dr = command.ExecuteReader
 
-            sw.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
+            swAll.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
+            swJnr.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
+            swSnr.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
 
             While dr.Read()
 
@@ -3296,14 +3306,27 @@ AND event.recurring_id is null
                 outLine = Left(outLine, outLine.Length - 2)
 
 
+                If Not IsDBNull(dr.GetValue(11)) Then
+                    Select Case dr.GetValue(11)
+                        Case 1
+                            swAll.WriteLine(outLine)
+                        Case 61
+                            swJnr.WriteLine(outLine)
+                        Case 63
+                            swSnr.WriteLine(outLine)
+                        Case Else
+                            swAll.WriteLine(outLine)
+                    End Select
+                End If
 
 
-
-
-                sw.WriteLine(outLine)
+                'sw.WriteLine(outLine)
             End While
         End Using
-        sw.Close()
+        swAll.Close()
+        swJnr.Close()
+        swSnr.Close()
+
     End Sub
 
 
