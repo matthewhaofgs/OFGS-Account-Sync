@@ -272,6 +272,8 @@ Module AccountSync
         currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
         currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
 
+
+
         Dim mysqlUsersToAdd As List(Of user)
         mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
 
@@ -282,6 +284,7 @@ Module AccountSync
         updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
         currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
         AddStudentsToYearGroups(currentEdumateStudents, config)
+
 
 
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
@@ -599,6 +602,8 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
             searcher.PropertiesToLoad.Add("userPrincipalName")
             searcher.PropertiesToLoad.Add("memberof")
             searcher.PropertiesToLoad.Add("userAccountControl")
+            searcher.PropertiesToLoad.Add("pwdLastSet")
+
 
 
             searcher.Filter = "(objectCategory=person)"
@@ -2477,7 +2482,7 @@ inner join contact on carer.contact_id = contact.contact_id
                 users.Last.SchoolboxUserID = ""
                 users.Last.Title = ""
                 users.Last.Role = "Parent"
-                users.Last.Campus = "Senior"
+                'users.Last.Campus = "Senior"
                 users.Last.Password = ""
                 users.Last.Year = "Parent"
                 users.Last.ResidentialHouse = ""
@@ -2507,16 +2512,87 @@ inner join contact on carer.contact_id = contact.contact_id
 
                 For Each a In studentParents
                     If users.Last.ExternalID = a.parent_id Then
+
+
+
+                        For Each existingUser In users
+                            If a.student_id = existingUser.ExternalID Then
+
+                                Select Case True
+                                    Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+
+                                    Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+                                    Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+                                    Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+                                    Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+                                    Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+                                    Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        users.Last.Campus = "Senior"
+
+                                    Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+
+                                    Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+
+                                End Select
+                            End If
+                        Next
+
+
+
                         If users.Last.ChildExternalIDs = "" Then
                             users.Last.ChildExternalIDs = a.student_id.ToString
                         Else
                             users.Last.ChildExternalIDs = users.Last.ChildExternalIDs.ToString & ", " & a.student_id.ToString
                         End If
+
+
                     End If
 
                 Next
                 users.Last.ChildExternalIDs = """" & users.Last.ChildExternalIDs & """"
-
+                users.Last.Campus = """" & users.Last.Campus & """"
 
 
 
@@ -2562,7 +2638,7 @@ left join contact on carer.contact_id = contact.contact_id
                     users.Last.SchoolboxUserID = ""
                     users.Last.Title = ""
                     users.Last.Role = "Parent"
-                    users.Last.Campus = "Senior"
+                    'users.Last.Campus = "Senior"
                     users.Last.Password = ""
                     users.Last.Year = "Parent"
                     users.Last.ResidentialHouse = ""
@@ -2808,12 +2884,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                 If users.Last.Username.ToLower = "juliet" Then
                     users.Last.Role = "Administration"
                 End If
-                If users.Last.Username.ToLower = "lugsd340188" Then
-                    users.Last.Role = "Administration"
-                End If
-                If users.Last.Username.ToLower = "lugsd319293" Then
-                    users.Last.Role = "Administration"
-                End If
+
                 If users.Last.Username.ToLower = "selinam" Then
                     users.Last.Role = "Administration"
                 End If
@@ -3540,8 +3611,23 @@ AND event.recurring_id is null
         sanitizedSurname = Replace(user.surname, "'", "\'")
         Dim sanitizedDn
         sanitizedDn = Replace(user.distinguishedName, "'", "\'")
+        Dim datePasswordSet As String
 
-        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,`surname`,`firstname`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`smtp_proxy_set`,`init_password`,`staff_number`,`distinguished_name`,`edumate_login_active`,`edumate_start_date`,`edumate_end_date`,`employment_type`,`edumate_staff_number`,`tutor`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, sanitizedDn, user.edumateLoginActive, user.startDate, user.endDate, user.employmentType, user.edumateStaffNumber, musicTutor), conn)
+
+
+        If user.adObject.Properties("pwdLastSet").Count > 0 Then
+            datePasswordSet = user.adObject.Properties("pwdLastSet")(0)
+        Else
+            datePasswordSet = "Never"
+        End If
+
+
+
+
+
+
+
+        Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`staff_id`,`surname`,`firstname`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`smtp_proxy_set`,`init_password`,`staff_number`,`distinguished_name`,`edumate_login_active`,`edumate_start_date`,`edumate_end_date`,`employment_type`,`edumate_staff_number`,`tutor`,`datePwdSet`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.smtpProxy, user.password, user.employeeNumber, sanitizedDn, user.edumateLoginActive, user.startDate, user.endDate, user.employmentType, user.edumateStaffNumber, musicTutor, datePasswordSet), conn)
         cmd.ExecuteNonQuery()
 
         conn.Close()
