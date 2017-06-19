@@ -2768,7 +2768,7 @@ left join contact on carer.contact_id = contact.contact_id
 
                     Next
                     users.Last.ChildExternalIDs = """" & users.Last.ChildExternalIDs & """"
-
+                    users.Last.Campus = """" & users.Last.Campus & """"
                 End If
 
 
@@ -2927,7 +2927,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
                 users.Last.Role = "Staff"
 
-                users.Last.Campus = "Junior, Senior"
+                users.Last.Campus = """Junior, Senior"""
                 users.Last.Password = ""
 
                 users.Last.Year = ""
