@@ -293,7 +293,7 @@ Module AccountSync
 
         updateParentStudents(edumateParents, config)
 
-        SchoolboxMain(config)
+        ' SchoolboxMain(config)
         purgeStaffDB(config)
         updateStaffDatabase(config)
 
@@ -384,7 +384,7 @@ Module AccountSync
                         Case Left(line, 13) = "tutorGroupId="
                             config.tutorGroupID = (Mid(line, 14))
                         Case Left(line, 18) = "danceTutorGroupId="
-                            config.tutorGroupID = (Mid(line, 19))
+                            config.danceTutorGroupID = (Mid(line, 19))
 
 
 
@@ -2786,7 +2786,6 @@ schoolbox_staff2.firstname,
 schoolbox_staff2.surname,
 schoolbox_staff2.house,
 staff.staff_id,
-
 case when staff.staff_number in (
 
 select distinct
@@ -2872,8 +2871,8 @@ on class.class_id = class_short_names.class_id
 where class_short_names.short_name = 'K'
 and class.class_type_id = '2'
 
-) then 'true' else 'false' END AS kindy
-
+) then 'true' else 'false' END AS kindy,
+schoolbox_staff2.title as title
 
 from (
 
@@ -2903,6 +2902,8 @@ and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
 
 inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
+
+
 "
 
         Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
@@ -2922,8 +2923,11 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
                 users.Last.Delete = ""
                 users.Last.SchoolboxUserID = ""
-                users.Last.Title = ""
-
+                'users.Last.Title = ""
+                If Not dr.IsDBNull(8) Then
+                    users.Last.Title = dr.GetValue(8)
+                Else users.last.title = "Staff"
+                End If
 
                 users.Last.Role = "Staff"
 
@@ -3690,9 +3694,13 @@ AND event.recurring_id is null
 
         End Select
 
+
+
         Dim musicTutor As Integer = 0
         If Not IsNothing(user.edumateGroupMemberships) Then
             For Each group In user.edumateGroupMemberships
+
+
                 If group = tutorGroupID Then
                     musicTutor = 1
                 End If
