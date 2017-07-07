@@ -3645,7 +3645,7 @@ AND event.recurring_id is null
         Return adUsers
     End Function
 
-    Sub insertUserToStaffDB(conn As MySqlConnection, user As user, tutorGroupID As String, danceTutorGroupID As Integer)
+    Sub insertUserToStaffDB(conn As MySqlConnection, user As user, tutorGroupID As Integer, danceTutorGroupID As Integer)
 
         Dim table As String = "staff_details"
 
