@@ -1345,7 +1345,7 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 
-WHERE        (relationship.relationship_type_id IN (1, 15, 28, 33)) 
+WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
 "
 
 
@@ -1426,7 +1426,7 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 
-WHERE        (relationship.relationship_type_id IN (2, 16, 29, 34)) 
+WHERE        (relationship.relationship_type_id IN (2, 5, 16, 29, 34)) 
 "
 
 
