@@ -2813,7 +2813,7 @@ left join sys_user on sys_user.contact_id = contact.contact_id
 left join house on house.house_id = staff.house_id
 left join campus on campus.campus_id = staff.campus_id
 where (staff_employment.end_date is null or staff_employment.end_date >= current date)
-and staff_employment.start_date <= current date
+and staff_employment.start_date <= (current date -90 DAYS)
 and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
 
 ) schoolbox_staff1
@@ -2896,14 +2896,12 @@ left join sys_user on sys_user.contact_id = contact.contact_id
 left join house on house.house_id = staff.house_id
 left join campus on campus.campus_id = staff.campus_id
 where (staff_employment.end_date is null or staff_employment.end_date >= current date)
-and staff_employment.start_date <= current date
+and staff_employment.start_date <= (current date - 90 DAYS)
 and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
 
 )  schoolbox_staff2
 
 inner join staff on schoolbox_staff2.staff_number = staff.staff_number
-
-
 
 "
 
@@ -3184,7 +3182,7 @@ AND
 
                 campus = Replace(dr.GetValue(0), "Year 1", "Senior")
 
-                If campus = "Senior" Then
+                If True Then
                     outLine = (campus & "," & dr.GetValue(1) & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
                     sw.WriteLine(outLine)
                 End If
