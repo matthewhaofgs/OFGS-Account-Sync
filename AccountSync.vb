@@ -565,6 +565,28 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                 getYearOf = endYear + 1
             Case "12"
                 getYearOf = endYear
+            Case "1"
+                getYearOf = endYear + 11
+            Case "2"
+                getYearOf = endYear + 10
+            Case "3"
+                getYearOf = endYear + 9
+            Case "4"
+                getYearOf = endYear + 8
+            Case "5"
+                getYearOf = endYear + 7
+            Case "6"
+                getYearOf = endYear + 6
+            Case "7"
+                getYearOf = endYear + 5
+            Case "8"
+                getYearOf = endYear + 4
+            Case "9"
+
+
+
+
+
             Case Else
                 getYearOf = ""
         End Select
@@ -3000,6 +3022,10 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                     users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
                 End If
 
+                If users.Last.AltEmail = "pddowney@ofgs.nsw.edu.au" Then
+                    users.Last.EmailAddressFromUsername = "N"
+                    users.Last.AltEmail = "principal@ofgs.nsw.edu.au"
+                End If
 
 
 
