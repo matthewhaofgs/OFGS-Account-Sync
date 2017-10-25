@@ -220,85 +220,75 @@ Module AccountSync
         studentUsersToAdd = calculateCurrentYears(studentUsersToAdd)
         Console.WriteLine("Found " & studentUsersToAdd.Count & " users to add")
         Console.WriteLine("")
+
+        'Create student accounts
         If studentUsersToAdd.Count > 0 Then
             studentUsersToAdd = evaluateUsernames(studentUsersToAdd, adUsers)
             createUsers(studentUsersToAdd, config, conn)
         End If
 
+        'Get Edumate data for parents 
         Console.WriteLine("Getting Edumate parent data...")
         Console.WriteLine("")
         Dim edumateParents As List(Of user)
         edumateParents = getEdumateParents(config, edumateStudents)
 
+        'Get parent users who do not yet have accounts
         Dim parentsToAdd As List(Of user)
         parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
-
         parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
         parentsToAdd = addMailTo(config, parentsToAdd)
-
         Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
+
+        'Create Parent Accounts
         If parentsToAdd.Count > 0 Then
             parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
             createUsers(parentsToAdd, config, conn)
         End If
 
+        'Get Edumate data for staff
         Dim edumateStaff As List(Of user)
         Console.WriteLine("Getting Edumate staff data...")
         edumateStaff = getEdumateStaff(config)
 
+        'Get staff users who do not yet have accounts
         Dim staffToAdd As List(Of user)
         staffToAdd = getEdumateUsersNotInAD(edumateStaff, adUsers)
         staffToAdd = excludeUserOutsideEnrollDate(staffToAdd, config)
         staffToAdd = addMailTo(config, staffToAdd)
         Console.WriteLine("Found " & staffToAdd.Count & " users to add")
 
+        'Create staff accounts
         If staffToAdd.Count > 0 Then
             staffToAdd = evaluateUsernames(staffToAdd, adUsers)
-            'MsgBox("AddingStaff")
             createUsers(staffToAdd, config, conn)
-            'MsgBox("Done")
         End If
 
 
-
+        'MYSQL Database for student details
         Dim mySQLStudents As List(Of user)
         mySQLStudents = getMySQLStudents(conn)
-        'mySQLStudents = removeInvalidPasswords(mySQLStudents, config.domain)
-
-
         updatePasswordsInMysql(mySQLStudents, conn)
-
         Dim currentEdumateStudents As List(Of user)
         currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
         currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
-
-
-
         Dim mysqlUsersToAdd As List(Of user)
         mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
-
         For Each mySQLUserTOAdd In mysqlUsersToAdd
             addUsertoMySQL(conn, mySQLUserTOAdd)
         Next
-
         updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
         currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
         AddStudentsToYearGroups(currentEdumateStudents, config)
-
-
-
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
-        'updateEmployeeNumbers(adUsers, edumateStudents, config)
-
-        'updateParentStudents(edumateParents, config)
-
+        'Schoolbox Stuff
         SchoolboxMain(config)
         purgeStaffDB(config)
         updateStaffDatabase(config)
 
+
         adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
-        'MsgBox("Break before moving")
         moveUsersToOUs(adUsers, config)
 
 
@@ -2284,7 +2274,7 @@ LEFT JOIN sys_user
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
-        'Call writeUserCSV(config, adconfig)
+        Call writeUserCSV(config, adconfig)
         Call timetableStructure(config)
         Call timetable(config)
         Call enrollment(config)
@@ -3081,7 +3071,7 @@ SELECT DISTINCT
                          REPLACE(CONCAT(CONCAT(term.term, ' '), substr(timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, term.start_date, term.end_date, term.cycle_start_day, 
                          cycle_day.day_index, period.period, period.start_time, period.end_time
 FROM            TERM_GROUP, cycle_day, period_cycle_day, period, term, timetable
-WHERE        (start_date > '01/01/2017') AND (end_date < '12/31/2018') AND (term_group.cycle_id = cycle_day.cycle_id) AND 
+WHERE        (start_date > '01/01/2017') AND (end_date < '01/01/2018') AND (term_group.cycle_id = cycle_day.cycle_id) AND 
                          (cycle_day.cycle_day_id = period_cycle_day.cycle_day_id) AND (period_cycle_day.period_id = period.period_id) AND (term_group.term_id = term.term_id) AND 
                          (term.timetable_id = timetable.timetable_id)"
 
@@ -3111,8 +3101,11 @@ WHERE        (start_date > '01/01/2017') AND (end_date < '12/31/2018') AND (term
                 Dim sb As New StringBuilder()
 
                 Dim outLine As String
+                Dim strTermTitle As String
 
-                outLine = (dr.GetValue(0) & "," & dr.GetValue(1) & "," & Format(dr.GetValue(2), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
+                strTermTitle = Replace(dr.GetValue(1), "2018", "2017")
+
+                outLine = (dr.GetValue(0) & "," & strTermTitle & "," & Format(dr.GetValue(2), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
                 sw.WriteLine(outLine)
             End While
             conn.Close()
@@ -3210,6 +3203,7 @@ AND
 
                 campus = Replace(dr.GetValue(0), "Year 1", "Senior")
                 strTerm = Replace(dr.GetValue(1), "Term 0", "Term 4")
+                strTerm = Replace(strTerm, "2018", "2017")
                 If True Then
                     outLine = (campus & "," & strTerm & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
                     sw.WriteLine(outLine)
