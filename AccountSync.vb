@@ -2818,14 +2818,14 @@ campus.campus,
 replace(work_detail.title,'&#039;','''') as title
 from staff
 inner join contact on contact.contact_id = staff.contact_id
-inner join staff_employment on staff_employment.staff_id = staff.staff_id
-inner join work_detail on work_detail.contact_id=contact.contact_id
+left join staff_employment on staff_employment.staff_id = staff.staff_id
+left join work_detail on work_detail.contact_id=contact.contact_id
 left join salutation on salutation.salutation_id = contact.salutation_id
 left join sys_user on sys_user.contact_id = contact.contact_id
 left join house on house.house_id = staff.house_id
 left join campus on campus.campus_id = staff.campus_id
 where (staff_employment.end_date is null or staff_employment.end_date >= current date)
-and staff_employment.start_date <= (current date -90 DAYS)
+and staff_employment.start_date <= (current date +90 DAYS)
 and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
 
 ) schoolbox_staff1
@@ -2901,14 +2901,14 @@ campus.campus,
 replace(work_detail.title,'&#039;','''') as title
 from staff
 inner join contact on contact.contact_id = staff.contact_id
-inner join staff_employment on staff_employment.staff_id = staff.staff_id
-inner join work_detail on work_detail.contact_id=contact.contact_id
-inner join salutation on salutation.salutation_id = contact.salutation_id
+left join staff_employment on staff_employment.staff_id = staff.staff_id
+left join work_detail on work_detail.contact_id=contact.contact_id
+left join salutation on salutation.salutation_id = contact.salutation_id
 left join sys_user on sys_user.contact_id = contact.contact_id
 left join house on house.house_id = staff.house_id
 left join campus on campus.campus_id = staff.campus_id
 where (staff_employment.end_date is null or staff_employment.end_date >= current date)
-and staff_employment.start_date <= (current date - 90 DAYS)
+and staff_employment.start_date <= (current date + 90 DAYS)
 and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
 
 )  schoolbox_staff2
