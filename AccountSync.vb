@@ -2274,11 +2274,17 @@ LEFT JOIN sys_user
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
+        Console.WriteLine("Creating user.csv")
         Call writeUserCSV(config, adconfig)
+        Console.WriteLine("User.csv done")
+        Console.WriteLine("")
+        Console.WriteLine("")
+
         Call timetableStructure(config)
         Call timetable(config)
         Call enrollment(config)
         Call events(config)
+
         Call uploadFiles(config)
 
 
@@ -2294,11 +2300,9 @@ LEFT JOIN sys_user
         dirEntry = GetDirectoryEntry(adconfig.ldapDirectoryEntry)
 
         Dim adUsers As List(Of user)
-        Console.WriteLine("Loading AD users...")
-        Console.WriteLine("")
-        Console.WriteLine("")
+        Console.Write("Loading AD users...")
         adUsers = getADUsers(dirEntry)
-
+        Console.Write("Done!" & Chr(13) & Chr(10))
 
         ' Students ****************
         Dim ConnectionString As String = config.connectionString
@@ -2333,7 +2337,8 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
 "
         Dim users As New List(Of SchoolBoxUser)
 
-
+        Console.WriteLine("Loading Schoolbox Data... ")
+        Console.Write("Students... ")
 
         Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
             conn.Open()
@@ -2344,7 +2349,9 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
             command.CommandText = commandString
 
             Dim dr As System.Data.Odbc.OdbcDataReader
+
             dr = command.ExecuteReader
+
 
             Dim i As Integer = 0
             While dr.Read()
@@ -2415,13 +2422,14 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
 
             End While
             conn.Close()
+            Console.Write("Done!" & Chr(13) & Chr(10))
         End Using
 
 
 
 
 
-
+        Console.Write("ParentToStudent... ")
 
 
 
@@ -2455,10 +2463,10 @@ from schoolbox_parent_student
             conn.Close()
         End Using
 
+        Console.Write("Done!" & Chr(13) & Chr(10))
 
 
-
-
+        Console.Write("Parents... ")
 
         'Parents **********************
         commandString = "
@@ -2612,6 +2620,8 @@ inner join contact on carer.contact_id = contact.contact_id
             End While
             conn.Close()
         End Using
+
+
 
 
         'Parents (Spouse) **********************
@@ -2788,6 +2798,10 @@ left join contact on carer.contact_id = contact.contact_id
             End While
             conn.Close()
         End Using
+
+        Console.Write("Done!" & Chr(13) & Chr(10))
+
+        Console.Write("Staff... ")
 
         'Staff **********************
         commandString = "
@@ -3036,10 +3050,10 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
             conn.Close()
         End Using
 
+        Console.Write("Done!" & Chr(13) & Chr(10))
 
 
-
-
+        Console.WriteLine("Saving to CSV...")
 
 
 
@@ -3052,7 +3066,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
         Next
         sw.Close()
-
+        Console.WriteLine("Done!" & Chr(13) & Chr(10))
 
     End Sub
 
