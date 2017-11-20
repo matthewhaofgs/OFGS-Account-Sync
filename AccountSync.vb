@@ -90,6 +90,7 @@ Module AccountSync
         Public tutorGroupID As Integer
         Public danceTutorGroupID As Integer
         Public staffHomePath As String
+        Public formerStaffOU As String
 
 
         Public mailToAll As New List(Of String)
@@ -285,11 +286,19 @@ Module AccountSync
         'Schoolbox Stuff
         SchoolboxMain(config)
         purgeStaffDB(config)
+
+        'Staff MYSQL Database
         updateStaffDatabase(config)
 
 
         adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
+        adUsers = addUserTypeToAdUsers(adUsers)
+        adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
+        adUsers = getEdumateGroups(adUsers, config)
+
         moveUsersToOUs(adUsers, config)
+
+
 
 
     End Sub
@@ -418,7 +427,8 @@ Module AccountSync
                             config.sg_12 = (Mid(line, 7))
                         Case Left(line, 14) = "staffHomePath="
                             config.staffHomePath = (Mid(line, 15))
-
+                        Case Left(line, 14) = "formerStaffOU="
+                            config.formerStaffOU = (Mid(line, 15))
 
 
 
@@ -4743,45 +4753,73 @@ AND event.recurring_id is null
     End Sub
 
     Sub moveUsersToOUs(adUsers As List(Of user), config As configSettings)
+
+        Console.WriteLine("")
+        Console.WriteLine("Moving users...")
+        Console.WriteLine("")
+
         For Each adUser In adUsers
             'MsgBox(adUser.userAccountControl)
-            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") Then
-                Select Case adUser.userAccountControl
-                    Case Is = 512
-                    'enabled
-                    Case Is = 514
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 544
-                    'enabled
-                    Case Is = 546
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 66048
-                    'enabled
-                    Case Is = 66050
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 66080
-                    'enabled
-                    Case Is = 66082
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 262656
-                    'enabled
-                    Case Is = 262658
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 262688
-                    'enabled
-                    Case Is = 262690
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 328192
-                    'enabled
-                    Case Is = 328194
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                    Case Is = 328224
-                    'enabled
-                    Case Is = 328226
-                        moveStudentToAlum(adUser, config.studentAlumOU)
-                End Select
+            Dim userAccountEnabled As Boolean
+
+
+            Select Case adUser.userAccountControl
+                Case Is = 512
+                    userAccountEnabled = True
+                Case Is = 514
+                    userAccountEnabled = False
+                Case Is = 544
+                    userAccountEnabled = True
+                Case Is = 546
+                    userAccountEnabled = False
+                Case Is = 66048
+                    userAccountEnabled = True
+                Case Is = 66050
+                    userAccountEnabled = False
+                Case Is = 66080
+                    userAccountEnabled = True
+                Case Is = 66082
+                    userAccountEnabled = False
+                Case Is = 262656
+                    userAccountEnabled = True
+                Case Is = 262658
+                    userAccountEnabled = False
+                Case Is = 262688
+                    userAccountEnabled = True
+                Case Is = 262690
+                    userAccountEnabled = False
+                Case Is = 328192
+                    userAccountEnabled = True
+                Case Is = 328194
+                    userAccountEnabled = False
+                Case Is = 328224
+                    userAccountEnabled = True
+                Case Is = 328226
+                    userAccountEnabled = False
+            End Select
+
+
+
+
+            'Move former students to Alumni OU
+            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not userAccountEnabled Then
+                moveStudentToAlum(adUser, config.studentAlumOU)
             End If
 
+            'Move former staff 
+            If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") Then
+
+                Dim targetOU As String
+                targetOU = "CN=" & adUser.displayName & "," & config.formerStaffOU
+
+                moveUserToOU(adUser, targetOU)
+
+
+                Console.WriteLine("Moving User: " & adUser.displayName)
+                Console.WriteLine("Old OU: " & adUser.distinguishedName)
+                Console.WriteLine("New OU" & targetOU)
+
+            End If
 
         Next
     End Sub
