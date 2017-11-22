@@ -465,31 +465,36 @@ YEAR(student_form_run.end_date) as EndYear,
 student.student_number,
 contact.birthdate,
 stu_school.library_card,
-view_student_class_enrolment.class,
+Rollclass.class,
 stu_school.bos
 
 FROM            
-STUDENT, 
-contact, 
-view_student_start_exit_dates, 
-student_form_run, 
-form_run, 
-form,
-stu_school,
-view_student_class_enrolment
+STUDENT
+INNER JOIN contact ON student.contact_id = contact.contact_id
+INNER JOIN view_student_start_exit_dates ON student.student_id = view_student_start_exit_dates.student_id
+INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
+INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
+INNER JOIN form ON form_run.form_id = form.form_id
+INNER JOIN stu_school ON student.student_id = stu_school.student_id
+
+LEFT JOIN 
+(
+SELECT        
+student.student_id, 
+view_student_class_enrolment.class
 
 
+FROM            
+STUDENT
 
-WHERE (student.contact_id = contact.contact_id) 
-AND (student.student_id = view_student_start_exit_dates.student_id) 
-AND (student_form_run.student_id = student.student_id) 
-AND (form_run.form_id = form.form_id) 
-AND (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
-AND (student_form_run.form_run_id = form_run.form_run_id)
-AND (student.student_id = stu_school.student_id)
-AND (student.student_id = view_student_class_enrolment.student_id)
-AND (view_student_class_enrolment.class_type_id = 2)
+INNER JOIN view_student_class_enrolment ON student.student_id = view_student_class_enrolment.student_id
+
+WHERE 
+ (view_student_class_enrolment.class_type_id = 2)
 AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
+) RollClass ON rollclass.student_id = student.student_id
+WHERE 
+(YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
 
 "
 
@@ -521,7 +526,10 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                     users.Last.employeeID = dr.GetValue(4)
                     users.Last.classOf = getYearOf(dr.GetValue(5), dr.GetValue(6))
                     users.Last.userType = "Student"
-                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
+
+                    users.Last.displayName = Replace(users.Last.firstName, "&#039;", "") & " " & Replace(users.Last.surname, "&#039;", "")
+
+
                     users.Last.employeeNumber = dr.GetValue(7)
                     users.Last.dob = dr.GetValue(8)
                     users.Last.libraryCard = dr.GetValue(9)
@@ -792,7 +800,7 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=" & objUserToAdd.classOf.ToString & ",OU=Student Users"
 
                         Console.WriteLine("UPN: " & objUserToAdd.ad_username & config.studentDomainName)
-                        strUserPrincipalName = objUserToAdd.ad_username & config.domain
+                        strUserPrincipalName = objUserToAdd.ad_username '& config.domain
 
                         Console.WriteLine("Class of: " & "Class of " & objUserToAdd.classOf & " Barcode: ")
                         strDescription = "Class of " & objUserToAdd.classOf & " Barcode: "
@@ -802,7 +810,7 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                         Console.WriteLine("CN: " & "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users")
                         strUser = "CN=" & objUserToAdd.displayName & ",OU=Current Staff,OU=Staff Users"
                         Console.WriteLine("UPN: " & objUserToAdd.ad_username & config.staffDomainName)
-                        strUserPrincipalName = objUserToAdd.ad_username & config.domain
+                        strUserPrincipalName = objUserToAdd.ad_username '& config.domain
                         strHomeDirectory = config.staffHomePath & objUserToAdd.ad_username
                         strMail = objUserToAdd.ad_username & config.staffDomainName
 
@@ -810,7 +818,7 @@ AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
                         strUser = "CN=" & objUserToAdd.ad_username & "," & config.parentOU
                         strDescription = objUserToAdd.firstName & " " & objUserToAdd.surname
                         strDisplayName = objUserToAdd.ad_username
-                        strUserPrincipalName = objUserToAdd.ad_username & config.domain
+                        strUserPrincipalName = objUserToAdd.ad_username '& config.domain
                         strMail = objUserToAdd.ad_username & config.parentDomainName
 
 
@@ -4798,26 +4806,23 @@ AND event.recurring_id is null
                     userAccountEnabled = False
             End Select
 
-
-
-
             'Move former students to Alumni OU
             If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not userAccountEnabled Then
                 moveStudentToAlum(adUser, config.studentAlumOU)
             End If
 
             'Move former staff 
-            If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") Then
+            If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
 
                 Dim targetOU As String
-                targetOU = "CN=" & adUser.displayName & "," & config.formerStaffOU
+                targetOU = config.formerStaffOU
 
                 moveUserToOU(adUser, targetOU)
 
 
                 Console.WriteLine("Moving User: " & adUser.displayName)
                 Console.WriteLine("Old OU: " & adUser.distinguishedName)
-                Console.WriteLine("New OU" & targetOU)
+                Console.WriteLine("New OU: " & targetOU)
 
             End If
 
