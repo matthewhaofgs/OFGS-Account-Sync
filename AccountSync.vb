@@ -284,7 +284,7 @@ Module AccountSync
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
         'Schoolbox Stuff
-        SchoolboxMain(config)
+        SchoolboxMain(config, currentEdumateStudents)
         purgeStaffDB(config)
 
         'Staff MYSQL Database
@@ -1590,39 +1590,39 @@ WHERE        (relationship.relationship_type_id IN (2, 5, 16, 29, 34))
                     For Each emailAddress In config.mailToK
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "1"
+                Case "01"
                     For Each emailAddress In config.mailTo1
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "2"
+                Case "02"
                     For Each emailAddress In config.mailTo2
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "3"
+                Case "03"
                     For Each emailAddress In config.mailTo3
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "4"
+                Case "04"
                     For Each emailAddress In config.mailTo4
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "5"
+                Case "05"
                     For Each emailAddress In config.mailTo5
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "6"
+                Case "06"
                     For Each emailAddress In config.mailTo6
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "7"
+                Case "07"
                     For Each emailAddress In config.mailTo7
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "8"
+                Case "08"
                     For Each emailAddress In config.mailTo8
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "9"
+                Case "09"
                     For Each emailAddress In config.mailTo9
                         user.mailTo.Add(emailAddress)
                     Next
@@ -1655,23 +1655,23 @@ WHERE        (relationship.relationship_type_id IN (2, 5, 16, 29, 34))
                     Case 2
                         user.currentYear = "10"
                     Case 3
-                        user.currentYear = "9"
+                        user.currentYear = "09"
                     Case 4
-                        user.currentYear = "8"
+                        user.currentYear = "08"
                     Case 5
-                        user.currentYear = "7"
+                        user.currentYear = "07"
                     Case 6
-                        user.currentYear = "6"
+                        user.currentYear = "06"
                     Case 7
-                        user.currentYear = "5"
+                        user.currentYear = "05"
                     Case 8
-                        user.currentYear = "4"
+                        user.currentYear = "04"
                     Case 9
-                        user.currentYear = "3"
+                        user.currentYear = "03"
                     Case 10
-                        user.currentYear = "2"
+                        user.currentYear = "02"
                     Case 11
-                        user.currentYear = "1"
+                        user.currentYear = "01"
                     Case 12
                         user.currentYear = "K"
                 End Select
@@ -2065,15 +2065,15 @@ LEFT JOIN sys_user
                     strExt12 = getChildFromChildren(parent.children, "12")
                     strExt11 = getChildFromChildren(parent.children, "11")
                     strExt10 = getChildFromChildren(parent.children, "10")
-                    strExt9 = getChildFromChildren(parent.children, "9")
-                    strExt8 = getChildFromChildren(parent.children, "8")
-                    strExt7 = getChildFromChildren(parent.children, "7")
-                    strExt6 = getChildFromChildren(parent.children, "6")
-                    strExt5 = getChildFromChildren(parent.children, "5")
-                    strExt4 = getChildFromChildren(parent.children, "4")
-                    strExt3 = getChildFromChildren(parent.children, "3")
-                    strExt2 = getChildFromChildren(parent.children, "2")
-                    strExt1 = getChildFromChildren(parent.children, "1")
+                    strExt9 = getChildFromChildren(parent.children, "09")
+                    strExt8 = getChildFromChildren(parent.children, "08")
+                    strExt7 = getChildFromChildren(parent.children, "07")
+                    strExt6 = getChildFromChildren(parent.children, "06")
+                    strExt5 = getChildFromChildren(parent.children, "05")
+                    strExt4 = getChildFromChildren(parent.children, "04")
+                    strExt3 = getChildFromChildren(parent.children, "03")
+                    strExt2 = getChildFromChildren(parent.children, "02")
+                    strExt1 = getChildFromChildren(parent.children, "01")
                     strExt13 = getChildFromChildren(parent.children, "K")
 
                     '[If CInt(strExt12 & strExt11 & strExt10 & strExt9 & strExt8 & strExt7 & strExt6 & strExt5 & strExt4 & strExt3 & strExt2 & strExt1 & strExt13) > 1 Then
@@ -2286,14 +2286,14 @@ LEFT JOIN sys_user
         End If
     End Function
 
-    Public Sub SchoolboxMain(adconfig As configSettings)
+    Public Sub SchoolboxMain(adconfig As configSettings, currentEdumateStudents As List(Of user))
 
         Console.WriteLine("Doing Schoolbox stuff")
         Dim config As schoolboxConfigSettings
         config = SchoolboxReadConfig()
 
         Console.WriteLine("Creating user.csv")
-        Call writeUserCSV(config, adconfig)
+        Call writeUserCSV(config, adconfig, currentEdumateStudents)
         Console.WriteLine("User.csv done")
         Console.WriteLine("")
         Console.WriteLine("")
@@ -2309,7 +2309,7 @@ LEFT JOIN sys_user
         Console.WriteLine("Schoolbox stuff done")
     End Sub
 
-    Sub writeUserCSV(config As schoolboxConfigSettings, adconfig As configSettings)
+    Sub writeUserCSV(config As schoolboxConfigSettings, adconfig As configSettings, currentEdumateStudents As List(Of user))
 
 
         Dim dirEntry As DirectoryEntry
@@ -2358,90 +2358,141 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
         Console.WriteLine("Loading Schoolbox Data... ")
         Console.Write("Students... ")
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
-            conn.Open()
 
-            'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
-            command.Connection = conn
-            command.CommandText = commandString
+        For Each edumateStudent In currentEdumateStudents
+            users.Add(New SchoolBoxUser)
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            users.Last.Delete = ""
+            users.Last.SchoolboxUserID = ""
+            users.Last.Title = ""
 
-            dr = command.ExecuteReader
-
-
-            Dim i As Integer = 0
-            While dr.Read()
-                If Not dr.IsDBNull(0) Then
-                    users.Add(New SchoolBoxUser)
-
-                    users.Last.Delete = ""
-                    users.Last.SchoolboxUserID = ""
-                    users.Last.Title = ""
-
-                    If Not dr.IsDBNull(5) Then
-                        Try
-                            If Int(Right(dr.GetValue(5), 2)) < 7 Then
-                                users.Last.Campus = "Junior"
-                                users.Last.Role = "Junior Students"
-                            Else
-                                users.Last.Campus = "Senior"
-                                users.Last.Role = "Senior Students"
-                            End If
-                        Catch
-                            users.Last.Campus = "Junior"
-                            users.Last.Role = "Junior Students"
-                        End Try
-                    End If
-
-                    users.Last.Password = ""
-                    'users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
-                    users.Last.Year = dr.GetValue(7)
-                    users.Last.House = ""
-                    users.Last.ResidentialHouse = ""
-                    users.Last.EPortfolio = "Y"
-                    users.Last.HideContactDetails = "Y"
-                    users.Last.HideTimetable = "N"
-                    users.Last.EmailAddressFromUsername = "N"
-                    users.Last.UseExternalMailClient = "N"
-                    users.Last.EnableWebmailTab = "Y"
-                    users.Last.Superuser = "N"
-                    users.Last.AccountEnabled = "Y"
-                    users.Last.ChildExternalIDs = ""
-                    users.Last.HomePhone = ""
-                    users.Last.MobilePhone = ""
-                    users.Last.WorkPhone = ""
-                    users.Last.Address = ""
-                    users.Last.Suburb = ""
-                    users.Last.Postcode = ""
-
-
-                    ' REPLACE CODE HERE FOR USERNAME ========================================================================================================
-                    'If Not dr.IsDBNull(0) Then users.Last.Username = Replace(dr.GetValue(0), "noSAML", "")
-
-                    If Not dr.IsDBNull(0) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
-
-                    users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
-
-
-
-                    '========================================================================================================================================
-                    If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
-                    If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
-                    If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
-                    If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
-
-
-                    'MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
-
-
+            Try
+                If CInt(edumateStudent.currentYear) < 7 Then
+                    users.Last.Campus = "Junior"
+                    users.Last.Role = "Junior Students"
+                Else
+                    users.Last.Campus = "Senior"
+                    users.Last.Role = "Senior Students"
                 End If
+            Catch
+                users.Last.Campus = "Junior"
+                users.Last.Role = "Junior Students"
+            End Try
 
-            End While
-            conn.Close()
-            Console.Write("Done!" & Chr(13) & Chr(10))
-        End Using
+            users.Last.Password = ""
+            users.Last.Year = edumateStudent.currentYear
+            users.Last.House = ""
+            users.Last.ResidentialHouse = ""
+            users.Last.EPortfolio = "Y"
+            users.Last.HideContactDetails = "Y"
+            users.Last.HideTimetable = "N"
+            users.Last.EmailAddressFromUsername = "N"
+            users.Last.UseExternalMailClient = "N"
+            users.Last.EnableWebmailTab = "Y"
+            users.Last.Superuser = "N"
+            users.Last.AccountEnabled = "Y"
+            users.Last.ChildExternalIDs = ""
+            users.Last.HomePhone = ""
+            users.Last.MobilePhone = ""
+            users.Last.WorkPhone = ""
+            users.Last.Address = ""
+            users.Last.Suburb = ""
+            users.Last.Postcode = ""
+            users.Last.Username = edumateStudent.ad_username
+            users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
+            users.Last.ExternalID = edumateStudent.employeeNumber
+            users.Last.FirstName = """" & edumateStudent.firstName & """"
+            users.Last.Surname = """" & edumateStudent.surname & """"
+            users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(edumateStudent.dob)
+
+            '            If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
+        Next
+
+
+        'Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        '    conn.Open()
+
+        '    'define the command object to execute
+        '    Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+        '    command.Connection = conn
+        '    command.CommandText = commandString
+
+        '    Dim dr As System.Data.Odbc.OdbcDataReader
+
+        '    dr = command.ExecuteReader
+
+
+        '    Dim i As Integer = 0
+        '    While dr.Read()
+        '        If Not dr.IsDBNull(0) Then
+        '            users.Add(New SchoolBoxUser)
+
+        '            users.Last.Delete = ""
+        '            users.Last.SchoolboxUserID = ""
+        '            users.Last.Title = ""
+
+        '            If Not dr.IsDBNull(5) Then
+        '                Try
+        '                    If Int(Right(dr.GetValue(5), 2)) < 7 Then
+        '                        users.Last.Campus = "Junior"
+        '                        users.Last.Role = "Junior Students"
+        '                    Else
+        '                        users.Last.Campus = "Senior"
+        '                        users.Last.Role = "Senior Students"
+        '                    End If
+        '                Catch
+        '                    users.Last.Campus = "Junior"
+        '                    users.Last.Role = "Junior Students"
+        '                End Try
+        '            End If
+
+        '            users.Last.Password = ""
+        '            'users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
+        '            users.Last.Year = dr.GetValue(7)
+        '            users.Last.House = ""
+        '            users.Last.ResidentialHouse = ""
+        '            users.Last.EPortfolio = "Y"
+        '            users.Last.HideContactDetails = "Y"
+        '            users.Last.HideTimetable = "N"
+        '            users.Last.EmailAddressFromUsername = "N"
+        '            users.Last.UseExternalMailClient = "N"
+        '            users.Last.EnableWebmailTab = "Y"
+        '            users.Last.Superuser = "N"
+        '            users.Last.AccountEnabled = "Y"
+        '            users.Last.ChildExternalIDs = ""
+        '            users.Last.HomePhone = ""
+        '            users.Last.MobilePhone = ""
+        '            users.Last.WorkPhone = ""
+        '            users.Last.Address = ""
+        '            users.Last.Suburb = ""
+        '            users.Last.Postcode = ""
+
+
+        '            ' REPLACE CODE HERE FOR USERNAME ========================================================================================================
+        '            'If Not dr.IsDBNull(0) Then users.Last.Username = Replace(dr.GetValue(0), "noSAML", "")
+
+        '            If Not dr.IsDBNull(0) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
+
+        '            users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
+
+
+
+        '            '========================================================================================================================================
+        '            If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
+        '            If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
+        '            If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
+        '            If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
+
+
+        '            'MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
+
+
+        '        End If
+
+        '    End While
+        '    conn.Close()
+        '    Console.Write("Done!" & Chr(13) & Chr(10))
+        'End Using
 
 
 
@@ -2489,15 +2540,13 @@ from schoolbox_parent_student
         'Parents **********************
         commandString = "
 select
-schoolbox_parents.email,
-schoolbox_parents.carer_number,
+contact.email_address,
+carer.carer_number,
 contact.firstname,
 contact.surname,
 carer.carer_id
 
-
-from schoolbox_parents
-inner join carer on schoolbox_parents.carer_number = carer.carer_number
+from carer
 inner join contact on carer.contact_id = contact.contact_id
 
 "
@@ -2543,7 +2592,9 @@ inner join contact on carer.contact_id = contact.contact_id
                 'If Not dr.IsDBNull(0) Then users.Last.Username = Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1)
                 users.Last.Username = getUsernameFromID(dr.GetValue(4), adUsers)
 
-                If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
+
+                'If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
+                users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                 If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
                 If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
@@ -2716,7 +2767,8 @@ left join contact on carer.contact_id = contact.contact_id
                         End If
                     End If
 
-                    If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
+                    'If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
+                    users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
                     If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
                     If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
                     If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
@@ -3078,8 +3130,10 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         Dim sw As New StreamWriter(".\user.csv")
         sw.WriteLine("Delete?,Schoolbox User ID,Username,External ID,Title,First Name,Surname,Role,Campus,Password,Alt Email,Year,House,Residential House,E-Portfolio?,Hide Contact Details?,Hide Timetable?,Email Address From Username?,Use External Mail Client?,Enable Webmail Tab?,Account Enabled?,Child External IDs,Date of Birth,Home Phone,Mobile Phone,Work Phone,Address,Suburb,Postcode,Position Title")
         For Each i In users
-            sw.WriteLine(i.Delete & "," & i.SchoolboxUserID & "," & i.Username & "," & i.ExternalID & "," & i.Title & "," & i.FirstName & "," & i.Surname & "," & i.Role & "," & i.Campus & "," & i.Password & "," & i.AltEmail & "," & i.Year & "," & i.House & "," & i.ResidentialHouse & "," & i.EPortfolio & "," & i.HideContactDetails & "," & i.HideTimetable & "," & i.EmailAddressFromUsername & "," & i.UseExternalMailClient & "," & i.EnableWebmailTab & "," & i.AccountEnabled & "," & i.ChildExternalIDs & "," & i.DateOfBirth & "," & i.HomePhone & "," & i.MobilePhone & "," & i.WorkPhone & "," & i.Address & "," & i.Suburb & "," & i.Postcode & "," & i.PositionTitle)
 
+            If Len(i.Campus) > 2 Then
+                sw.WriteLine(i.Delete & "," & i.SchoolboxUserID & "," & i.Username & "," & i.ExternalID & "," & i.Title & "," & i.FirstName & "," & i.Surname & "," & i.Role & "," & i.Campus & "," & i.Password & "," & i.AltEmail & "," & i.Year & "," & i.House & "," & i.ResidentialHouse & "," & i.EPortfolio & "," & i.HideContactDetails & "," & i.HideTimetable & "," & i.EmailAddressFromUsername & "," & i.UseExternalMailClient & "," & i.EnableWebmailTab & "," & i.AccountEnabled & "," & i.ChildExternalIDs & "," & i.DateOfBirth & "," & i.HomePhone & "," & i.MobilePhone & "," & i.WorkPhone & "," & i.Address & "," & i.Suburb & "," & i.Postcode & "," & i.PositionTitle)
+            End If
 
 
         Next
@@ -4657,23 +4711,23 @@ AND event.recurring_id is null
             Select Case user.currentYear
                 Case "K"
                     kindyUsers.Add(user)
-                Case "1"
+                Case "01"
                     Year01Users.Add(user)
-                Case "2"
+                Case "02"
                     Year02Users.Add(user)
-                Case "3"
+                Case "03"
                     Year03Users.Add(user)
-                Case "4"
+                Case "04"
                     Year04Users.Add(user)
-                Case "5"
+                Case "05"
                     Year05Users.Add(user)
-                Case "6"
+                Case "06"
                     Year06Users.Add(user)
-                Case "7"
+                Case "07"
                     Year07Users.Add(user)
-                Case "8"
+                Case "08"
                     Year08Users.Add(user)
-                Case "9"
+                Case "09"
                     Year09Users.Add(user)
                 Case "10"
                     Year10Users.Add(user)
