@@ -1186,7 +1186,10 @@ WHERE
 
                     While availableNameFound = False And i <= user.firstName.Length
 
+                        user.surname = Replace(user.surname, "&#039;", "")
+                        user.firstName = Replace(user.firstName, "&#039;", "")
                         strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
+
                         Console.WriteLine("Trying " & strUsername & "...")
                         Dim duplicate As Boolean
                         duplicate = False
