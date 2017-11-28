@@ -2404,8 +2404,8 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
             users.Last.Username = edumateStudent.ad_username
             users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
             users.Last.ExternalID = edumateStudent.employeeNumber
-            users.Last.FirstName = """" & edumateStudent.firstName & """"
-            users.Last.Surname = """" & edumateStudent.surname & """"
+            users.Last.FirstName = """" & Replace(edumateStudent.firstName, "&#039;", "'") & """"
+            users.Last.Surname = """" & Replace(edumateStudent.surname, "&#039;", "'") & """"
             users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(edumateStudent.dob)
 
             '            If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
@@ -2599,8 +2599,8 @@ inner join contact on carer.contact_id = contact.contact_id
                 'If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
                 users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
                 If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
-                If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
-                If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
+                If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & Replace(dr.GetValue(2), "&#039;", "'") & """"
+                If Not dr.IsDBNull(3) Then users.Last.Surname = """" & Replace(dr.GetValue(3), "&#039;", "'") & """"
 
 
                 For Each a In studentParents
@@ -2777,14 +2777,15 @@ left join contact on carer.contact_id = contact.contact_id
                         Else
                             'MsgBox("Duplicate check fail")
                             users.Last.Username = getUsernameFromID(dr.GetValue(4), adUsers) & "_parent"
+                            users.Last.ExternalID = ""
                         End If
                     End If
 
                     'If Not dr.IsDBNull(0) Then users.Last.AltEmail = dr.GetValue(0)
                     users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
                     If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
-                    If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
-                    If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
+                    If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & Replace(dr.GetValue(2), "&#039;", "'") & """"
+                    If Not dr.IsDBNull(3) Then users.Last.Surname = """" & Replace(dr.GetValue(3), "&#039;", "'") & """"
 
 
                     For Each a In studentParents
