@@ -2612,61 +2612,71 @@ inner join contact on carer.contact_id = contact.contact_id
                             If a.student_id = existingUser.ExternalID Then
 
                                 Select Case True
-                                    Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
-                                    Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        users.Last.Campus = "Junior"
 
-                                    Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                    Case (existingUser.Campus = "Junior") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        users.Last.Campus = "Junior"
+                                    Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                         users.Last.Campus = "Senior"
-                                    Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        users.Last.Campus = "Senior"
-                                    Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        users.Last.Campus = "Senior"
-                                    Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        users.Last.Campus = "Senior"
-                                    Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        users.Last.Campus = "Senior"
-                                    Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        users.Last.Campus = "Senior"
-
-                                    Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                    Case (existingUser.Year = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
                                         users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                    Case existingUser.Year = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
                                         users.Last.Campus = "Junior, Senior"
 
-                                    Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
+                                        '   Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '      users.Last.Campus = "Junior"
+                                        ' Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '     users.Last.Campus = "Junior"
+                                        ' Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '    users.Last.Campus = "Junior"
+                                        '                        Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '                              users.Last.Campus = "Junior"
+                                        '                          Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '                             users.Last.Campus = "Junior"
+                                        '                         Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '                            users.Last.Campus = "Junior"
+                                        '                       Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                        '                          users.Last.Campus = "Junior"
+
+                                        ' Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '      users.Last.Campus = "Senior"
+                                        '  Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '        users.Last.Campus = "Senior"
+                                        '    Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '         users.Last.Campus = "Senior"
+                                        '     Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '         users.Last.Campus = "Senior"
+                                        '     Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '         users.Last.Campus = "Senior"
+                                        '    Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        '        users.Last.Campus = "Senior"
+
+                                        '    Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '      users.Last.Campus = "Junior, Senior"
+                                        '  Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '      users.Last.Campus = "Junior, Senior"
+                                        '  Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '      users.Last.Campus = "Junior, Senior"
+                                        '   Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '        users.Last.Campus = "Junior, Senior"
+                                        '     Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        '          users.Last.Campus = "Junior, Senior"
+
+                                        '     Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '           users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
+                                        '        Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        '            users.Last.Campus = "Junior, Senior"
 
                                 End Select
                             End If
@@ -2785,61 +2795,71 @@ left join contact on carer.contact_id = contact.contact_id
                                 If a.student_id = existingUser.ExternalID Then
 
                                     Select Case True
-                                        Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
-                                        Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            users.Last.Campus = "Junior"
 
-                                        Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                        Case (existingUser.Campus = "Junior") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            users.Last.Campus = "Junior"
+                                        Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                             users.Last.Campus = "Senior"
-                                        Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            users.Last.Campus = "Senior"
-                                        Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            users.Last.Campus = "Senior"
-                                        Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            users.Last.Campus = "Senior"
-                                        Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            users.Last.Campus = "Senior"
-                                        Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            users.Last.Campus = "Senior"
-
-                                        Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        Case (existingUser.Year = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
                                             users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        Case existingUser.Year = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
                                             users.Last.Campus = "Junior, Senior"
 
-                                        Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
+                                            'Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+                                            'Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
+                                            '    users.Last.Campus = "Junior"
+
+                                            'Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+                                            'Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+                                            'Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+                                            'Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+                                            'Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+                                            'Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
+                                            '    users.Last.Campus = "Senior"
+
+                                            'Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+
+                                            'Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
+                                            'Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            '    users.Last.Campus = "Junior, Senior"
 
                                     End Select
                                 End If
