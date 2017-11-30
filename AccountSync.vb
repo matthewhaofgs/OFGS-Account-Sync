@@ -2617,10 +2617,10 @@ inner join contact on carer.contact_id = contact.contact_id
                                         users.Last.Campus = "Junior"
                                     Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                         users.Last.Campus = "Senior"
-                                    Case (existingUser.Year = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
-                                    Case existingUser.Year = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        users.Last.Campus = "Junior, Senior"
+                                    Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = """Junior, Senior""")
+                                        users.Last.Campus = """Junior, Senior"""
+                                    Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = """Junior, Senior""")
+                                        users.Last.Campus = """Junior, Senior"""
 
                                         '   Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
                                         '      users.Last.Campus = "Junior"
@@ -2695,7 +2695,7 @@ inner join contact on carer.contact_id = contact.contact_id
 
                 Next
                 users.Last.ChildExternalIDs = """" & users.Last.ChildExternalIDs & """"
-                users.Last.Campus = """" & users.Last.Campus & """"
+                'users.Last.Campus = """" & users.Last.Campus & """"
 
 
 
@@ -2801,10 +2801,10 @@ left join contact on carer.contact_id = contact.contact_id
                                             users.Last.Campus = "Junior"
                                         Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                             users.Last.Campus = "Senior"
-                                        Case (existingUser.Year = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
-                                        Case existingUser.Year = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            users.Last.Campus = "Junior, Senior"
+                                        Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = """Junior, Senior""")
+                                            users.Last.Campus = """Junior, Senior"""
+                                        Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = """Junior, Senior""")
+                                            users.Last.Campus = """Junior, Senior"""
 
                                             'Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
                                             '    users.Last.Campus = "Junior"
@@ -2885,7 +2885,7 @@ left join contact on carer.contact_id = contact.contact_id
 
                     Next
                     users.Last.ChildExternalIDs = """" & users.Last.ChildExternalIDs & """"
-                    users.Last.Campus = """" & users.Last.Campus & """"
+                    'users.Last.Campus = """" & users.Last.Campus & """"
                 End If
 
 
@@ -3155,8 +3155,10 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         sw.WriteLine("Delete?,Schoolbox User ID,Username,External ID,Title,First Name,Surname,Role,Campus,Password,Alt Email,Year,House,Residential House,E-Portfolio?,Hide Contact Details?,Hide Timetable?,Email Address From Username?,Use External Mail Client?,Enable Webmail Tab?,Account Enabled?,Child External IDs,Date of Birth,Home Phone,Mobile Phone,Work Phone,Address,Suburb,Postcode,Position Title")
         For Each i In users
 
-            If Len(i.Campus) > 2 Then
-                sw.WriteLine(i.Delete & "," & i.SchoolboxUserID & "," & i.Username & "," & i.ExternalID & "," & i.Title & "," & i.FirstName & "," & i.Surname & "," & i.Role & "," & i.Campus & "," & i.Password & "," & i.AltEmail & "," & i.Year & "," & i.House & "," & i.ResidentialHouse & "," & i.EPortfolio & "," & i.HideContactDetails & "," & i.HideTimetable & "," & i.EmailAddressFromUsername & "," & i.UseExternalMailClient & "," & i.EnableWebmailTab & "," & i.AccountEnabled & "," & i.ChildExternalIDs & "," & i.DateOfBirth & "," & i.HomePhone & "," & i.MobilePhone & "," & i.WorkPhone & "," & i.Address & "," & i.Suburb & "," & i.Postcode & "," & i.PositionTitle)
+            ' If i.Campus = "Junior" Or i.Campus = "Senior" Or i.Campus = """Junior, Senior""" Then
+            If i.Campus <> "" Then
+                If i.Year = "" Then i.Year = "K"
+                sw.WriteLine(i.Delete & "," & i.SchoolboxUserID & "," & i.Username & "," & i.ExternalID & "," & i.Title & "," & i.FirstName & "," & i.Surname & "," & i.Role & ",""" & i.Campus & """," & i.Password & "," & i.AltEmail & "," & i.Year & "," & i.House & "," & i.ResidentialHouse & "," & i.EPortfolio & "," & i.HideContactDetails & "," & i.HideTimetable & "," & i.EmailAddressFromUsername & "," & i.UseExternalMailClient & "," & i.EnableWebmailTab & "," & i.AccountEnabled & "," & i.ChildExternalIDs & "," & i.DateOfBirth & "," & i.HomePhone & "," & i.MobilePhone & "," & i.WorkPhone & "," & i.Address & "," & i.Suburb & "," & i.Postcode & "," & i.PositionTitle)
             End If
 
 
@@ -3170,6 +3172,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         ddMMYYYY_to_yyyyMMdd = Strings.Right(inString, 4) & "-" & Left(Mid(inString, Strings.InStr(inString, "/") + 1), 2) & "-" & Left(inString, InStr(inString, "/") - 1)
 
     End Function
+
 
     Sub timetableStructure(config As schoolboxConfigSettings)
 
