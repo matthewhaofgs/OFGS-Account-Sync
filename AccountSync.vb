@@ -2617,10 +2617,10 @@ inner join contact on carer.contact_id = contact.contact_id
                                         users.Last.Campus = "Junior"
                                     Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                         users.Last.Campus = "Senior"
-                                    Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = """Junior, Senior""")
-                                        users.Last.Campus = """Junior, Senior"""
-                                    Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = """Junior, Senior""")
-                                        users.Last.Campus = """Junior, Senior"""
+                                    Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
+                                    Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                        users.Last.Campus = "Junior, Senior"
 
                                         '   Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
                                         '      users.Last.Campus = "Junior"
@@ -2801,10 +2801,10 @@ left join contact on carer.contact_id = contact.contact_id
                                             users.Last.Campus = "Junior"
                                         Case existingUser.Campus = "Senior" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
                                             users.Last.Campus = "Senior"
-                                        Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = """Junior, Senior""")
-                                            users.Last.Campus = """Junior, Senior"""
-                                        Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = """Junior, Senior""")
-                                            users.Last.Campus = """Junior, Senior"""
+                                        Case (existingUser.Campus = "Junior") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
+                                            users.Last.Campus = "Junior, Senior"
+                                        Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
+                                            users.Last.Campus = "Junior, Senior"
 
                                             'Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
                                             '    users.Last.Campus = "Junior"
@@ -3050,7 +3050,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
                 users.Last.Role = "Staff"
 
-                users.Last.Campus = """Junior, Senior"""
+                users.Last.Campus = "Junior, Senior"
                 users.Last.Password = ""
 
                 users.Last.Year = ""
