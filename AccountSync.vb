@@ -2383,6 +2383,7 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
             End Try
 
             users.Last.Password = ""
+
             users.Last.Year = edumateStudent.currentYear
             users.Last.House = ""
             users.Last.ResidentialHouse = ""
@@ -2743,7 +2744,6 @@ left join contact on carer.contact_id = contact.contact_id
                     users.Last.SchoolboxUserID = ""
                     users.Last.Title = ""
                     users.Last.Role = "Parents"
-                    'users.Last.Campus = "Senior"
                     users.Last.Password = ""
                     users.Last.Year = "Parent"
                     users.Last.ResidentialHouse = ""
@@ -2767,7 +2767,7 @@ left join contact on carer.contact_id = contact.contact_id
                         Dim duplicateUser As Boolean
                         duplicateUser = False
                         For Each z In users
-                            'If Strings.Left(dr.GetValue(0), Strings.InStr(dr.GetValue(0), "@") - 1) = z.Username Then
+
                             If getUsernameFromID(dr.GetValue(4), adUsers) = z.Username Then
                                 duplicateUser = True
                             End If
@@ -3053,7 +3053,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                 users.Last.Campus = "Junior, Senior"
                 users.Last.Password = ""
 
-                users.Last.Year = ""
+                users.Last.Year = "Staff"
                 users.Last.ResidentialHouse = ""
                 users.Last.EPortfolio = "Y"
                 users.Last.HideContactDetails = "Y"
@@ -3156,8 +3156,28 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         For Each i In users
 
             ' If i.Campus = "Junior" Or i.Campus = "Senior" Or i.Campus = """Junior, Senior""" Then
-            If i.Campus <> "" Then
-                If i.Year = "" Then i.Year = "K"
+            If i.Campus <> "" And Not i.Username.Contains("_parent") Then
+                Select Case i.Year
+                    Case "K"
+                    Case "01"
+                    Case "02"
+                    Case "03"
+                    Case "04"
+                    Case "05"
+                    Case "06"
+                    Case "07"
+                    Case "08"
+                    Case "09"
+                    Case "10"
+                    Case "11"
+                    Case "12"
+                    Case "Parent"
+                    Case "Staff"
+                    Case Else
+                        i.Year = "K"
+                End Select
+
+
                 sw.WriteLine(i.Delete & "," & i.SchoolboxUserID & "," & i.Username & "," & i.ExternalID & "," & i.Title & "," & i.FirstName & "," & i.Surname & "," & i.Role & ",""" & i.Campus & """," & i.Password & "," & i.AltEmail & "," & i.Year & "," & i.House & "," & i.ResidentialHouse & "," & i.EPortfolio & "," & i.HideContactDetails & "," & i.HideTimetable & "," & i.EmailAddressFromUsername & "," & i.UseExternalMailClient & "," & i.EnableWebmailTab & "," & i.AccountEnabled & "," & i.ChildExternalIDs & "," & i.DateOfBirth & "," & i.HomePhone & "," & i.MobilePhone & "," & i.WorkPhone & "," & i.Address & "," & i.Suburb & "," & i.Postcode & "," & i.PositionTitle)
             End If
 
