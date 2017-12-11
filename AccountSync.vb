@@ -1378,7 +1378,7 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 
-WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+WHERE        (relationship.relationship_type_id IN (1, 4, 8, 15, 28, 33)) 
 "
 
 
@@ -1459,7 +1459,7 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 
-WHERE        (relationship.relationship_type_id IN (2, 5, 16, 29, 34)) 
+WHERE        (relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
 "
 
 
@@ -4187,6 +4187,8 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
             sw.WriteLine("13TX1,""12 D&T Textiles"",11550")
             sw.WriteLine("13TX1,""12 D&T Textiles"",12782")
             sw.WriteLine("13TX1,""12 D&T Textiles"",3607")
+            sw.WriteLine("12SOR1,""12 Studies of Religion 1"",9549")
+
 
             conn.Close()
         End Using
