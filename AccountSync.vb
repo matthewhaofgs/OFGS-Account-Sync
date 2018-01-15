@@ -194,6 +194,7 @@ Module AccountSync
         Console.WriteLine("Reading config...")
         config = readConfig()
 
+
         'Declare and connect to mySQL Database to text connection is working
         Dim conn As New MySqlConnection
         connect(conn, config)
@@ -503,15 +504,15 @@ WHERE
 
 
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -1386,15 +1387,15 @@ WHERE        (relationship.relationship_type_id IN (1, 4, 8, 15, 28, 33))
 
 
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -1463,15 +1464,15 @@ WHERE        (relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34))
 "
 
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -1715,15 +1716,15 @@ LEFT JOIN sys_user
 
 
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -2515,15 +2516,15 @@ carer_number
 from schoolbox_parent_student
 "
         Dim studentParents As New List(Of studentParent)
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -2555,15 +2556,15 @@ inner join contact on carer.contact_id = contact.contact_id
 
 "
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -2724,15 +2725,15 @@ left join contact on carer.contact_id = contact.contact_id
 
 "
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0
@@ -3025,15 +3026,15 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
 "
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             While dr.Read()
@@ -3215,15 +3216,15 @@ WHERE        (start_date > '01/01/2017') AND (end_date < '01/01/2018') AND (term
         Dim sw As New StreamWriter(".\timetableStructure.csv")
 
         Dim ConnectionString As String = config.connectionString
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
 
@@ -3307,15 +3308,15 @@ AND
         Dim sw As New StreamWriter(".\timetable.csv")
 
         Dim ConnectionString As String = config.connectionString
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandstring, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandstring, conn)
             command.Connection = conn
             command.CommandText = commandstring
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
 
@@ -3698,15 +3699,15 @@ WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrol
         Dim sw As New StreamWriter(".\enrollment.csv")
 
         Dim ConnectionString As String = config.connectionString
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandstring, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandstring, conn)
             command.Connection = conn
             command.CommandText = commandstring
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
 
@@ -4244,8 +4245,8 @@ left join room on event_rooms.max_room_id = room.room_id
 
 
 WHERE
-event.start_date >  '01/01/2017' 
-AND event.end_date < '12/31/2017' 
+event.start_date >  '01/01/2018' 
+AND event.end_date < '12/31/2018' 
 AND event.publish_flag = 1
 AND event.recurring_id is not null and event.recurring_id > 0
 AND event.event_id = (select min(event_id) from event e2
@@ -4288,8 +4289,8 @@ on event.event_id = event_rooms.event_id
 left join room on event_rooms.max_room_id = room.room_id
 
 WHERE
-event.start_date >  '01/01/2017' 
-AND event.end_date < '12/31/2017' 
+event.start_date >  '01/01/2018' 
+AND event.end_date < '12/31/2018' 
 AND event.publish_flag = 1
 AND event.recurring_id is null
 
@@ -4303,15 +4304,15 @@ AND event.recurring_id is null
 
 
         Dim ConnectionString As String = config.connectionString
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandstring, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandstring, conn)
             command.Connection = conn
             command.CommandText = commandstring
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             swAll.WriteLine("Start Date,Start Time,Finish Date,Finish Time,All Day,Name,Detail,Location,Type,Publish Date,Attendance")
@@ -4959,15 +4960,15 @@ FROM            group_membership
 "
 
 
-        Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
             conn.Open()
 
             'define the command object to execute
-            Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
             command.Connection = conn
             command.CommandText = commandString
 
-            Dim dr As System.Data.Odbc.OdbcDataReader
+            Dim dr As IBM.Data.DB2.DB2DataReader
             dr = command.ExecuteReader
 
             Dim i As Integer = 0

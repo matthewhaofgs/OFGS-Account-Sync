@@ -47,6 +47,14 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IBM.Data.DB2, Version=9.7.4.4, Culture=neutral, PublicKeyToken=7c307b91aa13d208, processorArchitecture=AMD64">
+      <HintPath>packages\IBM.Data.DB2.10.0.5.5\lib\net451\IBM.Data.DB2.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IBM.Data.DB2.Entity, Version=9.7.4.4, Culture=neutral, PublicKeyToken=7c307b91aa13d208, processorArchitecture=AMD64">
+      <HintPath>packages\IBM.Data.DB2.10.0.5.5\lib\net451\IBM.Data.DB2.Entity.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="MySql.Data, Version=6.9.9.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <HintPath>packages\MySql.Data.6.9.9\lib\net45\MySql.Data.dll</HintPath>
       <Private>True</Private>
