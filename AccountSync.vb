@@ -3243,7 +3243,7 @@ WHERE        (start_date > '01/01/2018') AND (end_date < '01/01/2019') AND (term
 
                 strTermTitle = Replace(dr.GetValue(1), "2019", "2018")
 
-                outLine = (dr.GetValue(0) & "," & strTermTitle & "," & Format(dr.GetValue(2).adddays(-1), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
+                outLine = (dr.GetValue(0) & "," & strTermTitle & "," & Format(dr.GetValue(2), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
                 sw.WriteLine(outLine)
             End While
             conn.Close()
