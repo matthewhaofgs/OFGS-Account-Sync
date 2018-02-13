@@ -827,54 +827,6 @@ WHERE
                         strMail = objUserToAdd.ad_username & config.parentDomainName
 
 
-
-                        '                        For Each child In objUserToAdd.children
-                        '                        If child IsNot Nothing Then
-                        '
-                        '                       Select Case child.currentYear
-                        '                    Case "12"
-                        '                        Console.WriteLine("Child 12: " & child.employeeID)
-                        '                        strExt12 = child.employeeID
-                        '                    Case "11"
-                        '                        Console.WriteLine("Child 11: " & child.employeeID)
-                        '                        strExt11 = child.employeeID
-                        '                    Case "10"
-                        '                        Console.WriteLine("Child 10: " & child.employeeID)
-                        '                        strExt10 = child.employeeID
-                        '                    Case "9"
-                        '                        Console.WriteLine("Child 9: " & child.employeeID)
-                        '                        strExt9 = child.employeeID
-                        '                   Case "8"
-                        '                                        Console.WriteLine("Child 8: " & child.employeeID)
-                        '                       strExt8 = child.employeeID
-                        '                   Case "7"
-                        '                       Console.WriteLine("Child 7: " & child.employeeID)
-                        '                       strExt7 = child.employeeID
-                        '                   Case "6"
-                        '                       Console.WriteLine("Child 6: " & child.employeeID)
-                        '                       strExt6 = child.employeeID
-                        '                   Case "5"
-                        '                       Console.WriteLine("Child 5: " & child.employeeID)
-                        '                       strExt5 = child.employeeID
-                        '                   Case "4"
-                        '                       Console.WriteLine("Child 4: " & child.employeeID)
-                        '                       strExt4 = child.employeeID
-                        '                   Case "3"
-                        '                       Console.WriteLine("Child 3: " & child.employeeID)
-                        '                       strExt3 = child.employeeID
-                        '                   Case "2"
-                        '                      Console.WriteLine("Child 2: " & child.employeeID)
-                        '                      strExt2 = child.employeeID
-                        '                  Case "1"
-                        '                      Console.WriteLine("Child 1: " & child.employeeID)
-                        '                      strExt1 = child.employeeID
-                        '                  Case "K"
-                        '                      Console.WriteLine("Child 13: " & child.employeeID)
-                        '                      strExt13 = child.employeeID
-                        '              End Select
-                        '          End If
-                        '      Next
-
                     Case Else
                         'Do Else
 
@@ -935,45 +887,6 @@ WHERE
                     If strDescription <> "" Then
                         objUser.Properties("description").Add(strDescription)
                     End If
-                    If strExt12 <> "" Then
-                        ' objUser.Properties("extensionAttribute12").Add(strExt12)
-                    End If
-                    If strExt11 <> "" Then
-                        '  objUser.Properties("extensionAttribute11").Add(strExt11)
-                    End If
-                    If strExt10 <> "" Then
-                        '   objUser.Properties("extensionAttribute10").Add(strExt10)
-                    End If
-                    If strExt9 <> "" Then
-                        '  objUser.Properties("extensionAttribute9").Add(strExt9)
-                    End If
-                    If strExt8 <> "" Then
-                        '  objUser.Properties("extensionAttribute8").Add(strExt8)
-                    End If
-                    If strExt7 <> "" Then
-                        '   objUser.Properties("extensionAttribute7").Add(strExt7)
-                    End If
-                    If strExt6 <> "" Then
-                        '  objUser.Properties("extensionAttribute6").Add(strExt6)
-                    End If
-                    If strExt5 <> "" Then
-                        '   objUser.Properties("extensionAttribute5").Add(strExt5)
-                    End If
-                    If strExt4 <> "" Then
-                        '   objUser.Properties("extensionAttribute4").Add(strExt4)
-                    End If
-                    If strExt3 <> "" Then
-                        '   objUser.Properties("extensionAttribute3").Add(strExt3)
-                    End If
-                    If strExt2 <> "" Then
-                        '   objUser.Properties("extensionAttribute2").Add(strExt2)
-                    End If
-                    If strExt1 <> "" Then
-                        '   objUser.Properties("extensionAttribute1").Add(strExt1)
-                    End If
-                    If strExt13 <> "" Then
-                        '  objUser.Properties("extensionAttribute13").Add(strExt13)
-                    End If
 
 
 
@@ -981,25 +894,6 @@ WHERE
                         objUser.CommitChanges()
                     End If
 
-                    '            Catch e As Exception
-                    '                Console.WriteLine("Error: Create failed.")
-                    '                Console.WriteLine("         {0}", e.Message)
-                    '                For Each mailTo In objUserToAdd.mailTo
-                    '                Dim duplicate As Boolean = False
-                    '                For Each message In emailsToSend
-                    '                If message.mailTo = mailTo Then
-                    '                duplicate = True
-                    '                Message.body = message.body & "Error:   Create failed.  " & e.Message & vbCrLf
-                    '                End If
-                    '        Next
-                    '                If Not duplicate Then
-                    '                emailsToSend.Add(New emailNotification)
-                    '                emailsToSend.Last.mailTo = mailTo
-                    '                emailsToSend.Last.body = "Error:   Create failed.  " & e.Message & vbCrLf
-                    '                End If
-                    '        Next
-                    '                Return
-                    '            End Try
 
                     objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
                     If config.applyChanges Then
@@ -2417,99 +2311,7 @@ WHERE (SELECT current date FROM sysibm.sysdummy1) between student_form_run.start
             '            If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
         Next
 
-
-        'Using conn As New System.Data.Odbc.OdbcConnection(ConnectionString)
-        '    conn.Open()
-
-        '    'define the command object to execute
-        '    Dim command As New System.Data.Odbc.OdbcCommand(commandString, conn)
-        '    command.Connection = conn
-        '    command.CommandText = commandString
-
-        '    Dim dr As System.Data.Odbc.OdbcDataReader
-
-        '    dr = command.ExecuteReader
-
-
-        '    Dim i As Integer = 0
-        '    While dr.Read()
-        '        If Not dr.IsDBNull(0) Then
-        '            users.Add(New SchoolBoxUser)
-
-        '            users.Last.Delete = ""
-        '            users.Last.SchoolboxUserID = ""
-        '            users.Last.Title = ""
-
-        '            If Not dr.IsDBNull(5) Then
-        '                Try
-        '                    If Int(Right(dr.GetValue(5), 2)) < 7 Then
-        '                        users.Last.Campus = "Junior"
-        '                        users.Last.Role = "Junior Students"
-        '                    Else
-        '                        users.Last.Campus = "Senior"
-        '                        users.Last.Role = "Senior Students"
-        '                    End If
-        '                Catch
-        '                    users.Last.Campus = "Junior"
-        '                    users.Last.Role = "Junior Students"
-        '                End Try
-        '            End If
-
-        '            users.Last.Password = ""
-        '            'users.Last.AltEmail = Replace(dr.GetValue(0) & config.studentEmailDomain, "noSAML", "")
-        '            users.Last.Year = dr.GetValue(7)
-        '            users.Last.House = ""
-        '            users.Last.ResidentialHouse = ""
-        '            users.Last.EPortfolio = "Y"
-        '            users.Last.HideContactDetails = "Y"
-        '            users.Last.HideTimetable = "N"
-        '            users.Last.EmailAddressFromUsername = "N"
-        '            users.Last.UseExternalMailClient = "N"
-        '            users.Last.EnableWebmailTab = "Y"
-        '            users.Last.Superuser = "N"
-        '            users.Last.AccountEnabled = "Y"
-        '            users.Last.ChildExternalIDs = ""
-        '            users.Last.HomePhone = ""
-        '            users.Last.MobilePhone = ""
-        '            users.Last.WorkPhone = ""
-        '            users.Last.Address = ""
-        '            users.Last.Suburb = ""
-        '            users.Last.Postcode = ""
-
-
-        '            ' REPLACE CODE HERE FOR USERNAME ========================================================================================================
-        '            'If Not dr.IsDBNull(0) Then users.Last.Username = Replace(dr.GetValue(0), "noSAML", "")
-
-        '            If Not dr.IsDBNull(0) Then users.Last.Username = getUsernameFromID(dr.GetValue(6), adUsers)
-
-        '            users.Last.AltEmail = (users.Last.Username & config.studentEmailDomain)
-
-
-
-        '            '========================================================================================================================================
-        '            If Not dr.IsDBNull(1) Then users.Last.ExternalID = dr.GetValue(1)
-        '            If Not dr.IsDBNull(2) Then users.Last.FirstName = """" & dr.GetValue(2) & """"
-        '            If Not dr.IsDBNull(3) Then users.Last.Surname = """" & dr.GetValue(3) & """"
-        '            If Not dr.IsDBNull(4) Then users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(dr.GetValue(4))
-
-
-        '            'MsgBox(users.Last.ExternalID & " " & users.Last.Surname & " " & users.Last.Username)
-
-
-        '        End If
-
-        '    End While
-        '    conn.Close()
-        '    Console.Write("Done!" & Chr(13) & Chr(10))
-        'End Using
-
-
-
-
-
         Console.Write("ParentToStudent... ")
-
-
 
 
         'Parent to student **********************
@@ -2627,62 +2429,6 @@ inner join contact on carer.contact_id = contact.contact_id
                                         users.Last.Campus = "Junior, Senior"
                                     Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
                                         users.Last.Campus = "Junior, Senior"
-
-                                        '   Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '      users.Last.Campus = "Junior"
-                                        ' Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '     users.Last.Campus = "Junior"
-                                        ' Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '    users.Last.Campus = "Junior"
-                                        '                        Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '                              users.Last.Campus = "Junior"
-                                        '                          Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '                             users.Last.Campus = "Junior"
-                                        '                         Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '                            users.Last.Campus = "Junior"
-                                        '                       Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                        '                          users.Last.Campus = "Junior"
-
-                                        ' Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '      users.Last.Campus = "Senior"
-                                        '  Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '        users.Last.Campus = "Senior"
-                                        '    Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '         users.Last.Campus = "Senior"
-                                        '     Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '         users.Last.Campus = "Senior"
-                                        '     Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '         users.Last.Campus = "Senior"
-                                        '    Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                        '        users.Last.Campus = "Senior"
-
-                                        '    Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '      users.Last.Campus = "Junior, Senior"
-                                        '  Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '      users.Last.Campus = "Junior, Senior"
-                                        '  Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '      users.Last.Campus = "Junior, Senior"
-                                        '   Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '        users.Last.Campus = "Junior, Senior"
-                                        '     Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                        '          users.Last.Campus = "Junior, Senior"
-
-                                        '     Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '           users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
-                                        '        Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                        '            users.Last.Campus = "Junior, Senior"
 
                                 End Select
                             End If
@@ -2811,74 +2557,9 @@ left join contact on carer.contact_id = contact.contact_id
                                         Case existingUser.Campus = "Senior" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
                                             users.Last.Campus = "Junior, Senior"
 
-                                            'Case (existingUser.Year = "K") And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "01" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "02" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "03" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "04" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "05" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-                                            'Case existingUser.Year = "06" And (users.Last.Campus = "" Or users.Last.Campus = "Junior")
-                                            '    users.Last.Campus = "Junior"
-
-                                            'Case existingUser.Year = "07" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-                                            'Case existingUser.Year = "08" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-                                            'Case existingUser.Year = "09" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-                                            'Case existingUser.Year = "10" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-                                            'Case existingUser.Year = "11" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-                                            'Case existingUser.Year = "12" And (users.Last.Campus = "" Or users.Last.Campus = "Senior")
-                                            '    users.Last.Campus = "Senior"
-
-                                            'Case (existingUser.Year = "K") And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "01" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "02" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "03" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "04" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "05" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "06" And (users.Last.Campus = "Senior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-
-                                            'Case existingUser.Year = "07" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "08" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "09" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "10" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "11" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-                                            'Case existingUser.Year = "12" And (users.Last.Campus = "Junior" Or users.Last.Campus = "Junior, Senior")
-                                            '    users.Last.Campus = "Junior, Senior"
-
                                     End Select
                                 End If
                             Next
-
-
-
-
-
-
-
-
-
 
 
                             If users.Last.ChildExternalIDs = "" Then
