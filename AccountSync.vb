@@ -2989,7 +2989,16 @@ AND
 	END
 	)
 	AND timetable.computed_end_date
-)"
+)
+AND
+(
+period_class.effective_start BETWEEN term.start_date AND term.end_date
+OR
+period_class.effective_end BETWEEN term.start_date AND term.end_date
+OR
+(period_class.effective_start <= term.start_date AND period_class.effective_end >= term.end_date)
+)
+"
 
         Dim sw As New StreamWriter(".\timetable.csv")
 
