@@ -48,6 +48,8 @@ Module AccountSync
         Public contact_id As String
         Public adObject As SearchResult
         Public edumateProperties As New EdumateProperties
+        Public enrolledClasses As String
+
 
     End Class
 
@@ -458,7 +460,6 @@ Module AccountSync
         Dim ConnectionString As String = config.edumateConnectionString
         Dim commandString As String =
 "
-
 SELECT        
 contact.firstname, 
 contact.surname, 
@@ -471,7 +472,8 @@ student.student_number,
 contact.birthdate,
 stu_school.library_card,
 Rollclass.class,
-stu_school.bos
+stu_school.bos,
+listagg(class.class,',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
 
 FROM            
 STUDENT
@@ -481,25 +483,47 @@ INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
 INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
 INNER JOIN form ON form_run.form_id = form.form_id
 INNER JOIN stu_school ON student.student_id = stu_school.student_id
+INNER JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
+INNER JOIN class ON class_enrollment.class_id = class.class_id 
 
 LEFT JOIN 
-(
-SELECT        
-student.student_id, 
-view_student_class_enrolment.class
+	(
+	SELECT        
+	student.student_id, 
+	view_student_class_enrolment.class
 
+	FROM            
+	STUDENT
 
-FROM            
-STUDENT
+	INNER JOIN view_student_class_enrolment ON student.student_id = view_student_class_enrolment.student_id
 
-INNER JOIN view_student_class_enrolment ON student.student_id = view_student_class_enrolment.student_id
+	WHERE 
+ 	(view_student_class_enrolment.class_type_id = 2)
+	AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
+	) RollClass ON rollclass.student_id = student.student_id
 
+	
 WHERE 
- (view_student_class_enrolment.class_type_id = 2)
-AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
-) RollClass ON rollclass.student_id = student.student_id
-WHERE 
+
 (YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+
+AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN class_enrollment.START_DATE AND class_enrollment.END_DATE
+
+
+GROUP BY 
+
+contact.firstname, 
+contact.surname, 
+view_student_start_exit_dates.start_date, 
+view_student_start_exit_dates.exit_date, 
+student.student_id, 
+form.short_name,
+YEAR(student_form_run.end_date),
+student.student_number,
+contact.birthdate,
+stu_school.library_card,
+Rollclass.class,
+stu_school.bos
 
 "
 
@@ -540,6 +564,7 @@ WHERE
                     users.Last.libraryCard = dr.GetValue(9)
                     users.Last.rollClass = dr.GetValue(10)
                     users.Last.bosNumber = dr.GetValue(11)
+                    users.Last.enrolledClasses = dr.GetValue(12)
 
                 End If
             End While
@@ -1884,6 +1909,8 @@ LEFT JOIN sys_user
                     cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET bos  = '{1}' where student_id = '{2}' ", usertable, user.bosNumber, user.employeeID), conn)
                     cmd.ExecuteNonQuery()
 
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET enrolled_classes  = '{1}' where student_id = '{2}' ", usertable, user.enrolledClasses, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
 
                 End If
             Next
