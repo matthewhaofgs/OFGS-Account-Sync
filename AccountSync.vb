@@ -49,6 +49,9 @@ Module AccountSync
         Public adObject As SearchResult
         Public edumateProperties As New EdumateProperties
         Public enrolledClasses As String
+        Public adFirstname As String
+        Public adSurname As String
+
 
 
     End Class
@@ -284,6 +287,7 @@ Module AccountSync
         updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
         currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
         AddStudentsToYearGroups(currentEdumateStudents, config)
+        currentEdumateStudents = addADObjectoToEdumateUser(currentEdumateStudents, adUsers)
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
         'Schoolbox Stuff
@@ -1910,6 +1914,12 @@ LEFT JOIN sys_user
                     cmd.ExecuteNonQuery()
 
                     cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET enrolled_classes  = '{1}' where student_id = '{2}' ", usertable, user.enrolledClasses, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET adFirstname  = '{1}' where student_id = '{2}' ", usertable, user.adFirstname, user.employeeID), conn)
+                    cmd.ExecuteNonQuery()
+
+                    cmd = New MySqlCommand(String.Format("UPDATE `{0}` SET adSurname  = '{1}' where student_id = '{2}' ", usertable, user.adSurname, user.employeeID), conn)
                     cmd.ExecuteNonQuery()
 
                 End If
@@ -4026,6 +4036,19 @@ FROM            group_membership
         conn.Close()
 
     End Sub
+
+    Function addADObjectoToEdumateUser(users As List(Of user), adUsers As List(Of user))
+        For Each user In users
+            For Each adUser In adUsers
+                If user.employeeID = adUser.employeeID Then
+                    user.adFirstname = adUser.firstName
+                    user.adSurname = Replace(adUser.surname, "'", "")
+                End If
+            Next
+        Next
+        addADObjectoToEdumateUser = users
+    End Function
+
 
 
 End Module
