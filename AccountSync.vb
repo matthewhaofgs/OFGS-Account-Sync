@@ -478,8 +478,8 @@ Public Module AccountSync
 SELECT        
 contact.firstname, 
 contact.surname, 
-view_student_start_exit_dates.start_date, 
-view_student_start_exit_dates.exit_date, 
+edumate.view_student_start_exit_dates.start_date, 
+edumate.view_student_start_exit_dates.exit_date, 
 student.student_id, 
 form.short_name AS grad_form,
 YEAR(student_form_run.end_date) as EndYear,
@@ -493,7 +493,7 @@ listagg(class.class,',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
 FROM            
 STUDENT
 INNER JOIN contact ON student.contact_id = contact.contact_id
-INNER JOIN view_student_start_exit_dates ON student.student_id = view_student_start_exit_dates.student_id
+INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
 INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
 INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
 INNER JOIN form ON form_run.form_id = form.form_id
@@ -505,22 +505,22 @@ LEFT JOIN
 	(
 	SELECT        
 	student.student_id, 
-	view_student_class_enrolment.class
+	edumate.view_student_class_enrolment.class
 
 	FROM            
 	STUDENT
 
-	INNER JOIN view_student_class_enrolment ON student.student_id = view_student_class_enrolment.student_id
+	INNER JOIN edumate.view_student_class_enrolment ON student.student_id = edumate.view_student_class_enrolment.student_id
 
 	WHERE 
- 	(view_student_class_enrolment.class_type_id = 2)
-	AND (view_student_class_enrolment.academic_year = char(year(current timestamp)))
+ 	(edumate.view_student_class_enrolment.class_type_id = 2)
+	AND (edumate.view_student_class_enrolment.academic_year = char(year(current timestamp)))
 	) RollClass ON rollclass.student_id = student.student_id
 
 	
 WHERE 
 
-(YEAR(view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
 
 AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN class_enrollment.START_DATE AND class_enrollment.END_DATE
 
@@ -529,8 +529,8 @@ GROUP BY
 
 contact.firstname, 
 contact.surname, 
-view_student_start_exit_dates.start_date, 
-view_student_start_exit_dates.exit_date, 
+edumate.view_student_start_exit_dates.start_date, 
+edumate.view_student_start_exit_dates.exit_date, 
 student.student_id, 
 form.short_name,
 YEAR(student_form_run.end_date),

@@ -177,163 +177,167 @@ Public Module Schoolbox
             users.Last.Username = edumateParent.ad_username
             users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
             users.Last.ExternalID = edumateParent.edumateProperties.carer_number
-            users.Last.FirstName = Replace(edumateParent.firstName, "&#039;", "'") & """"
+            users.Last.FirstName = """" & Replace(edumateParent.firstName, "&#039;", "'") & """"
             users.Last.Surname = """" & Replace(edumateParent.surname, "&#039;", "'") & """"
 
             For Each child In edumateParent.children
-                Select Case child.currentYear
-                    Case "12"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "11"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "10"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "09"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "08"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "07"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Senior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Senior"
-                                users.Last.Campus = "Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "06"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "05"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "04"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "03"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "02"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "01"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case "K"
-                        Select Case users.Last.Campus
-                            Case ""
-                                users.Last.Campus = "Junior"
-                            Case "Junior"
-                                users.Last.Campus = "Junior"
-                            Case "Senior"
-                                users.Last.Campus = "Junior, Senior"
-                            Case "Junior, Senior"
-                                users.Last.Campus = "Junior, Senior"
-                        End Select
-                    Case Else
-                End Select
+                If Not IsNothing(child) Then
 
-                If users.Last.ChildExternalIDs = "" Then
-                    users.Last.ChildExternalIDs = child.employeeNumber
-                Else
-                    users.Last.ChildExternalIDs = users.Last.ChildExternalIDs & ", " & child.employeeNumber
+                    Select Case child.currentYear
+                        Case "12"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "11"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "10"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "09"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "08"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "07"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Senior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Senior"
+                                    users.Last.Campus = "Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "06"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "05"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "04"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "03"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "02"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "01"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case "K"
+                            Select Case users.Last.Campus
+                                Case ""
+                                    users.Last.Campus = "Junior"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior"
+                                Case "Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                                Case "Junior, Senior"
+                                    users.Last.Campus = "Junior, Senior"
+                            End Select
+                        Case Else
+                    End Select
+
+                    If users.Last.ChildExternalIDs = "" Then
+                        users.Last.ChildExternalIDs = child.employeeNumber
+                    Else
+                        users.Last.ChildExternalIDs = users.Last.ChildExternalIDs & ", " & child.employeeNumber
+                    End If
                 End If
             Next
+            users.Last.ChildExternalIDs = """" & users.Last.ChildExternalIDs & """"
         Next
 
 
@@ -605,7 +609,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         For Each i In users
 
             ' If i.Campus = "Junior" Or i.Campus = "Senior" Or i.Campus = """Junior, Senior""" Then
-            If i.Campus <> "" And Not i.Username.Contains("_parent") Then
+            If Not IsNothing(i.Campus) Then
                 Select Case i.Year
                     Case "K"
                     Case "01"
