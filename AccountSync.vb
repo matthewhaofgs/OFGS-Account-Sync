@@ -97,6 +97,7 @@ Public Module AccountSync
         Public danceTutorGroupID As Integer
         Public staffHomePath As String
         Public formerStaffOU As String
+        Public currentStaffOU As String
 
 
         Public mailToAll As New List(Of String)
@@ -451,7 +452,8 @@ Public Module AccountSync
                             config.staffHomePath = (Mid(line, 15))
                         Case Left(line, 14) = "formerStaffOU="
                             config.formerStaffOU = (Mid(line, 15))
-
+                        Case Left(line, 15) = "currentStaffOU="
+                            config.currentStaffOU = (Mid(line, 16))
 
 
 
@@ -2644,8 +2646,8 @@ LEFT JOIN sys_user
 
                 Dim targetOU As String
                 targetOU = config.formerStaffOU
-
                 moveUserToOU(adUser, targetOU)
+
 
 
                 Console.WriteLine("Moving User: " & adUser.displayName)
@@ -2653,6 +2655,21 @@ LEFT JOIN sys_user
                 Console.WriteLine("New OU: " & targetOU)
 
             End If
+
+            'Move current staff
+            If adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") And Not adUser.distinguishedName.Contains("Current") Then
+                Dim targetOU As String = config.currentStaffOU
+
+                moveUserToOU(adUser, targetOU)
+
+                Console.WriteLine("Moving User: " & adUser.displayName)
+                Console.WriteLine("Old OU: " & adUser.distinguishedName)
+                Console.WriteLine("New OU: " & targetOU)
+
+
+            End If
+
+
 
         Next
     End Sub
