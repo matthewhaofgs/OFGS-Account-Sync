@@ -2641,7 +2641,7 @@ LEFT JOIN sys_user
             End If
 
             For Each group In adUser.memberOf
-                If group = config.sg_tutors And adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Tutor") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
+                If group = config.sg_tutors And adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
                     targetOU = config.tutorOU
                 End If
             Next
