@@ -98,7 +98,7 @@ Public Module AccountSync
         Public staffHomePath As String
         Public formerStaffOU As String
         Public currentStaffOU As String
-
+        Public tutorOU As String
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -135,6 +135,8 @@ Public Module AccountSync
         Public sg_10 As String
         Public sg_11 As String
         Public sg_12 As String
+
+        Public sg_tutors As String
 
     End Class
 
@@ -216,6 +218,7 @@ Public Module AccountSync
         Console.WriteLine("")
         adUsers = getADUsers(dirEntry)
 
+
         'Get Edumate data for students
         Dim edumateStudents As List(Of user)
         Console.WriteLine("Getting Edumate student data...")
@@ -272,6 +275,11 @@ Public Module AccountSync
             staffToAdd = evaluateUsernames(staffToAdd, adUsers)
             createUsers(staffToAdd, config, conn)
         End If
+
+        'Add staff to AD groups
+        adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
+        adUsers = getEdumateGroups(adUsers, config)
+        AddStaffToGroups(adUsers, config)
 
         'Re Pull AD data after creating new accounts
         adUsers = getADUsers(dirEntry)
@@ -448,13 +456,20 @@ Public Module AccountSync
                             config.sg_11 = (Mid(line, 7))
                         Case Left(line, 6) = "sg_12="
                             config.sg_12 = (Mid(line, 7))
+                        Case Left(line, 10) = "sg_tutors="
+                            config.sg_tutors = (Mid(line, 11))
+
+
+
+
                         Case Left(line, 14) = "staffHomePath="
                             config.staffHomePath = (Mid(line, 15))
                         Case Left(line, 14) = "formerStaffOU="
                             config.formerStaffOU = (Mid(line, 15))
                         Case Left(line, 15) = "currentStaffOU="
                             config.currentStaffOU = (Mid(line, 16))
-
+                        Case Left(line, 8) = "tutorOU="
+                            config.tutorOU = (Mid(line, 9))
 
 
 
@@ -2527,39 +2542,7 @@ LEFT JOIN sys_user
     End Sub
 
 
-    Sub addUsersToGroup(users As List(Of user), group As String)
 
-
-
-        Using ADgroup As New DirectoryEntry("LDAP://" & group)
-            'Setting username & password to Nothing forces
-            'the connection to use your logon credentials
-            ADgroup.Username = Nothing
-            ADgroup.Password = Nothing
-            'Always use a secure connection
-            ADgroup.AuthenticationType = AuthenticationTypes.Secure
-            ADgroup.RefreshCache()
-
-
-            ADgroup.Properties("member").Clear()
-            ADgroup.CommitChanges()
-            For Each user In users
-
-                ADgroup.Properties("member").Add(user.distinguishedName)
-
-
-
-            Next
-            ADgroup.CommitChanges()
-
-        End Using
-
-
-
-
-
-
-    End Sub
 
     Sub moveUserToOU(user As user, targetOU As String)
 
@@ -2591,6 +2574,8 @@ LEFT JOIN sys_user
     End Sub
 
     Sub moveUsersToOUs(adUsers As List(Of user), config As configSettings)
+
+
 
         Console.WriteLine("")
         Console.WriteLine("Moving users...")
@@ -2636,38 +2621,44 @@ LEFT JOIN sys_user
                     userAccountEnabled = False
             End Select
 
+            Dim targetOU As String
+            targetOU = Nothing
+
             'Move former students to Alumni OU
             If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not userAccountEnabled Then
-                moveStudentToAlum(adUser, config.studentAlumOU)
+                'moveStudentToAlum(adUser, config.studentAlumOU)
+                targetOU = "alum"
             End If
 
             'Move former staff 
             If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
-
-                Dim targetOU As String
                 targetOU = config.formerStaffOU
-                moveUserToOU(adUser, targetOU)
-
-
-
-                Console.WriteLine("Moving User: " & adUser.displayName)
-                Console.WriteLine("Old OU: " & adUser.distinguishedName)
-                Console.WriteLine("New OU: " & targetOU)
-
             End If
 
             'Move current staff
             If adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") And Not adUser.distinguishedName.Contains("Current") Then
-                Dim targetOU As String = config.currentStaffOU
-
-                moveUserToOU(adUser, targetOU)
-
-                Console.WriteLine("Moving User: " & adUser.displayName)
-                Console.WriteLine("Old OU: " & adUser.distinguishedName)
-                Console.WriteLine("New OU: " & targetOU)
-
-
+                targetOU = config.currentStaffOU
             End If
+
+            For Each group In adUser.memberOf
+                If group = config.sg_tutors And adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Tutor") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
+                    targetOU = config.tutorOU
+                End If
+            Next
+
+
+            Console.WriteLine(" ThenMoving User: " & adUser.displayName)
+            Console.WriteLine("Old OU: " & adUser.distinguishedName)
+            Console.WriteLine("New OU: " & targetOU)
+
+            If Not IsNothing(targetOU) Then
+                If targetOU = "alum" Then
+                    moveStudentToAlum(adUser, config.studentAlumOU)
+                Else
+                    moveUserToOU(adUser, targetOU)
+                End If
+            End If
+
 
 
 
@@ -2764,6 +2755,9 @@ FROM            group_membership
             Next
         Next
         addADObjectoToEdumateUser = users
+
+
+
     End Function
 
 

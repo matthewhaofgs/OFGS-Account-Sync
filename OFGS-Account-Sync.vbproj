@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AccountSync.vb" />
+    <Compile Include="Modules\ADGroups.vb" />
     <Compile Include="Modules\Schoolbox.vb" />
     <Compile Include="Modules\Parents.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
