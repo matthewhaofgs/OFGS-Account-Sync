@@ -99,6 +99,7 @@ Public Module AccountSync
         Public formerStaffOU As String
         Public currentStaffOU As String
         Public tutorOU As String
+        Public casualStaffOU As String
 
         Public mailToAll As New List(Of String)
         Public mailToParent As New List(Of String)
@@ -470,6 +471,9 @@ Public Module AccountSync
                             config.currentStaffOU = (Mid(line, 16))
                         Case Left(line, 8) = "tutorOU="
                             config.tutorOU = (Mid(line, 9))
+                        Case Left(line, 14) = "casualStaffOU="
+                            config.casualStaffOU = (Mid(line, 15))
+
 
 
 
@@ -2636,8 +2640,15 @@ LEFT JOIN sys_user
             End If
 
             'Move current staff
-            If adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") And Not adUser.distinguishedName.Contains("Current") Then
-                targetOU = config.currentStaffOU
+            If adUser.edumateCurrent = 1 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
+
+                If adUser.employmentType = 3 And Not adUser.distinguishedName.Contains("Casual") Then
+                    targetOU = config.casualStaffOU
+                End If
+                If adUser.employmentType < 3 And Not adUser.distinguishedName.Contains("Current") Then
+                    targetOU = config.currentStaffOU
+                End If
+
             End If
 
             For Each group In adUser.memberOf
