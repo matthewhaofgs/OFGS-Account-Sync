@@ -1548,7 +1548,7 @@ LEFT JOIN sys_user
 
                     If Not IsDBNull(users.Last.startDate) Then
 
-                        If users.Last.startDate < Date.Now() Then
+                        If users.Last.startDate < Date.Now.AddDays(10) Then
                             If IsDBNull(users.Last.endDate) Then
                                 users.Last.edumateCurrent = 1
                             Else
