@@ -2190,6 +2190,11 @@ LEFT JOIN sys_user
             If user.distinguishedName.Contains("OU=@ofgsfamily.com") Then
                 user.userType = "Parent"
             End If
+            If user.distinguishedName.Contains("OU=Casual Staff") Then
+                user.userType = "Staff"
+            End If
+
+
         Next
 
         Return users
