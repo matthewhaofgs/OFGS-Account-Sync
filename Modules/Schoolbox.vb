@@ -578,6 +578,11 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                     users.Last.AltEmail = "principal@ofgs.nsw.edu.au"
                 End If
 
+                If users.Last.AltEmail = "dannyrav@ofgs.nsw.edu.au" Then
+                    users.Last.EmailAddressFromUsername = "N"
+                    users.Last.AltEmail = "sport@ofgs.nsw.edu.au"
+                End If
+
                 ' *******************************************************************************
 
 

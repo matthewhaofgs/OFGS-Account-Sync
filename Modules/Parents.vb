@@ -31,7 +31,7 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 
-WHERE        (relationship.relationship_type_id IN (1, 4, 8, 15, 28, 33)) 
+WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
 "
 
 
