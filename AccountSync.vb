@@ -2193,9 +2193,11 @@ LEFT JOIN sys_user
             If user.distinguishedName.Contains("OU=Casual Staff") Then
                 user.userType = "Staff"
             End If
+			If user.distinguishedName.Contains("OU=Music") Then
+				user.userType = "Staff"
+			End If
 
-
-        Next
+		Next
 
         Return users
     End Function
