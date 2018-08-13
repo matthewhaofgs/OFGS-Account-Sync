@@ -509,7 +509,7 @@ contact.birthdate,
 stu_school.library_card,
 Rollclass.class,
 stu_school.bos,
-listagg(class.class,',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
+listagg(cast(class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
 
 FROM            
 STUDENT
@@ -519,8 +519,8 @@ INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
 INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
 INNER JOIN form ON form_run.form_id = form.form_id
 INNER JOIN stu_school ON student.student_id = stu_school.student_id
-INNER JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
-INNER JOIN class ON class_enrollment.class_id = class.class_id 
+LEFT JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
+LEFT JOIN class ON class_enrollment.class_id = class.class_id 
 
 LEFT JOIN 
 	(
@@ -543,7 +543,7 @@ WHERE
 
 (YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
 
-AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN class_enrollment.START_DATE AND class_enrollment.END_DATE
+AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 
 
 GROUP BY 
@@ -560,6 +560,7 @@ contact.birthdate,
 stu_school.library_card,
 Rollclass.class,
 stu_school.bos
+
 
 "
 
@@ -600,9 +601,9 @@ stu_school.bos
                     users.Last.libraryCard = dr.GetValue(9)
                     users.Last.rollClass = dr.GetValue(10)
                     users.Last.bosNumber = dr.GetValue(11)
-                    users.Last.enrolledClasses = dr.GetValue(12)
+					If Not dr.IsDBNull(12) Then users.Last.enrolledClasses = dr.GetValue(12)
 
-                End If
+				End If
             End While
             conn.Close()
         End Using
