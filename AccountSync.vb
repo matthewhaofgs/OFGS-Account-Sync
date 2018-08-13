@@ -955,34 +955,41 @@ stu_school.bos
                         objUser.CommitChanges()
                     End If
 
-
-                    objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
-                    If config.applyChanges Then
-                        objUser.Invoke("setPassword", objUserToAdd.password)
-                        objUser.CommitChanges()
-                    End If
-
-
-                    '512	Enabled Account
-                    '514	Disabled Account
-                    '544	Enabled, Password Not Required
-                    '546	Disabled, Password Not Required
-                    '66048	Enabled, Password Doesn't Expire
-                    '66050	Disabled, Password Doesn't Expire
-                    '66080	Enabled, Password Doesn't Expire & Not Required
-                    '66082	Disabled, Password Doesn't Expire & Not Required
-                    '262656	Enabled, Smartcard Required
-                    '262658	Disabled, Smartcard Required
-                    '262688	Enabled, Smartcard Required, Password Not Required
-                    '262690	Disabled, Smartcard Required, Password Not Required
-                    '328192	Enabled, Smartcard Required, Password Doesn't Expire
-                    '328194	Disabled, Smartcard Required, Password Doesn't Expire
-                    '328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
-                    '328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+					Dim pwSet = 0
+					While pwSet = 0
+						Try
+						objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
+						If config.applyChanges Then
+							objUser.Invoke("setPassword", objUserToAdd.password)
+							objUser.CommitChanges()
+						End If
+							pwSet = 1
+						Catch ex As Exception
+							pwSet = 0
+						End Try
+					End While
 
 
+					'512	Enabled Account
+					'514	Disabled Account
+					'544	Enabled, Password Not Required
+					'546	Disabled, Password Not Required
+					'66048	Enabled, Password Doesn't Expire
+					'66050	Disabled, Password Doesn't Expire
+					'66080	Enabled, Password Doesn't Expire & Not Required
+					'66082	Disabled, Password Doesn't Expire & Not Required
+					'262656	Enabled, Smartcard Required
+					'262658	Disabled, Smartcard Required
+					'262688	Enabled, Smartcard Required, Password Not Required
+					'262690	Disabled, Smartcard Required, Password Not Required
+					'328192	Enabled, Smartcard Required, Password Doesn't Expire
+					'328194	Disabled, Smartcard Required, Password Doesn't Expire
+					'328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
+					'328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
 
-                    Const ADS_UF_ACCOUNTDISABLE = &H10200
+
+
+					Const ADS_UF_ACCOUNTDISABLE = &H10200
                     objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
                     If config.applyChanges Then
                         objUser.CommitChanges()
