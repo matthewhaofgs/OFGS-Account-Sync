@@ -1260,16 +1260,17 @@ stu_school.bos
         Dim rndNumber As Integer = RandomClass.Next(10, 99)
 
 
-        'Dim PasswordPosition As Integer = RandomClass.Next(0, 5)
-        Dim PasswordPosition As Integer = 2
-        Select Case PasswordPosition
+		'Dim PasswordPosition As Integer = RandomClass.Next(0, 5)
+		Dim PasswordPosition As Integer = 6   'original was 2
+		Select Case PasswordPosition
             Case 0 : Return getWord(wordlist) & getWord(wordlist) & rndNumber
             Case 1 : Return rndNumber & getWord(wordlist) & getWord(wordlist)
             Case 2 : Return Mixedcase(getWord(wordlist)) & rndNumber & Mixedcase(getWord(wordlist))
             Case 3 : Return getWord(wordlist) & getWord(wordlist) & rndNumber
             Case 4 : Return rndNumber & getWord(wordlist) & getWord(wordlist)
             Case 5 : Return getWord(wordlist) & rndNumber & getWord(wordlist)
-            Case Else : Return getWord(wordlist) & getWord(wordlist)
+			Case 6 : Return getWord(wordlist) & " " & getWord(wordlist) & " " & getWord(wordlist)
+			Case Else : Return getWord(wordlist) & getWord(wordlist)
         End Select
 
 
