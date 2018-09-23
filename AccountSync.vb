@@ -1547,9 +1547,10 @@ LEFT JOIN sys_user
                     users.Last.employeeID = dr.GetValue(4)
                     'users.Last.employeeNumber = dr.GetValue(5) (this should be print code, not staff number)
                     users.Last.userType = "Staff"
-                    users.Last.displayName = users.Last.firstName & " " & users.Last.surname
-                    users.Last.edumateCurrent = 0
-                    If Not IsDBNull(dr.GetValue(6)) Then users.Last.edumateUsername = dr.GetValue(6)
+
+					users.Last.displayName = Replace(users.Last.firstName, "&#039;", "") & " " & Replace(users.Last.surname, "&#039;", "")
+					users.Last.edumateCurrent = 0
+					If Not IsDBNull(dr.GetValue(6)) Then users.Last.edumateUsername = dr.GetValue(6)
                     If Not IsDBNull(dr.GetValue(7)) Then users.Last.edumateEmail = dr.GetValue(7)
                     If Not IsDBNull(dr.GetValue(8)) Then users.Last.employmentType = dr.GetValue(8)
                     users.Last.edumateStaffNumber = dr.GetValue(5)
