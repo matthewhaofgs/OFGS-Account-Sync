@@ -309,13 +309,13 @@ Public Module AccountSync
         currentEdumateStudents = addADObjectoToEdumateUser(currentEdumateStudents, adUsers)
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
-        'Schoolbox Stuff
-        SchoolboxMain(config, currentEdumateStudents, edumateParents)
+		'Schoolbox Stuff
+		SchoolboxMain(config, currentEdumateStudents, edumateParents)
 
 
 
-        'Staff MYSQL Database
-        purgeStaffDB(config)
+		'Staff MYSQL Database
+		purgeStaffDB(config)
         updateStaffDatabase(config)
 
 

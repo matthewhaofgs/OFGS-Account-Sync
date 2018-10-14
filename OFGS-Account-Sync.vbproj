@@ -70,8 +70,8 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="WinSCPnet, Version=1.5.5.8565, Culture=neutral, PublicKeyToken=2271ec4a3c56d0bf, processorArchitecture=MSIL">
-      <HintPath>packages\WinSCP.5.13.3\lib\net\WinSCPnet.dll</HintPath>
+    <Reference Include="WinSCPnet, Version=1.5.6.8731, Culture=neutral, PublicKeyToken=2271ec4a3c56d0bf, processorArchitecture=MSIL">
+      <HintPath>packages\WinSCP.5.13.4\lib\net\WinSCPnet.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -128,12 +128,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
-  <Import Project="packages\WinSCP.5.13.3\build\WinSCP.targets" Condition="Exists('packages\WinSCP.5.13.3\build\WinSCP.targets')" />
+  <Import Project="packages\WinSCP.5.13.4\build\WinSCP.targets" Condition="Exists('packages\WinSCP.5.13.4\build\WinSCP.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\WinSCP.5.13.3\build\WinSCP.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\WinSCP.5.13.3\build\WinSCP.targets'))" />
+    <Error Condition="!Exists('packages\WinSCP.5.13.4\build\WinSCP.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\WinSCP.5.13.4\build\WinSCP.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
