@@ -4,10 +4,7 @@ Module ADGroups
 
     Sub AddStaffToGroups(users As List(Of user), config As configSettings)
 
-
-
-
-        Dim musicTutors As New List(Of user)
+		Dim musicTutors As New List(Of user)
 
         For Each user In users
 

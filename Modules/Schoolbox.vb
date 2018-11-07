@@ -21,7 +21,7 @@ Public Module Schoolbox
 		'Console.WriteLine("")
 		'Console.WriteLine("")
 
-		Call timetableStructure(config)
+		'Call timetableStructure(config)
 		Call timetable(config)
 		Call enrollment(config)
 		Call events(config)
@@ -653,7 +653,7 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
         commandString = "
 SELECT DISTINCT 
                          CASE WHEN substr(timetable.timetable, 6, 6) = 'Year 1' THEN 'Senior' ELSE substr(timetable.timetable, 6, 6) END AS Expr1, 
-                         REPLACE(CONCAT(CONCAT(term.term, ' '), substr(timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, term.start_date, term.end_date, term.cycle_start_day, 
+                         REPLACE(CONCAT(CONCAT(term.term, ' '), substr(timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, term.v_start_date, term.end_date, term.cycle_start_day, 
                          cycle_day.day_index, period.period, period.start_time, period.end_time
 FROM            TERM_GROUP, cycle_day, period_cycle_day, period, term, timetable
 WHERE        (start_date > '01/01/2018') AND (end_date < '01/01/2019') AND (term_group.cycle_id = cycle_day.cycle_id) AND 

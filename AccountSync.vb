@@ -259,8 +259,11 @@ Public Module AccountSync
             createUsers(parentsToAdd, config, conn)
         End If
 
-        'Get Edumate data for staff
-        Dim edumateStaff As List(Of user)
+		'Update parent mysql datasbase
+		updateParentDatabase(config, edumateParents)
+
+		'Get Edumate data for staff
+		Dim edumateStaff As List(Of user)
         Console.WriteLine("Getting Edumate staff data...")
         edumateStaff = getEdumateStaff(config)
 
@@ -308,6 +311,9 @@ Public Module AccountSync
         AddStudentsToYearGroups(currentEdumateStudents, config)
         currentEdumateStudents = addADObjectoToEdumateUser(currentEdumateStudents, adUsers)
         updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
+
+
+
 
 		'Schoolbox Stuff
 		SchoolboxMain(config, currentEdumateStudents, edumateParents)
@@ -941,8 +947,8 @@ stu_school.bos
                     objUser.Properties("EmployeeNumber").Add(intEmployeeNumber)
 
                     If strUserPrincipalName <> "" Then
-                        objUser.Properties("userPrincipalName").Add(strUserPrincipalName)
-                    End If
+						objUser.Properties("userPrincipalName").Add(strUserPrincipalName & "@i.ofgs.nsw.edu.au")
+					End If
                     If strDisplayName <> "" Then
                         objUser.Properties("displayName").Add(strDisplayName)
                     End If
@@ -1019,11 +1025,11 @@ stu_school.bos
                             Select Case objUserToAdd.userType
                                 Case "Student"
                                     Dim strMessageBody As String
-                                    strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
-                                    message.body = message.body & strMessageBody
+									strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Student Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
+									message.body = message.body & strMessageBody
                                 Case "Parent"
-                                    message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
-                                Case "Staff"
+									message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+								Case "Staff"
                                     message.body = message.body & "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                             End Select
 
@@ -2132,52 +2138,93 @@ LEFT JOIN sys_user
         Return "noUsername"
     End Function
 
-    Function getMySQLStaff(conn)
+	Function getMySQLStaff(conn)
 
-        Dim userTable As String = "staff_details"
+		Dim userTable As String = "staff_details"
 
-        Dim users As New List(Of user)
+		Dim users As New List(Of user)
 
-        Dim commandstring As String = ("SELECT staff_id, surname, firstname, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, smtp_proxy_set, init_password, staff_number, distinguished_name, edumate_login_active, edumate_start_date, edumate_end_date FROM " & userTable)
-        Dim command As New MySqlCommand(commandstring, conn)
+		Dim commandstring As String = ("SELECT staff_id, surname, firstname, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, smtp_proxy_set, init_password, staff_number, distinguished_name, edumate_login_active, edumate_start_date, edumate_end_date FROM " & userTable)
+		Dim command As New MySqlCommand(commandstring, conn)
 
-        conn.open
+		conn.open
 
-        command.Connection = conn
-        command.CommandText = commandstring
+		command.Connection = conn
+		command.CommandText = commandstring
 
-        Dim dr As MySqlDataReader
-        dr = command.ExecuteReader
+		Dim dr As MySqlDataReader
+		dr = command.ExecuteReader
 
-        Dim i As Integer = 0
-        While dr.Read()
-            If Not dr.IsDBNull(0) Then
-                users.Add(New user)
-                users.Last.employeeID = dr.GetValue(0)
-                users.Last.surname = dr.GetValue(1)
-                users.Last.firstName = dr.GetValue(2)
-                users.Last.ad_username = dr.GetValue(3)
-                users.Last.edumateUsername = dr.GetValue(4)
-                users.Last.edumateCurrent = dr.GetValue(5)
-                users.Last.enabled = dr.GetValue(6)
-                users.Last.email = dr.GetValue(7)
-                users.Last.edumateEmail = dr.GetValue(8)
-                users.Last.smtpProxy = dr.GetValue(9)
-                users.Last.password = dr.GetValue(10)
-                users.Last.employeeNumber = dr.GetValue(11)
-                users.Last.distinguishedName = dr.GetValue(12)
-                users.Last.edumateLoginActive = dr.GetValue(13)
-                users.Last.startDate = dr.GetValue(14)
-                users.Last.endDate = dr.GetValue(15)
-                users.Last.userType = "Staff"
-            End If
-        End While
-        conn.Close()
-        Return users
+		Dim i As Integer = 0
+		While dr.Read()
+			If Not dr.IsDBNull(0) Then
+				users.Add(New user)
+				users.Last.employeeID = dr.GetValue(0)
+				users.Last.surname = dr.GetValue(1)
+				users.Last.firstName = dr.GetValue(2)
+				users.Last.ad_username = dr.GetValue(3)
+				users.Last.edumateUsername = dr.GetValue(4)
+				users.Last.edumateCurrent = dr.GetValue(5)
+				users.Last.enabled = dr.GetValue(6)
+				users.Last.email = dr.GetValue(7)
+				users.Last.edumateEmail = dr.GetValue(8)
+				users.Last.smtpProxy = dr.GetValue(9)
+				users.Last.password = dr.GetValue(10)
+				users.Last.employeeNumber = dr.GetValue(11)
+				users.Last.distinguishedName = dr.GetValue(12)
+				users.Last.edumateLoginActive = dr.GetValue(13)
+				users.Last.startDate = dr.GetValue(14)
+				users.Last.endDate = dr.GetValue(15)
+				users.Last.userType = "Staff"
+			End If
+		End While
+		conn.Close()
+		Return users
 
-    End Function
+	End Function
 
-    Function addUserTypeToAdUsers(users As List(Of user))
+
+	Function getMySQLParents(conn)
+
+		Dim userTable As String = "parent_details"
+
+		Dim users As New List(Of user)
+
+		Dim commandstring As String = ("SELECT parent_id, surname, first_name, ad_username, edumate_username, edumate_current, ad_active, ad_email, edumate_email, carer_number FROM " & userTable)
+		Dim command As New MySqlCommand(commandstring, conn)
+
+		conn.open
+
+		command.Connection = conn
+		command.CommandText = commandstring
+
+		Dim dr As MySqlDataReader
+		dr = command.ExecuteReader
+
+		Dim i As Integer = 0
+		While dr.Read()
+			If Not dr.IsDBNull(0) Then
+				users.Add(New user)
+				users.Last.employeeID = dr.GetValue(0)
+				users.Last.surname = dr.GetValue(1)
+				users.Last.firstName = dr.GetValue(2)
+				users.Last.ad_username = dr.GetValue(3)
+				users.Last.edumateUsername = dr.GetValue(4)
+				users.Last.edumateCurrent = dr.GetValue(5)
+				users.Last.enabled = dr.GetValue(6)
+				users.Last.email = dr.GetValue(7)
+				users.Last.edumateEmail = dr.GetValue(8)
+				users.Last.employeeNumber = dr.GetValue(9)
+				users.Last.userType = "Parent"
+			End If
+		End While
+		conn.Close()
+		Return users
+
+	End Function
+
+
+	Function addUserTypeToAdUsers(users As List(Of user))
         For Each user In users
             If user.distinguishedName.Contains("OU=Admin") Then
                 user.userType = "Staff"
@@ -2266,7 +2313,61 @@ LEFT JOIN sys_user
 
     End Sub
 
-    Function addEdumateDetailsToAdUsers(adUsers As List(Of user), edumateUsers As List(Of user))
+	Sub updateParentDatabase(config As configSettings, edumateParents As List(Of user))
+
+		Dim conn As New MySqlConnection
+		connect(conn, config)
+		Dim dirEntry As DirectoryEntry
+
+
+
+		Console.WriteLine("Connecting to AD...")
+		dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
+		Console.WriteLine(Chr(8) & "Done")
+		Dim adUsers As List(Of user)
+		Console.WriteLine("Loading AD users for parent DB...")
+		adUsers = getADUsers(dirEntry)
+		Console.WriteLine(Chr(8) & "Done")
+		Console.WriteLine("Adding user types to AD Users...")
+		adUsers = addUserTypeToAdUsers(adUsers)
+		Console.WriteLine(Chr(8) & "Done")
+
+		Console.WriteLine("Loading mySQL Parents...")
+		Dim mySQLUsers As List(Of user)
+		mySQLUsers = getMySQLParents(conn)
+		Console.WriteLine(Chr(8) & "Done")
+
+		Console.WriteLine("Loading edumate Staff...")
+		Dim edumateUsers As List(Of user)
+		edumateUsers = edumateParents
+		Console.WriteLine(Chr(8) & "Done")
+
+		Console.WriteLine("Adding edumate details to AD parents...")
+		adUsers = addEdumateDetailsToAdUsers(adUsers, edumateUsers)
+		adUsers = getEdumateGroups(adUsers, config)
+		Console.WriteLine(Chr(8) & "Done")
+
+		Console.WriteLine("Inserting staff to mySQL database...")
+		For Each aduser In adUsers
+			If aduser.userType = "Parent" Then
+
+				Dim found As Boolean = False
+				For Each mysqlUser In mySQLUsers
+					If aduser.employeeID = mysqlUser.employeeID Then
+						found = True
+					End If
+				Next
+				If found = False Then
+					insertUserToParentDB(conn, aduser)
+				End If
+			End If
+
+		Next
+
+
+	End Sub
+
+	Function addEdumateDetailsToAdUsers(adUsers As List(Of user), edumateUsers As List(Of user))
         For Each aduser In adUsers
             For Each edumateUser In edumateUsers
                 If aduser.employeeID = edumateUser.employeeID Then
@@ -2276,8 +2377,9 @@ LEFT JOIN sys_user
                     aduser.edumateUsername = edumateUser.edumateUsername
                     aduser.edumateStaffNumber = edumateUser.edumateStaffNumber
                     aduser.employmentType = edumateUser.employmentType
-                    aduser.contact_id = edumateUser.contact_id
-                End If
+					aduser.contact_id = edumateUser.contact_id
+					aduser.edumateProperties.carer_number = edumateUser.edumateProperties.carer_number
+				End If
             Next
         Next
         Return adUsers
@@ -2375,7 +2477,91 @@ LEFT JOIN sys_user
 
     End Sub
 
-    Sub updateUserInStaffDB(conn As MySqlConnection, user As user)
+	Sub insertUserToParentDB(conn As MySqlConnection, user As user)
+
+		Dim table As String = "parent_details"
+
+
+		'512	Enabled Account
+		'514	Disabled Account
+		'544	Enabled, Password Not Required
+		'546	Disabled, Password Not Required
+		'66048	Enabled, Password Doesn't Expire
+		'66050	Disabled, Password Doesn't Expire
+		'66080	Enabled, Password Doesn't Expire & Not Required
+		'66082	Disabled, Password Doesn't Expire & Not Required
+		'262656	Enabled, Smartcard Required
+		'262658	Disabled, Smartcard Required
+		'262688	Enabled, Smartcard Required, Password Not Required
+		'262690	Disabled, Smartcard Required, Password Not Required
+		'328192	Enabled, Smartcard Required, Password Doesn't Expire
+		'328194	Disabled, Smartcard Required, Password Doesn't Expire
+		'328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
+		'328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+
+		Dim accountStatus As String
+
+		Select Case user.userAccountControl
+			Case 512
+				accountStatus = "Enabled Account"
+			Case 514
+				accountStatus = "Disabled Account"
+			Case 544
+				accountStatus = "Enabled, Password Not Required"
+			Case 546
+				accountStatus = "Disabled, Password Not Required"
+			Case 66048
+				accountStatus = "Enabled, Password Doesnt Expire"
+			Case 66050
+				accountStatus = "Disabled, Password Doesnt Expire"
+			Case 66080
+				accountStatus = "Enabled, Password Doesnt Expire + Not Required"
+			Case 66082
+				accountStatus = "Disabled, Password Doesnt Expire + Not Required"
+
+
+		End Select
+
+
+		Try
+			conn.Open()
+		Catch ex As Exception
+		End Try
+		Dim sanitizedSurname As String
+		sanitizedSurname = Replace(user.surname, "'", "\'")
+		Dim sanitizedDn
+		sanitizedDn = Replace(user.distinguishedName, "'", "\'")
+		Dim datePasswordSet As String
+
+
+
+		If user.adObject.Properties("pwdLastSet").Count > 0 Then
+			datePasswordSet = user.adObject.Properties("pwdLastSet")(0)
+		Else
+			datePasswordSet = "Never"
+		End If
+
+
+
+
+		Try
+			If IsDBNull(user.employeeID) Or user.employeeID = "" Then
+			Else
+				Dim cmd As New MySqlCommand(String.Format("INSERT INTO `{0}` (`parent_id`,`surname`,`first_name`, `ad_username`,`edumate_username`,`edumate_current`,`ad_active`,`ad_email`,`edumate_email`,`carer_number`) VALUES ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}')", table, user.employeeID, sanitizedSurname, user.firstName, user.ad_username, user.edumateUsername, user.edumateCurrent, accountStatus, user.email, user.edumateEmail, user.edumateProperties.carer_number), conn)
+				cmd.ExecuteNonQuery()
+			End If
+		Catch
+		End Try
+
+
+
+		conn.Close()
+
+	End Sub
+
+
+
+	Sub updateUserInStaffDB(conn As MySqlConnection, user As user)
 
     End Sub
 
