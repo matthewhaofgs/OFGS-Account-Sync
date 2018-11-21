@@ -240,14 +240,20 @@ Public Module AccountSync
             createUsers(studentUsersToAdd, config, conn)
         End If
 
-        'Get Edumate data for parents 
-        Console.WriteLine("Getting Edumate parent data...")
+		'build current student list to attach to parents
+		Dim currentEdumateStudents As New List(Of user)
+		currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
+		currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
+		currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
+
+		'Get Edumate data for parents 
+		Console.WriteLine("Getting Edumate parent data...")
         Console.WriteLine("")
         Dim edumateParents As List(Of user)
-        edumateParents = getEdumateParents(config, edumateStudents)
+		edumateParents = getEdumateParents(config, currentEdumateStudents)
 
-        'Get parent users who do not yet have accounts
-        Dim parentsToAdd As List(Of user)
+		'Get parent users who do not yet have accounts
+		Dim parentsToAdd As List(Of user)
         parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
         parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
         parentsToAdd = addMailTo(config, parentsToAdd)
@@ -290,8 +296,9 @@ Public Module AccountSync
 
         'Add usernames to account objects / refresh data now accountsd are created
         edumateParents = addUsernamesToUsers(edumateParents, adUsers)
-        Dim currentEdumateStudents As List(Of user)
-        currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
+		currentEdumateStudents = New List(Of user)
+
+		currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
         currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
         currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
 
