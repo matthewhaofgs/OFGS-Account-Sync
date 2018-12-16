@@ -140,10 +140,14 @@ Public Module Schoolbox
             users.Last.ExternalID = edumateStudent.employeeNumber
             users.Last.FirstName = """" & Replace(edumateStudent.firstName, "&#039;", "'") & """"
             users.Last.Surname = """" & Replace(edumateStudent.surname, "&#039;", "'") & """"
-            users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(edumateStudent.dob)
+			Try
+				users.Last.DateOfBirth = ddMMYYYY_to_yyyyMMdd(edumateStudent.dob)
+			Catch
+			End Try
 
 
-        Next
+
+		Next
 
         Console.Write("Parents... ")
 
@@ -1675,7 +1679,7 @@ left join room on event_rooms.max_room_id = room.room_id
 
 WHERE
 event.start_date >  '01/01/2018' 
-AND event.end_date < '12/31/2018' 
+AND event.end_date < '12/31/2019' 
 AND event.publish_flag = 1
 AND event.recurring_id is not null and event.recurring_id > 0
 AND event.event_id = (select min(event_id) from event e2
@@ -1719,7 +1723,7 @@ left join room on event_rooms.max_room_id = room.room_id
 
 WHERE
 event.start_date >  '01/01/2018' 
-AND event.end_date < '12/31/2018' 
+AND event.end_date < '12/31/2019' 
 AND event.publish_flag = 1
 AND event.recurring_id is null
 
