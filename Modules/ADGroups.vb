@@ -5,8 +5,9 @@ Module ADGroups
     Sub AddStaffToGroups(users As List(Of user), config As configSettings)
 
 		Dim musicTutors As New List(Of user)
+		Dim currentStaff As New List(Of user)
 
-        For Each user In users
+		For Each user In users
 
             Dim musicTutor As Integer = 0
             If Not IsNothing(user.edumateGroupMemberships) Then
@@ -27,14 +28,20 @@ Module ADGroups
                 musicTutors.Add(user)
 
             End If
-        Next
 
-        addUsersToGroup(musicTutors, config.sg_tutors)
+			If user.edumateCurrent = 1 And musicTutor = 0 Then
+				currentStaff.Add(user)
+			End If
 
 
+		Next
+
+		addUsersToGroup(musicTutors, config.sg_tutors)
+		addUsersToGroup(currentStaff, config.sg_currentStaff)
+		addUsersToGroup(currentStaff, "CN=SG_Adobe_Staff,OU=_Security Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")
 
 
-    End Sub
+	End Sub
 
     Sub addUsersToGroup(users As List(Of user), group As String)
 

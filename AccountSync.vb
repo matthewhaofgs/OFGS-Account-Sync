@@ -137,9 +137,10 @@ Public Module AccountSync
         Public sg_11 As String
         Public sg_12 As String
 
-        Public sg_tutors As String
+		Public sg_tutors As String
+		Public sg_currentStaff As String
 
-    End Class
+	End Class
 
     Class emailNotification
         Public mailTo
@@ -472,11 +473,13 @@ Public Module AccountSync
                             config.sg_12 = (Mid(line, 7))
                         Case Left(line, 10) = "sg_tutors="
                             config.sg_tutors = (Mid(line, 11))
+						Case Left(line, 16) = "sg_currentStaff="
+							config.sg_currentStaff = (Mid(line, 17))
 
 
 
 
-                        Case Left(line, 14) = "staffHomePath="
+						Case Left(line, 14) = "staffHomePath="
                             config.staffHomePath = (Mid(line, 15))
                         Case Left(line, 14) = "formerStaffOU="
                             config.formerStaffOU = (Mid(line, 15))
@@ -1571,16 +1574,16 @@ LEFT JOIN sys_user
 
                     If Not IsDBNull(users.Last.startDate) Then
 
-                        If users.Last.startDate < Date.Now.AddDays(10) Then
-                            If IsDBNull(users.Last.endDate) Then
-                                users.Last.edumateCurrent = 1
-                            Else
-                                If users.Last.endDate > Date.Now() Then
-                                    users.Last.edumateCurrent = 1
-                                End If
-                            End If
-                        End If
-                    End If
+						If users.Last.startDate < Date.Now.AddDays(90) Then
+							If IsDBNull(users.Last.endDate) Then
+								users.Last.edumateCurrent = 1
+							Else
+								If users.Last.endDate > Date.Now() Then
+									users.Last.edumateCurrent = 1
+								End If
+							End If
+						End If
+					End If
                 End If
             End While
             conn.Close()
@@ -2623,40 +2626,57 @@ LEFT JOIN sys_user
         Dim Year09Users As New List(Of user)
         Dim Year10Users As New List(Of user)
         Dim Year11Users As New List(Of user)
-        Dim Year12Users As New List(Of user)
+		Dim Year12Users As New List(Of user)
+		Dim AdobeUsers As New List(Of user)
 
-        For Each user In users
-            Select Case user.currentYear
-                Case "K"
-                    kindyUsers.Add(user)
-                Case "01"
-                    Year01Users.Add(user)
-                Case "02"
-                    Year02Users.Add(user)
-                Case "03"
-                    Year03Users.Add(user)
-                Case "04"
-                    Year04Users.Add(user)
-                Case "05"
-                    Year05Users.Add(user)
-                Case "06"
-                    Year06Users.Add(user)
-                Case "07"
-                    Year07Users.Add(user)
-                Case "08"
-                    Year08Users.Add(user)
-                Case "09"
-                    Year09Users.Add(user)
-                Case "10"
-                    Year10Users.Add(user)
-                Case "11"
-                    Year11Users.Add(user)
-                Case "12"
-                    Year12Users.Add(user)
-            End Select
-        Next
+		Dim seniorSchool As Boolean
 
-        addUsersToGroup(kindyUsers, config.sg_k)    '<================================================================
+
+		For Each user In users
+			seniorSchool = False
+			Select Case user.currentYear
+				Case "K"
+					kindyUsers.Add(user)
+				Case "01"
+					Year01Users.Add(user)
+				Case "02"
+					Year02Users.Add(user)
+				Case "03"
+					Year03Users.Add(user)
+				Case "04"
+					Year04Users.Add(user)
+				Case "05"
+					Year05Users.Add(user)
+				Case "06"
+					Year06Users.Add(user)
+				Case "07"
+					Year07Users.Add(user)
+					seniorSchool = True
+				Case "08"
+					Year08Users.Add(user)
+					seniorSchool = True
+				Case "09"
+					Year09Users.Add(user)
+					seniorSchool = True
+				Case "10"
+					Year10Users.Add(user)
+					seniorSchool = True
+				Case "11"
+					Year11Users.Add(user)
+					seniorSchool = True
+				Case "12"
+					Year12Users.Add(user)
+					seniorSchool = True
+			End Select
+
+			If seniorSchool And Not IsNothing(user.enrolledClasses) Then
+				If user.enrolledClasses.Contains("Multimedia") Or user.enrolledClasses.Contains("Design") Or user.enrolledClasses.Contains("Visual") Or user.enrolledClasses.Contains("Technology") Then
+					AdobeUsers.Add(user)
+				End If
+			End If
+		Next
+
+		addUsersToGroup(kindyUsers, config.sg_k)    '<================================================================
         addUsersToGroup(Year01Users, config.sg_1)
         addUsersToGroup(Year02Users, config.sg_2)
         addUsersToGroup(Year03Users, config.sg_3)
@@ -2668,10 +2688,15 @@ LEFT JOIN sys_user
         addUsersToGroup(Year09Users, config.sg_9)
         addUsersToGroup(Year10Users, config.sg_10)
         addUsersToGroup(Year11Users, config.sg_11)
-        addUsersToGroup(Year12Users, config.sg_12)
+		addUsersToGroup(Year12Users, config.sg_12)
+
+		addUsersToGroup(AdobeUsers, "CN=SG_Adobe_Student,OU=_Security Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")
 
 
-    End Sub
+
+
+
+	End Sub
 
     Sub addParentsToGroups(users As List(Of user))
         Dim kindyParents As New List(Of user)
