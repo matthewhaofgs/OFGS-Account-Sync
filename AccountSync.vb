@@ -335,14 +335,15 @@ Public Module AccountSync
 
         adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
         adUsers = addUserTypeToAdUsers(adUsers)
-        adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
-        adUsers = getEdumateGroups(adUsers, config)
+		adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
+		adUsers = addEdumateDetailsToAdUsers(adUsers, currentEdumateStudents)
+		adUsers = getEdumateGroups(adUsers, config)
 
 
 
         addParentsToGroups(edumateParents)
 
-        moveUsersToOUs(adUsers, config)
+		moveUsersToOUs(adUsers, config)
 
 
 
@@ -2389,6 +2390,9 @@ LEFT JOIN sys_user
                     aduser.employmentType = edumateUser.employmentType
 					aduser.contact_id = edumateUser.contact_id
 					aduser.edumateProperties.carer_number = edumateUser.edumateProperties.carer_number
+					aduser.startDate = edumateUser.startDate
+					aduser.endDate = edumateUser.endDate
+					aduser.classOf = edumateUser.classOf
 				End If
             Next
         Next
@@ -2794,9 +2798,18 @@ LEFT JOIN sys_user
             ADuser.AuthenticationType = AuthenticationTypes.Secure
             ADuser.RefreshCache()
 
-            ADuser.MoveTo(New DirectoryEntry(("LDAP://" & targetOU)))
+			If targetOU = "OU=Former Staff,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au" Then
+				ADuser.Properties("userAccountControl").Value = "66082"
+			Else
+				ADuser.Properties("userAccountControl").Value = "66080"
+			End If
 
-        End Using
+			ADuser.CommitChanges()
+
+
+			ADuser.MoveTo(New DirectoryEntry(("LDAP://" & targetOU)))
+
+		End Using
 
     End Sub
 
@@ -2819,8 +2832,8 @@ LEFT JOIN sys_user
         Console.WriteLine("")
         Console.WriteLine("Moving users...")
         Console.WriteLine("")
-
-        For Each adUser In adUsers
+		'MsgBox("PAUSE")
+		For Each adUser In adUsers
             'MsgBox(adUser.userAccountControl)
             Dim userAccountEnabled As Boolean
 
@@ -2863,14 +2876,29 @@ LEFT JOIN sys_user
             Dim targetOU As String
             targetOU = Nothing
 
-            'Move former students to Alumni OU
-            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not userAccountEnabled Then
-                'moveStudentToAlum(adUser, config.studentAlumOU)
-                targetOU = "alum"
-            End If
 
-            'Move former staff 
-            If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
+			If IsDBNull(adUser.endDate) Then
+				adUser.endDate = Date.Now.AddYears(1000)
+			End If
+
+			If IsDBNull(adUser.startDate) Then
+				adUser.startDate = Date.Now.AddYears(1000)
+			End If
+
+			'Move former students to Alumni OU
+			If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not (adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
+				'moveStudentToAlum(adUser, config.studentAlumOU)
+				targetOU = "alum"
+			End If
+
+			'Alum to current
+			If adUser.distinguishedName.Contains("Alumni") And adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+				targetOU = "OU=" & adUser.classOf & ",OU=Student Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"
+			End If
+
+
+			'Move former staff 
+			If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
                 targetOU = config.formerStaffOU
             End If
 
@@ -2893,11 +2921,12 @@ LEFT JOIN sys_user
             Next
 
 
-            Console.WriteLine(" ThenMoving User: " & adUser.displayName)
-            Console.WriteLine("Old OU: " & adUser.distinguishedName)
-            Console.WriteLine("New OU: " & targetOU)
+			Console.WriteLine("Moving User: " & adUser.displayName)
+			Console.WriteLine("Old OU: " & adUser.distinguishedName)
 
-            If Not IsNothing(targetOU) Then
+			Console.WriteLine("New OU: " & targetOU)
+
+			If Not IsNothing(targetOU) Then
                 If targetOU = "alum" Then
                     moveStudentToAlum(adUser, config.studentAlumOU)
                 Else
