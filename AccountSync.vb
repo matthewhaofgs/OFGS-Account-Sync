@@ -205,150 +205,153 @@ Public Module AccountSync
         Console.WriteLine("Reading config...")
         config = readConfig()
 
-
-        'Declare and connect to mySQL Database to text connection is working
-        Dim conn As New MySqlConnection
-        connect(conn, config)
-
-        'Get ALL AD Data
-        Dim dirEntry As DirectoryEntry
-        Console.WriteLine("Connecting to AD...")
-        dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
-        Dim adUsers As List(Of user)
-        Console.WriteLine("Loading AD users...")
-        Console.WriteLine("")
-        Console.WriteLine("")
-        adUsers = getADUsers(dirEntry)
+		'getHashFromSchoolboxAPI()
 
 
-        'Get Edumate data for students
-        Dim edumateStudents As List(Of user)
-        Console.WriteLine("Getting Edumate student data...")
-        edumateStudents = getEdumateStudents(config)
+		If 1 = 1 Then
+			'Declare and connect to mySQL Database to text connection is working
+			Dim conn As New MySqlConnection
+			connect(conn, config)
 
-        'Get student users who do not yet have accounts
-        Dim studentUsersToAdd As List(Of user)
-        studentUsersToAdd = getEdumateUsersNotInAD(edumateStudents, adUsers)
-        studentUsersToAdd = excludeUserOutsideEnrollDate(studentUsersToAdd, config)
-        studentUsersToAdd = addMailTo(config, studentUsersToAdd)
-        studentUsersToAdd = calculateCurrentYears(studentUsersToAdd)
-        Console.WriteLine("Found " & studentUsersToAdd.Count & " users to add")
-        Console.WriteLine("")
-
-        'Create student accounts
-        If studentUsersToAdd.Count > 0 Then
-            studentUsersToAdd = evaluateUsernames(studentUsersToAdd, adUsers)
-            createUsers(studentUsersToAdd, config, conn)
-        End If
-
-		'build current student list to attach to parents
-		Dim currentEdumateStudents As New List(Of user)
-		currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
-		currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
-		currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
-
-		'Get Edumate data for parents 
-		Console.WriteLine("Getting Edumate parent data...")
-        Console.WriteLine("")
-        Dim edumateParents As List(Of user)
-		edumateParents = getEdumateParents(config, currentEdumateStudents)
-
-		'Get parent users who do not yet have accounts
-		Dim parentsToAdd As List(Of user)
-        parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
-        parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
-        parentsToAdd = addMailTo(config, parentsToAdd)
-        Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
-
-        'Create Parent Accounts
-        If parentsToAdd.Count > 0 Then
-            parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
-            createUsers(parentsToAdd, config, conn)
-        End If
-
-		'Update parent mysql datasbase
-		updateParentDatabase(config, edumateParents)
-
-		'Get Edumate data for staff
-		Dim edumateStaff As List(Of user)
-        Console.WriteLine("Getting Edumate staff data...")
-        edumateStaff = getEdumateStaff(config)
-
-        'Get staff users who do not yet have accounts
-        Dim staffToAdd As List(Of user)
-        staffToAdd = getEdumateUsersNotInAD(edumateStaff, adUsers)
-        staffToAdd = excludeUserOutsideEnrollDate(staffToAdd, config)
-        staffToAdd = addMailTo(config, staffToAdd)
-        Console.WriteLine("Found " & staffToAdd.Count & " users to add")
-
-        'Create staff accounts
-        If staffToAdd.Count > 0 Then
-            staffToAdd = evaluateUsernames(staffToAdd, adUsers)
-            createUsers(staffToAdd, config, conn)
-        End If
-
-        'Add staff to AD groups
-        adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
-        adUsers = getEdumateGroups(adUsers, config)
-        AddStaffToGroups(adUsers, config)
-
-        'Re Pull AD data after creating new accounts
-        adUsers = getADUsers(dirEntry)
-
-        'Add usernames to account objects / refresh data now accountsd are created
-        edumateParents = addUsernamesToUsers(edumateParents, adUsers)
-		currentEdumateStudents = New List(Of user)
-
-		currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
-        currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
-        currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
+			'Get ALL AD Data
+			Dim dirEntry As DirectoryEntry
+			Console.WriteLine("Connecting to AD...")
+			dirEntry = GetDirectoryEntry(config.ldapDirectoryEntry)
+			Dim adUsers As List(Of user)
+			Console.WriteLine("Loading AD users...")
+			Console.WriteLine("")
+			Console.WriteLine("")
+			adUsers = getADUsers(dirEntry)
 
 
-        'MYSQL Database for student details
-        Dim mySQLStudents As List(Of user)
-        mySQLStudents = getMySQLStudents(conn)
-        updatePasswordsInMysql(mySQLStudents, conn)
+			'Get Edumate data for students
+			Dim edumateStudents As List(Of user)
+			Console.WriteLine("Getting Edumate student data...")
+			edumateStudents = getEdumateStudents(config)
 
-        Dim mysqlUsersToAdd As List(Of user)
-        mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
-        For Each mySQLUserTOAdd In mysqlUsersToAdd
-            addUsertoMySQL(conn, mySQLUserTOAdd)
-        Next
-        updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
+			'Get student users who do not yet have accounts
+			Dim studentUsersToAdd As List(Of user)
+			studentUsersToAdd = getEdumateUsersNotInAD(edumateStudents, adUsers)
+			studentUsersToAdd = excludeUserOutsideEnrollDate(studentUsersToAdd, config)
+			studentUsersToAdd = addMailTo(config, studentUsersToAdd)
+			studentUsersToAdd = calculateCurrentYears(studentUsersToAdd)
+			Console.WriteLine("Found " & studentUsersToAdd.Count & " users to add")
+			Console.WriteLine("")
 
-        AddStudentsToYearGroups(currentEdumateStudents, config)
-        currentEdumateStudents = addADObjectoToEdumateUser(currentEdumateStudents, adUsers)
-        updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
+			'Create student accounts
+			If studentUsersToAdd.Count > 0 Then
+				studentUsersToAdd = evaluateUsernames(studentUsersToAdd, adUsers)
+				createUsers(studentUsersToAdd, config, conn)
+			End If
+
+			'build current student list to attach to parents
+			Dim currentEdumateStudents As New List(Of user)
+			currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
+			currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
+			currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
+
+			'Get Edumate data for parents 
+			Console.WriteLine("Getting Edumate parent data...")
+			Console.WriteLine("")
+			Dim edumateParents As List(Of user)
+			edumateParents = getEdumateParents(config, currentEdumateStudents)
+
+			'Get parent users who do not yet have accounts
+			Dim parentsToAdd As List(Of user)
+			parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
+			parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
+			parentsToAdd = addMailTo(config, parentsToAdd)
+			Console.WriteLine("Found " & parentsToAdd.Count & " users to add")
+
+			'Create Parent Accounts
+			If parentsToAdd.Count > 0 Then
+				parentsToAdd = evaluateUsernames(parentsToAdd, adUsers)
+				createUsers(parentsToAdd, config, conn)
+			End If
+
+			'Update parent mysql datasbase
+			updateParentDatabase(config, edumateParents)
+
+			'Get Edumate data for staff
+			Dim edumateStaff As List(Of user)
+			Console.WriteLine("Getting Edumate staff data...")
+			edumateStaff = getEdumateStaff(config)
+
+			'Get staff users who do not yet have accounts
+			Dim staffToAdd As List(Of user)
+			staffToAdd = getEdumateUsersNotInAD(edumateStaff, adUsers)
+			staffToAdd = excludeUserOutsideEnrollDate(staffToAdd, config)
+			staffToAdd = addMailTo(config, staffToAdd)
+			Console.WriteLine("Found " & staffToAdd.Count & " users to add")
+
+			'Create staff accounts
+			If staffToAdd.Count > 0 Then
+				staffToAdd = evaluateUsernames(staffToAdd, adUsers)
+				createUsers(staffToAdd, config, conn)
+			End If
+
+			'Add staff to AD groups
+			adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
+			adUsers = getEdumateGroups(adUsers, config)
+			AddStaffToGroups(adUsers, config)
+
+			'Re Pull AD data after creating new accounts
+			adUsers = getADUsers(dirEntry)
+
+			'Add usernames to account objects / refresh data now accountsd are created
+			edumateParents = addUsernamesToUsers(edumateParents, adUsers)
+			currentEdumateStudents = New List(Of user)
+
+			currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
+			currentEdumateStudents = addUsernamesToUsers(currentEdumateStudents, adUsers)
+			currentEdumateStudents = calculateCurrentYears(currentEdumateStudents)
 
 
+			'MYSQL Database for student details
+			Dim mySQLStudents As List(Of user)
+			mySQLStudents = getMySQLStudents(conn)
+			updatePasswordsInMysql(mySQLStudents, conn)
 
+			Dim mysqlUsersToAdd As List(Of user)
+			mysqlUsersToAdd = getEdumateUsersNotInAD(currentEdumateStudents, mySQLStudents)
+			For Each mySQLUserTOAdd In mysqlUsersToAdd
+				addUsertoMySQL(conn, mySQLUserTOAdd)
+			Next
+			updateCurrentFlags(mySQLStudents, currentEdumateStudents, conn, adUsers)
 
-		'Schoolbox Stuff
-		SchoolboxMain(config, currentEdumateStudents, edumateParents)
-
-
-
-		'Staff MYSQL Database
-		purgeStaffDB(config)
-        updateStaffDatabase(config)
-
-
-        adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
-        adUsers = addUserTypeToAdUsers(adUsers)
-		adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
-		adUsers = addEdumateDetailsToAdUsers(adUsers, currentEdumateStudents)
-		adUsers = getEdumateGroups(adUsers, config)
-
-
-
-        addParentsToGroups(edumateParents)
-
-		moveUsersToOUs(adUsers, config)
+			AddStudentsToYearGroups(currentEdumateStudents, config)
+			currentEdumateStudents = addADObjectoToEdumateUser(currentEdumateStudents, adUsers)
+			updateMSQLDetails(currentEdumateStudents, mySQLStudents, conn)
 
 
 
 
-    End Sub
+			'Schoolbox Stuff
+			SchoolboxMain(config, currentEdumateStudents, edumateParents)
+
+
+
+			'Staff MYSQL Database
+			purgeStaffDB(config)
+			updateStaffDatabase(config)
+
+
+			adUsers = addUserTypeToADUSersFromEdumate(adUsers, edumateStudents)
+			adUsers = addUserTypeToAdUsers(adUsers)
+			adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
+			adUsers = addEdumateDetailsToAdUsers(adUsers, currentEdumateStudents)
+			adUsers = getEdumateGroups(adUsers, config)
+
+
+
+			addParentsToGroups(edumateParents)
+
+			moveUsersToOUs(adUsers, config)
+
+		End If
+
+
+	End Sub
 
     Function readConfig()
         Dim config As New configSettings()
@@ -1579,7 +1582,7 @@ LEFT JOIN sys_user
 							If IsDBNull(users.Last.endDate) Then
 								users.Last.edumateCurrent = 1
 							Else
-								If users.Last.endDate > Date.Now() Then
+								If users.Last.endDate.addDays(14) > Date.Now() Then
 									users.Last.edumateCurrent = 1
 								End If
 							End If

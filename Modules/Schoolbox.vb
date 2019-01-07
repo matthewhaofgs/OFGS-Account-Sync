@@ -5,6 +5,7 @@ Imports System.Net.Mail
 Imports MySql.Data.MySqlClient
 Imports System.Text
 Imports WinSCP
+Imports System.Net.Http
 
 
 Public Module Schoolbox
@@ -510,8 +511,8 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 
                 users.Last.Role = "Staff"
 
-                users.Last.Campus = "Junior, Senior"
-                users.Last.Password = ""
+				users.Last.Campus = "Junior, Senior"
+				users.Last.Password = ""
 
                 users.Last.Year = "Staff"
                 users.Last.ResidentialHouse = ""
@@ -1847,6 +1848,9 @@ AND event.recurring_id is null
             upload(i.host, i.userName, i.pass, i.rsa)
         Next
     End Sub
+
+
+
 
 
 
