@@ -50,11 +50,12 @@ Public Module AccountSync
         Public edumateProperties As New EdumateProperties
         Public enrolledClasses As String
         Public adFirstname As String
-        Public adSurname As String
+		Public adSurname As String
 
 
 
-    End Class
+
+	End Class
 
     Class EdumateProperties
         Public firstName As String
@@ -70,8 +71,9 @@ Public Module AccountSync
         Public libraryCard As String
         Public rollClass As String
         Public bosNumber As String
-        Public carer_number As String
-    End Class
+		Public carer_number As String
+		Public workTitle As String
+	End Class
 
 
 
@@ -294,6 +296,9 @@ Public Module AccountSync
 			adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
 			adUsers = getEdumateGroups(adUsers, config)
 			AddStaffToGroups(adUsers, config)
+
+			'Update staff AD account details
+			updateStaffADDetails(adUsers, edumateStaff)
 
 			'Re Pull AD data after creating new accounts
 			adUsers = getADUsers(dirEntry)
@@ -1526,7 +1531,8 @@ staff.staff_number,
 sys_user.username,
 contact.email_address,
 staff_employment.employment_type_id,
-contact.contact_id
+contact.contact_id,
+replace(work_detail.title,'&#039;','''') as title
 
 
 FROM            STAFF
@@ -1537,6 +1543,8 @@ INNER JOIN staff_employment
   ON staff.staff_id = staff_employment.staff_id
 LEFT JOIN sys_user 
   ON contact.contact_id = sys_user.contact_id
+left join work_detail on work_detail.contact_id=contact.contact_id
+
 "
 
 
@@ -1574,9 +1582,10 @@ LEFT JOIN sys_user
                     If Not IsDBNull(dr.GetValue(7)) Then users.Last.edumateEmail = dr.GetValue(7)
                     If Not IsDBNull(dr.GetValue(8)) Then users.Last.employmentType = dr.GetValue(8)
                     users.Last.edumateStaffNumber = dr.GetValue(5)
-                    users.Last.contact_id = dr.GetValue(9)
+					users.Last.contact_id = dr.GetValue(9)
+					If Not IsDBNull(dr.GetValue(10)) Then users.Last.edumateProperties.workTitle = dr.GetValue(10)
 
-                    If Not IsDBNull(users.Last.startDate) Then
+					If Not IsDBNull(users.Last.startDate) Then
 
 						If users.Last.startDate < Date.Now.AddDays(90) Then
 							If IsDBNull(users.Last.endDate) Then
@@ -3037,6 +3046,45 @@ FROM            group_membership
 
 
     End Function
+
+
+	Sub updateStaffADDetails(AdUSers As List(Of user), edumateUsers As List(Of user))
+
+		For Each edumateUser In edumateUsers
+			For Each aduser In AdUSers
+				If aduser.employeeID = edumateUser.employeeID Then
+
+
+
+					Using ADObject As New DirectoryEntry("LDAP://" & aduser.distinguishedName)
+						'Setting username & password to Nothing forces
+						'the connection to use your logon credentials
+						ADObject.Username = Nothing
+						ADObject.Password = Nothing
+						'Always use a secure connection
+						ADObject.AuthenticationType = AuthenticationTypes.Secure
+						ADObject.RefreshCache()
+
+
+						ADObject.Properties("title").Value = edumateUser.edumateProperties.workTitle
+
+
+						ADObject.CommitChanges()
+
+
+
+
+					End Using
+
+
+
+
+				End If
+			Next
+		Next
+
+
+	End Sub
 
 
 
