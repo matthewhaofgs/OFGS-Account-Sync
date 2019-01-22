@@ -672,7 +672,7 @@ SELECT DISTINCT
                          REPLACE(CONCAT(CONCAT(term.term, ' '), substr(timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, term.v_start_date, term.end_date, term.cycle_start_day, 
                          cycle_day.day_index, period.period, period.start_time, period.end_time
 FROM            TERM_GROUP, cycle_day, period_cycle_day, period, term, timetable
-WHERE        (start_date > '01/01/2018') AND (end_date < '01/01/2019') AND (term_group.cycle_id = cycle_day.cycle_id) AND 
+WHERE        (start_date > '01/01/2019') AND (end_date < '01/01/2020') AND (term_group.cycle_id = cycle_day.cycle_id) AND 
                          (cycle_day.cycle_day_id = period_cycle_day.cycle_day_id) AND (period_cycle_day.period_id = period.period_id) AND (term_group.term_id = term.term_id) AND 
                          (term.timetable_id = timetable.timetable_id)"
 
@@ -704,9 +704,9 @@ WHERE        (start_date > '01/01/2018') AND (end_date < '01/01/2019') AND (term
                 Dim outLine As String
                 Dim strTermTitle As String
 
-                strTermTitle = Replace(dr.GetValue(1), "2019", "2018")
+				strTermTitle = Replace(dr.GetValue(1), "2020", "2019")
 
-                outLine = (dr.GetValue(0) & "," & strTermTitle & "," & Format(dr.GetValue(2), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
+				outLine = (dr.GetValue(0) & "," & strTermTitle & "," & Format(dr.GetValue(2), "yyyy-MM-dd") & "," & Format(dr.GetValue(3), "yyyy-MM-dd") & "," & dr.GetValue(4) & "," & dr.GetValue(5).ToString & "," & dr.GetValue(6).ToString & "," & dr.GetValue(7).ToString & "," & dr.GetValue(8).ToString)
                 sw.WriteLine(outLine)
             End While
             conn.Close()
