@@ -814,8 +814,8 @@ OR
 
                 campus = Replace(dr.GetValue(0), "Year 1", "Senior")
                 strTerm = Replace(dr.GetValue(1), "Term 0", "Term 4")
-                strTerm = Replace(strTerm, "2019", "2018")
-                If True Then
+				strTerm = Replace(strTerm, "2020", "2019")
+				If True Then
                     outLine = (campus & "," & strTerm & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
                     sw.WriteLine(outLine)
                 End If
