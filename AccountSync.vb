@@ -623,12 +623,12 @@ stu_school.bos
 
                     users.Last.employeeNumber = dr.GetValue(7)
                     users.Last.dob = dr.GetValue(8)
-                    users.Last.libraryCard = dr.GetValue(9)
-                    users.Last.rollClass = dr.GetValue(10)
-                    users.Last.bosNumber = dr.GetValue(11)
+					If Not dr.IsDBNull(9) Then users.Last.libraryCard = dr.GetValue(9)
+					users.Last.rollClass = dr.GetValue(10)
+					users.Last.bosNumber = dr.GetValue(11)
 					If Not dr.IsDBNull(12) Then users.Last.enrolledClasses = dr.GetValue(12)
 
-				End If
+					End If
             End While
             conn.Close()
         End Using
