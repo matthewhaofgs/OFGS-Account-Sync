@@ -574,12 +574,15 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
                 If users.Last.Username.ToLower = "janineg" Then
                     users.Last.Role = "Administration"
                 End If
-                If users.Last.Username.ToLower = "jillianp" Then
-                    users.Last.Role = "Administration"
-                End If
+				If users.Last.Username.ToLower = "jillianp" Then
+					users.Last.Role = "Administration"
+				End If
+				If users.Last.Username.ToLower = "julies" Then
+					users.Last.Role = "Administration"
+				End If
 
 
-                If dr.GetValue(7) = "true" Then
+				If dr.GetValue(7) = "true" Then
                     users.Last.AltEmail = "donotemail@ofgs.nsw.edu.au"
                     users.Last.EmailAddressFromUsername = "N"
                 Else

@@ -51,6 +51,7 @@ Public Module AccountSync
         Public enrolledClasses As String
         Public adFirstname As String
 		Public adSurname As String
+		Public edumateDepartmentMemberships As List(Of String)
 
 
 
@@ -296,6 +297,9 @@ Public Module AccountSync
 			adUsers = addEdumateDetailsToAdUsers(adUsers, edumateStaff)
 			adUsers = getEdumateGroups(adUsers, config)
 			AddStaffToGroups(adUsers, config)
+			adUsers = getEdumateDepartments(adUsers, config)
+			addUserToDepartmentGroups(adUsers, dirEntry)
+
 
 			'Update staff AD account details
 			updateStaffADDetails(adUsers, edumateStaff)
@@ -1177,13 +1181,19 @@ stu_school.bos
                     Dim availableNameFound As Boolean = False
                     Dim i As Integer = 1
 
-                    While availableNameFound = False And i <= user.firstName.Length
+					While availableNameFound = False
 
-                        user.surname = Replace(user.surname, "&#039;", "")
-                        user.firstName = Replace(user.firstName, "&#039;", "")
-                        strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
+						If i > user.firstName.Length Then
+							user.surname = Replace(user.surname, "&#039;", "")
+							user.firstName = Replace(user.firstName, "&#039;", "")
+							strUsername = rgx.Replace(user.surname & Left(user.firstName, 1), "").ToLower & (i - user.firstName.Length + 1).ToString
+						Else
+							user.surname = Replace(user.surname, "&#039;", "")
+							user.firstName = Replace(user.firstName, "&#039;", "")
+							strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
+						End If
 
-                        Console.WriteLine("Trying " & strUsername & "...")
+						Console.WriteLine("Trying " & strUsername & "...")
                         Dim duplicate As Boolean
                         duplicate = False
                         Dim a As Integer = 1
@@ -1211,10 +1221,10 @@ stu_school.bos
                         i = i + 1
                     End While
 
-                    If user.ad_username = Nothing Then
-                        Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
-                    Else
-                        Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.ad_username)
+					If user.ad_username = Nothing Then
+						Console.WriteLine("No valid username available for " & user.firstName & " " & user.surname)
+					Else
+						Console.WriteLine(user.firstName & " " & user.surname & " will be created as " & user.ad_username)
                     End If
 
 
@@ -1223,10 +1233,16 @@ stu_school.bos
                     Dim availableNameFound As Boolean = False
                     Dim i As Integer = 1
 
-                    While availableNameFound = False And i <= user.surname.Length
+					While availableNameFound = False
 
-                        strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
-                        Console.WriteLine("Trying " & strUsername & "...")
+						If i > user.surname.Length Then
+							strUsername = rgx.Replace(user.firstName & Left(user.surname, 1), "").ToLower & (i - user.surname.Length + 1).ToString
+						Else
+							strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
+						End If
+
+						'strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
+						Console.WriteLine("Trying " & strUsername & "...")
                         Dim duplicate As Boolean
                         duplicate = False
                         Dim a As Integer = 1
@@ -3085,6 +3101,92 @@ FROM            group_membership
 
 
 	End Sub
+
+
+
+	Function getEdumateDepartments(users As List(Of user), config As configSettings)
+		Dim ConnectionString As String = config.edumateConnectionString
+		Dim commandString As String =
+"
+SELECT DISTINCT
+
+school || ' ' || department,
+contact_id,
+firstname,
+surname
+FROM
+(
+SELECT DISTINCT 
+
+edumate.contact.contact_id,
+edumate.staff.staff_number,
+edumate.staff.short_name,
+edumate.contact.firstname,
+edumate.contact.surname,
+edumate.department.department,
+edumate.school.school
+
+FROM
+edumate.class_teacher
+
+inner join edumate.teacher on edumate.class_teacher.teacher_id = edumate.teacher.teacher_id
+inner join edumate.contact on edumate.teacher.contact_id = edumate.contact.contact_id
+inner join edumate.staff on edumate.contact.contact_id = edumate.staff.contact_id
+inner join edumate.class on edumate.class_teacher.class_id = edumate.class.class_id
+inner join edumate.course on edumate.class.course_id = edumate.course.course_id
+inner join edumate.subject on edumate.course.subject_id = edumate.subject.subject_id
+inner join edumate.department on edumate.subject.department_id = edumate.department.department_id
+INNER JOIN edumate.ACADEMIC_YEAR ON edumate.class.academic_year_id = edumate.academic_year.academic_year_id
+INNER JOIN edumate.school ON edumate.department.school_id = edumate.school.school_id 
+
+
+
+WHERE 
+edumate.academic_year.academic_year like year(CURRENT_DATE)
+)
+
+"
+
+
+		Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
+			conn.Open()
+
+			'define the command object to execute
+			Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
+			command.Connection = conn
+			command.CommandText = commandString
+
+			Dim dr As IBM.Data.DB2.DB2DataReader
+			dr = command.ExecuteReader
+
+			Dim i As Integer = 0
+			While dr.Read()
+				If Not dr.IsDBNull(0) Then
+
+					For Each user In users
+
+
+						If user.contact_id = dr.GetValue(1) Then
+							If IsNothing(user.edumateDepartmentMemberships) Then
+								user.edumateDepartmentMemberships = New List(Of String)
+							End If
+							user.edumateDepartmentMemberships.Add(dr.GetValue(0))
+						End If
+					Next
+
+
+
+				End If
+			End While
+			conn.Close()
+		End Using
+		Return users
+	End Function
+
+
+
+
+
 
 
 
