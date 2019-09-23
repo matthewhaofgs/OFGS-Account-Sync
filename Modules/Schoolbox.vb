@@ -834,9 +834,115 @@ OR
     Sub enrollment(config As schoolboxConfigSettings)
         Dim commandstring As String
         commandstring = "
-SELECT DISTINCT CONCAT(course.code, class.identifier) AS CLASS_CODE, class.class, student.student_number
-FROM            CLASS_ENROLLMENT, STUDENT, class, course, academic_year
-WHERE        (class_enrollment.student_id = student.student_id) AND (class_enrollment.class_id = class.class_id) AND (class.course_id = course.course_id) AND (class.academic_year_id = academic_year.academic_year_id) AND (academic_year.academic_year ='" & Date.Today.Year & "' OR academic_year.academic_year ='" & Date.Today.Year + 1 & "' ) AND ((SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date -10 DAYS) AND class_enrollment.end_date)
+SELECT DISTINCT 
+
+CONCAT(course.code, class.identifier) AS CLASS_CODE, 
+class.class, 
+student.student_number
+
+FROM            CLASS_ENROLLMENT
+
+INNER JOIN STUDENT 
+	ON class_enrollment.student_id = student.student_id
+
+INNER JOIN class 
+	ON class_enrollment.class_id = class.class_id
+	
+INNER JOIN COURSE
+	ON class.course_id = course.course_id
+	
+INNER JOIN ACADEMIC_YEAR
+	ON class.academic_year_id = academic_year.academic_year_id
+	
+
+ WHERE (academic_year.academic_year = CAST((YEAR(current_date))AS VARCHAR(10)) OR academic_year.academic_year =CAST((YEAR(current_date+ 1 years)) AS varchar(10))) AND ((SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date -10 DAYS) AND class_enrollment.end_date)
+
+ UNION
+ 
+ SELECT DISTINCT 
+
+replace(CONCAT(course.code, class.identifier),'12','13') AS CLASS_CODE, 
+replace(class.class,'12','13') AS CLASS,
+student.student_number
+
+FROM            CLASS_ENROLLMENT
+
+INNER JOIN STUDENT 
+	ON class_enrollment.student_id = student.student_id
+
+INNER JOIN class 
+	ON class_enrollment.class_id = class.class_id
+	
+INNER JOIN COURSE
+	ON class.course_id = course.course_id
+	
+INNER JOIN ACADEMIC_YEAR
+	ON class.academic_year_id = academic_year.academic_year_id
+	
+
+ WHERE (academic_year.academic_year = CAST((YEAR(current_date))AS VARCHAR(10)))  
+ 	AND ((SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date -10 DAYS) 
+	AND class_enrollment.end_date) 
+ 	AND student.student_number IN 
+ 	(
+ 	SELECT  distinct      
+
+student.student_number
+
+FROM            
+STUDENT
+INNER JOIN contact ON student.contact_id = contact.contact_id
+INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
+INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
+INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
+INNER JOIN form ON form_run.form_id = form.form_id
+INNER JOIN stu_school ON student.student_id = stu_school.student_id
+LEFT JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
+LEFT JOIN class ON class_enrollment.class_id = class.class_id 
+INNER JOIN TIMETABLE ON form_run.TIMETABLE_ID = timetable.TIMETABLE_ID
+
+
+
+	
+WHERE 
+
+(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+
+AND YEAR(edumate.view_student_start_exit_dates.exit_date) = year(current_date)
+
+AND edumate.view_student_start_exit_dates.exit_date = timetable.COMPUTED_END_DATE
+
+AND form.SHORT_NAME = '12'
+
+AND class.CLASS LIKE '12%'
+
+
+AND student.student_id NOT IN
+(
+	SELECT distinct       
+
+	student.student_id
+
+	FROM            
+	STUDENT
+	INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
+	INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
+	INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
+	INNER JOIN form ON form_run.form_id = form.form_id
+	INNER JOIN stu_school ON student.student_id = stu_school.student_id
+	
+	WHERE 
+
+	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+
+	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
+	)
+
+ 	
+ 	)
+ 	
+ 
+ 
 "
 
 
