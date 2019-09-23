@@ -574,7 +574,6 @@ WHERE
 
 AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 
-
 GROUP BY 
 
 contact.firstname, 
@@ -590,6 +589,104 @@ stu_school.library_card,
 Rollclass.class,
 stu_school.bos
 
+UNION
+
+SELECT        
+contact.firstname, 
+contact.surname, 
+edumate.view_student_start_exit_dates.start_date, 
+edumate.view_student_start_exit_dates.exit_date, 
+student.student_id, 
+'13' AS grad_form,
+YEAR(student_form_run.end_date) as EndYear,
+student.student_number,
+contact.birthdate,
+stu_school.library_card,
+Rollclass.class,
+stu_school.bos,
+listagg(cast(class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
+
+
+
+
+
+FROM            
+STUDENT
+INNER JOIN contact ON student.contact_id = contact.contact_id
+INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
+INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
+INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
+INNER JOIN form ON form_run.form_id = form.form_id
+INNER JOIN stu_school ON student.student_id = stu_school.student_id
+LEFT JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
+LEFT JOIN class ON class_enrollment.class_id = class.class_id 
+INNER JOIN TIMETABLE ON form_run.TIMETABLE_ID = timetable.TIMETABLE_ID
+
+LEFT JOIN 
+	(
+	SELECT        
+	student.student_id, 
+	edumate.view_student_class_enrolment.class
+
+	FROM            
+	STUDENT
+
+	INNER JOIN edumate.view_student_class_enrolment ON student.student_id = edumate.view_student_class_enrolment.student_id
+
+	WHERE 
+ 	(edumate.view_student_class_enrolment.class_type_id = 2)
+	AND (edumate.view_student_class_enrolment.academic_year = char(year(current timestamp)))
+	) RollClass ON rollclass.student_id = student.student_id
+
+	
+WHERE 
+
+(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+
+AND YEAR(edumate.view_student_start_exit_dates.exit_date) = year(current_date)
+
+AND edumate.view_student_start_exit_dates.exit_date = timetable.COMPUTED_END_DATE
+
+AND form.SHORT_NAME = '12'
+
+AND class.CLASS LIKE '12%'
+
+
+AND student.student_id NOT IN
+(
+	SELECT distinct       
+
+	student.student_id
+
+	FROM            
+	STUDENT
+	INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
+	INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
+	INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
+	INNER JOIN form ON form_run.form_id = form.form_id
+	INNER JOIN stu_school ON student.student_id = stu_school.student_id
+	
+	WHERE 
+
+	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+
+	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
+)
+
+GROUP BY 
+
+contact.firstname, 
+contact.surname, 
+edumate.view_student_start_exit_dates.start_date, 
+edumate.view_student_start_exit_dates.exit_date, 
+student.student_id, 
+form.short_name,
+YEAR(student_form_run.end_date),
+student.student_number,
+contact.birthdate,
+stu_school.library_card,
+Rollclass.class,
+stu_school.bos
 
 "
 

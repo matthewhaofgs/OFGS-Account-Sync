@@ -119,10 +119,13 @@ Module ADGroups
 			For Each existingGroupName In existingGroupNames
 				If "Edumate_Department_" & objDepartment.name = existingGroupName Then
 					existing = True
+
 				End If
 			Next
 			If existing = False Then
+				'MsgBox("Break")
 				createADGroup("Edumate_Department_" & objDepartment.name)
+
 			End If
 		Next
 
