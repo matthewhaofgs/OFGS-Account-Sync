@@ -203,8 +203,9 @@ Public Module AccountSync
     End Class
 
     Sub Main()
-        Dim config As New configSettings()
-        Console.Clear()
+
+		Dim config As New configSettings()
+		Console.Clear()
         Console.WriteLine("Reading config...")
         config = readConfig()
 
@@ -764,8 +765,10 @@ stu_school.bos
             Case "11"
                 getYearOf = endYear + 1
             Case "12"
-                getYearOf = endYear
-            Case "1"
+				getYearOf = endYear
+			Case "13"
+				getYearOf = endYear
+			Case "1"
                 getYearOf = endYear + 11
             Case "2"
                 getYearOf = endYear + 10
@@ -1231,10 +1234,10 @@ stu_school.bos
                 If IsDBNull(user.endDate) Then
                     ReturnUsers.Add(user)
                 Else
-                    If user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
-                        ReturnUsers.Add(user)
-                    End If
-                End If
+					If (user.endDate > Date.Now() And user.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Or (user.classOf = System.DateTime.Now.Year.ToString) Then
+						ReturnUsers.Add(user)
+					End If
+				End If
             End If
         Next
         Return ReturnUsers
