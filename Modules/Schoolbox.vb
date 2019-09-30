@@ -881,8 +881,8 @@ INNER JOIN ACADEMIC_YEAR
 	
 
  WHERE (academic_year.academic_year = CAST((YEAR(current_date))AS VARCHAR(10)))  
- 	AND ((SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date -10 DAYS) 
-	AND class_enrollment.end_date) 
+ 	--AND ((SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date -10 DAYS) 
+	--AND class_enrollment.end_date) 
  	AND student.student_number IN 
  	(
  	SELECT  distinct      
