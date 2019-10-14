@@ -859,7 +859,7 @@ INNER JOIN ACADEMIC_YEAR
 
  UNION
  
- SELECT DISTINCT 
+SELECT DISTINCT 
 
 replace(CONCAT(course.code, class.identifier),'12','13') AS CLASS_CODE, 
 replace(class.class,'12','13') AS CLASS,
@@ -906,41 +906,13 @@ INNER JOIN TIMETABLE ON form_run.TIMETABLE_ID = timetable.TIMETABLE_ID
 	
 WHERE 
 
-(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
-
-AND YEAR(edumate.view_student_start_exit_dates.exit_date) = year(current_date)
-
-AND edumate.view_student_start_exit_dates.exit_date = timetable.COMPUTED_END_DATE
-
-AND form.SHORT_NAME = '12'
-
-AND class.CLASS LIKE '12%'
-
-
-AND student.student_id NOT IN
 (
-	SELECT distinct       
-
-	student.student_id
-
-	FROM            
-	STUDENT
-	INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
-	INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
-	INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
-	INNER JOIN form ON form_run.form_id = form.form_id
-	INNER JOIN stu_school ON student.student_id = stu_school.student_id
-	
-	WHERE 
-
-	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
-
-	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
-	)
-
- 	
- 	)
- 	
+YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+AND YEAR(edumate.view_student_start_exit_dates.exit_date) = year(current_date)
+AND form.SHORT_NAME = '12'
+AND class.CLASS LIKE '12%'
+AND class_enrollment.END_DATE < current_date
+)
  
  
 "
