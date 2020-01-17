@@ -300,10 +300,10 @@ Public Module AccountSync
 			AddStaffToGroups(adUsers, config)
 			adUsers = getEdumateDepartments(adUsers, config)
 			addUserToDepartmentGroups(adUsers, dirEntry)
+            addUserToRoleGroups(adUsers, dirEntry)
 
-
-			'Update staff AD account details
-			updateStaffADDetails(adUsers, edumateStaff)
+            'Update staff AD account details
+            updateStaffADDetails(adUsers, edumateStaff)
 
 			'Re Pull AD data after creating new accounts
 			adUsers = getADUsers(dirEntry)

@@ -184,4 +184,68 @@ Module ADGroups
 
 	End Sub
 
+	Sub addUserToRoleGroups(users As List(Of user), dirEntry As DirectoryEntry)
+
+		Dim existingGroupNames As List(Of String)
+		Dim jobRoles As New List(Of department)
+		Dim existing As Boolean
+
+
+
+		For Each user In users
+			If Not IsNothing(user.edumateProperties.workTitle) Then
+
+				existing = False
+				For Each objJobRole In jobRoles
+					If user.edumateProperties.workTitle = objJobRole.name Then
+						existing = True
+						objJobRole.members.Add(user)
+					End If
+				Next
+
+				If existing = False Then
+					Dim objJobRole = New department
+					objJobRole.name = user.edumateProperties.workTitle
+					objJobRole.members.Add(user)
+					jobRoles.Add(objJobRole)
+				End If
+			End If
+		Next
+
+
+
+		existingGroupNames = getADGroups(dirEntry)
+
+		For Each objJobRole In jobRoles
+
+			For Each existingGroupName In existingGroupNames
+				If "Edumate_JobRole_" & objJobRole.name = existingGroupName Then
+					existing = True
+
+				End If
+			Next
+			If existing = False Then
+				'MsgBox("Break")
+				createADGroup("Edumate_JobRole_" & objJobRole.name)
+
+			End If
+		Next
+
+		For Each objJobRole In jobRoles
+			addUsersToGroup(objJobRole.members, ("CN=Edumate_JobRole_" & objJobRole.name & ",OU=_Edumate Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"))
+		Next
+
+
+
+
+
+	End Sub
+
+
+
+
+
+
+
+
 End Module
