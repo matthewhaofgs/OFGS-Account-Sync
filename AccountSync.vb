@@ -51,12 +51,13 @@ Public Module AccountSync
         Public enrolledClasses As String
         Public adFirstname As String
 		Public adSurname As String
-		Public edumateDepartmentMemberships As List(Of String)
+        Public edumateDepartmentMemberships As List(Of String)
+        Public workTitles As New List(Of String)
 
 
 
 
-	End Class
+    End Class
 
     Class EdumateProperties
         Public firstName As String
@@ -300,6 +301,7 @@ Public Module AccountSync
 			AddStaffToGroups(adUsers, config)
 			adUsers = getEdumateDepartments(adUsers, config)
 			addUserToDepartmentGroups(adUsers, dirEntry)
+            adUsers = getWorkTitlesFromEdumateTitle(adUsers)
             addUserToRoleGroups(adUsers, dirEntry)
 
             'Update staff AD account details
@@ -2520,8 +2522,9 @@ left join work_detail on work_detail.contact_id=contact.contact_id
 					aduser.edumateProperties.carer_number = edumateUser.edumateProperties.carer_number
 					aduser.startDate = edumateUser.startDate
 					aduser.endDate = edumateUser.endDate
-					aduser.classOf = edumateUser.classOf
-				End If
+                    aduser.classOf = edumateUser.classOf
+                    aduser.edumateProperties.workTitle = edumateUser.edumateProperties.workTitle
+                End If
             Next
         Next
         Return adUsers
@@ -3286,7 +3289,18 @@ edumate.academic_year.academic_year like year(CURRENT_DATE)
 
 
 
+    Function getWorkTitlesFromEdumateTitle(users As List(Of user))
 
+        Dim titles
+        For Each user In users
+            titles = Split(user.edumateProperties.workTitle, ",")
+            For Each title In titles
+                user.workTitles.Add(Trim(Replace(Replace(title, "&amp;", "&"), "/", " & ")))
+            Next
+        Next
+
+        Return users
+    End Function
 
 
 
