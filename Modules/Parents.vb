@@ -115,6 +115,10 @@ ON parentcontact.contact_id = carer.contact_id
 
 
 WHERE        (relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
+
+
+
+
 "
 
 

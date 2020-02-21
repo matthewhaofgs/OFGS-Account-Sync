@@ -19,16 +19,16 @@ Public Module Schoolbox
 		Console.WriteLine("Creating user.csv")
 		Call writeUserCSV(config, adconfig, currentEdumateStudents, edumateParents)
 		Console.WriteLine("User.csv done")
-		'Console.WriteLine("")
-		'Console.WriteLine("")
+        'Console.WriteLine("")
+        'Console.WriteLine("")
 
-		Call timetableStructure(config)
-		Call timetable(config)
-		Call enrollment(config)
-		Call events(config)
+        Call timetableStructure(config)
+        Call timetable(config)
+        Call enrollment(config)
+        Call events(config)
 
         Call uploadFiles(config)
-
+        Call relationships(config)
 
         Console.WriteLine("Schoolbox stuff done")
     End Sub
@@ -222,8 +222,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "09"
-							Select Case users.Last.Campus
+                        Case "9"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Senior"
 								Case "Junior"
@@ -233,8 +233,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "08"
-							Select Case users.Last.Campus
+                        Case "8"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Senior"
 								Case "Junior"
@@ -244,8 +244,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "07"
-							Select Case users.Last.Campus
+                        Case "7"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Senior"
 								Case "Junior"
@@ -255,8 +255,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "06"
-							Select Case users.Last.Campus
+                        Case "6"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -266,8 +266,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "05"
-							Select Case users.Last.Campus
+                        Case "5"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -277,8 +277,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "04"
-							Select Case users.Last.Campus
+                        Case "4"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -288,8 +288,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "03"
-							Select Case users.Last.Campus
+                        Case "3"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -299,8 +299,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "02"
-							Select Case users.Last.Campus
+                        Case "2"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -310,8 +310,8 @@ Public Module Schoolbox
 								Case "Junior, Senior"
 									users.Last.Campus = "Junior, Senior"
 							End Select
-						Case "01"
-							Select Case users.Last.Campus
+                        Case "1"
+                            Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
@@ -580,9 +580,11 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
 				If users.Last.Username.ToLower = "julies" Then
 					users.Last.Role = "Administration"
 				End If
+                If users.Last.Username.ToLower = "donnal" Then
+                    users.Last.Role = "Administration"
+                End If
 
-
-				If dr.GetValue(7) = "true" Then
+                If dr.GetValue(7) = "true" Then
                     users.Last.AltEmail = "donotemail@ofgs.nsw.edu.au"
                     users.Last.EmailAddressFromUsername = "N"
                 Else
@@ -633,15 +635,15 @@ inner join staff on schoolbox_staff2.staff_number = staff.staff_number
             If Not IsNothing(i.Campus) Then
                 Select Case i.Year
                     Case "K"
-                    Case "01"
-                    Case "02"
-                    Case "03"
-                    Case "04"
-                    Case "05"
-                    Case "06"
-                    Case "07"
-                    Case "08"
-                    Case "09"
+                    Case "1"
+                    Case "2"
+                    Case "3"
+                    Case "4"
+                    Case "5"
+                    Case "6"
+                    Case "7"
+                    Case "8"
+                    Case "9"
                     Case "10"
                     Case "11"
                     Case "12"
@@ -1052,8 +1054,8 @@ on event.event_id = event_rooms.event_id
 left join room on event_rooms.max_room_id = room.room_id
 
 WHERE
-event.start_date >  '01/01/2019' 
-AND event.end_date < '12/31/2020' 
+event.start_date >  '01/01/2020' 
+AND event.end_date < '12/31/2021' 
 AND event.publish_flag = 1
 AND event.recurring_id is null
 
@@ -1179,7 +1181,118 @@ AND event.recurring_id is null
     End Sub
 
 
+    Sub relationships(config As schoolboxConfigSettings)
 
+
+        Dim commandString As String
+        commandString = "
+
+
+SELECT        
+parentcontact.firstname,
+parentcontact.surname,
+carer.carer_id,
+student.student_id,
+carer.carer_number,
+student.STUDENT_NUMBER 
+
+
+FROM            relationship
+
+INNER JOIN contact as ParentContact
+ON relationship.contact_id1 = Parentcontact.contact_id
+
+INNER JOIN contact as StudentContact 
+ON relationship.contact_id2 = studentContact.contact_id
+
+INNER JOIN student
+ON studentContact.contact_id = student.contact_id AND
+student.student_id in (select student_id from student s1 where current_date BETWEEN (select min(start_date) from student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
+                                                                                 (select max(end_date) from student_form_run sfr2a where s1.student_id = sfr2a.student_id))
+
+INNER JOIN carer 
+ON parentcontact.contact_id = carer.contact_id
+
+
+WHERE        (relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
+
+
+UNION 
+
+SELECT        
+parentcontact.firstname,
+parentcontact.surname,
+carer.carer_id,
+student.student_id,
+carer.carer_number,
+student.STUDENT_NUMBER 
+
+
+FROM            relationship
+
+INNER JOIN contact as ParentContact
+ON relationship.contact_id2 = Parentcontact.contact_id
+
+INNER JOIN contact as StudentContact 
+ON relationship.contact_id1 = studentContact.contact_id
+
+INNER JOIN student
+ON studentContact.contact_id = student.contact_id AND
+student.student_id in (select student_id from student s1 where current_date BETWEEN (select min(start_date) from student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
+                                                                                 (select max(end_date) from student_form_run sfr2a where s1.student_id = sfr2a.student_id))
+INNER JOIN carer 
+ON parentcontact.contact_id = carer.contact_id
+
+
+WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+
+
+
+
+
+"
+
+
+
+
+
+        Dim sw As New StreamWriter(".\relationship.csv")
+
+        Dim ConnectionString As String = config.connectionString
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As IBM.Data.DB2.DB2DataReader
+            dr = command.ExecuteReader
+
+
+            sw.WriteLine("Guardian ID,Student ID,Type")
+
+            Dim fields As Integer = dr.FieldCount - 1
+            While dr.Read()
+                Dim sb As New StringBuilder()
+
+                Dim outLine As String
+
+                outLine = (dr.GetValue(4) & "," & dr.GetValue(5) & ",Parent")
+                sw.WriteLine(outLine)
+            End While
+            conn.Close()
+        End Using
+
+
+        sw.Close()
+
+
+
+
+
+    End Sub
 
 
 

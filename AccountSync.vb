@@ -74,8 +74,9 @@ Public Module AccountSync
         Public rollClass As String
         Public bosNumber As String
 		Public carer_number As String
-		Public workTitle As String
-	End Class
+        Public workTitle As String
+        Public yearsTeaching As String
+    End Class
 
 
 
@@ -302,7 +303,11 @@ Public Module AccountSync
 			adUsers = getEdumateDepartments(adUsers, config)
 			addUserToDepartmentGroups(adUsers, dirEntry)
             adUsers = getWorkTitlesFromEdumateTitle(adUsers)
-            addUserToRoleGroups(adUsers, dirEntry)
+            Dim currentAdStaff = excludeNonCurrentStaff(adUsers)
+            addUserToRoleGroups(currentAdStaff, dirEntry)
+            'yeargroups
+            adUsers = getEdumateSSYearsTeaching(adUsers, config)
+            addUsersToYearGroups(adUsers, dirEntry)
 
             'Update staff AD account details
             updateStaffADDetails(adUsers, edumateStaff)
@@ -1545,39 +1550,39 @@ stu_school.bos
                     For Each emailAddress In config.mailToK
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "01"
+                Case "1"
                     For Each emailAddress In config.mailTo1
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "02"
+                Case "2"
                     For Each emailAddress In config.mailTo2
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "03"
+                Case "3"
                     For Each emailAddress In config.mailTo3
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "04"
+                Case "4"
                     For Each emailAddress In config.mailTo4
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "05"
+                Case "5"
                     For Each emailAddress In config.mailTo5
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "06"
+                Case "6"
                     For Each emailAddress In config.mailTo6
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "07"
+                Case "7"
                     For Each emailAddress In config.mailTo7
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "08"
+                Case "8"
                     For Each emailAddress In config.mailTo8
                         user.mailTo.Add(emailAddress)
                     Next
-                Case "09"
+                Case "9"
                     For Each emailAddress In config.mailTo9
                         user.mailTo.Add(emailAddress)
                     Next
@@ -1610,23 +1615,23 @@ stu_school.bos
                     Case 2
                         user.currentYear = "10"
                     Case 3
-                        user.currentYear = "09"
+                        user.currentYear = "9"
                     Case 4
-                        user.currentYear = "08"
+                        user.currentYear = "8"
                     Case 5
-                        user.currentYear = "07"
+                        user.currentYear = "7"
                     Case 6
-                        user.currentYear = "06"
+                        user.currentYear = "6"
                     Case 7
-                        user.currentYear = "05"
+                        user.currentYear = "5"
                     Case 8
-                        user.currentYear = "04"
+                        user.currentYear = "4"
                     Case 9
-                        user.currentYear = "03"
+                        user.currentYear = "3"
                     Case 10
-                        user.currentYear = "02"
+                        user.currentYear = "2"
                     Case 11
-                        user.currentYear = "01"
+                        user.currentYear = "1"
                     Case 12
                         user.currentYear = "K"
                 End Select
@@ -2033,15 +2038,15 @@ left join work_detail on work_detail.contact_id=contact.contact_id
                     strExt12 = getChildFromChildren(parent.children, "12")
                     strExt11 = getChildFromChildren(parent.children, "11")
                     strExt10 = getChildFromChildren(parent.children, "10")
-                    strExt9 = getChildFromChildren(parent.children, "09")
-                    strExt8 = getChildFromChildren(parent.children, "08")
-                    strExt7 = getChildFromChildren(parent.children, "07")
-                    strExt6 = getChildFromChildren(parent.children, "06")
-                    strExt5 = getChildFromChildren(parent.children, "05")
-                    strExt4 = getChildFromChildren(parent.children, "04")
-                    strExt3 = getChildFromChildren(parent.children, "03")
-                    strExt2 = getChildFromChildren(parent.children, "02")
-                    strExt1 = getChildFromChildren(parent.children, "01")
+                    strExt9 = getChildFromChildren(parent.children, "9")
+                    strExt8 = getChildFromChildren(parent.children, "8")
+                    strExt7 = getChildFromChildren(parent.children, "7")
+                    strExt6 = getChildFromChildren(parent.children, "6")
+                    strExt5 = getChildFromChildren(parent.children, "5")
+                    strExt4 = getChildFromChildren(parent.children, "4")
+                    strExt3 = getChildFromChildren(parent.children, "3")
+                    strExt2 = getChildFromChildren(parent.children, "2")
+                    strExt1 = getChildFromChildren(parent.children, "1")
                     strExt13 = getChildFromChildren(parent.children, "K")
 
                     '[If CInt(strExt12 & strExt11 & strExt10 & strExt9 & strExt8 & strExt7 & strExt6 & strExt5 & strExt4 & strExt3 & strExt2 & strExt1 & strExt13) > 1 Then
@@ -2772,26 +2777,26 @@ left join work_detail on work_detail.contact_id=contact.contact_id
 			Select Case user.currentYear
 				Case "K"
 					kindyUsers.Add(user)
-				Case "01"
-					Year01Users.Add(user)
-				Case "02"
-					Year02Users.Add(user)
-				Case "03"
-					Year03Users.Add(user)
-				Case "04"
-					Year04Users.Add(user)
-				Case "05"
-					Year05Users.Add(user)
-				Case "06"
-					Year06Users.Add(user)
-				Case "07"
-					Year07Users.Add(user)
+                Case "1"
+                    Year01Users.Add(user)
+                Case "2"
+                    Year02Users.Add(user)
+                Case "3"
+                    Year03Users.Add(user)
+                Case "4"
+                    Year04Users.Add(user)
+                Case "5"
+                    Year05Users.Add(user)
+                Case "6"
+                    Year06Users.Add(user)
+                Case "7"
+                    Year07Users.Add(user)
 					seniorSchool = True
-				Case "08"
-					Year08Users.Add(user)
+                Case "8"
+                    Year08Users.Add(user)
 					seniorSchool = True
-				Case "09"
-					Year09Users.Add(user)
+                Case "9"
+                    Year09Users.Add(user)
 					seniorSchool = True
 				Case "10"
 					Year10Users.Add(user)
@@ -2854,31 +2859,31 @@ left join work_detail on work_detail.contact_id=contact.contact_id
                     If child.currentYear = "K" Then
                         kindyParents.Add(parent)
                     End If
-                    If child.currentYear = "01" Then
+                    If child.currentYear = "1" Then
                         Year01Parents.Add(parent)
                     End If
-                    If child.currentYear = "02" Then
+                    If child.currentYear = "2" Then
                         Year02Parents.Add(parent)
                     End If
-                    If child.currentYear = "03" Then
+                    If child.currentYear = "3" Then
                         Year03Parents.Add(parent)
                     End If
-                    If child.currentYear = "04" Then
+                    If child.currentYear = "4" Then
                         Year04Parents.Add(parent)
                     End If
-                    If child.currentYear = "05" Then
+                    If child.currentYear = "5" Then
                         Year05Parents.Add(parent)
                     End If
-                    If child.currentYear = "06" Then
+                    If child.currentYear = "6" Then
                         Year06Parents.Add(parent)
                     End If
-                    If child.currentYear = "07" Then
+                    If child.currentYear = "7" Then
                         Year07Parents.Add(parent)
                     End If
-                    If child.currentYear = "08" Then
+                    If child.currentYear = "8" Then
                         Year08Parents.Add(parent)
                     End If
-                    If child.currentYear = "09" Then
+                    If child.currentYear = "9" Then
                         Year09Parents.Add(parent)
                     End If
                     If child.currentYear = "10" Then
@@ -3012,12 +3017,12 @@ left join work_detail on work_detail.contact_id=contact.contact_id
 				adUser.endDate = Date.Now.AddYears(1000)
 			End If
 
-			If IsDBNull(adUser.startDate) Then
-				adUser.startDate = Date.Now.AddYears(1000)
-			End If
+            If IsDBNull(adUser.startDate) Then
+                adUser.startDate = Date.Now.AddYears(1000)
+            End If
 
-			'Move former students to Alumni OU
-			If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not (adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
+            'Move former students to Alumni OU
+            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not (adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
 				'moveStudentToAlum(adUser, config.studentAlumOU)
 				targetOU = "alum"
 			End If
@@ -3295,12 +3300,169 @@ edumate.academic_year.academic_year like year(CURRENT_DATE)
         For Each user In users
             titles = Split(user.edumateProperties.workTitle, ",")
             For Each title In titles
-                user.workTitles.Add(Trim(Replace(Replace(title, "&amp;", "&"), "/", " & ")))
+                If ("Job_" & (Trim(Replace(Replace(title, "&amp;", "&"), "/", " & ")))).Length > 50 Then
+                    user.workTitles.Add(("Job_" & (Trim(Replace(Replace(title, "&amp;", "&"), "/", " & ")))).Substring(0, 50))
+                Else
+                    user.workTitles.Add("Job_" & (Trim(Replace(Replace(title, "&amp;", "&"), "/", " & "))))
+                End If
+
+
             Next
         Next
 
         Return users
     End Function
+
+    Function excludeNonCurrentStaff(users As List(Of user))
+        Dim currentUsers As New List(Of user)
+        For Each user In users
+
+            If Not IsDBNull(user.startDate) Then
+                If user.startDate < (Date.Now).AddDays(-30) Then
+                    If IsDBNull(user.endDate) Then
+                        currentUsers.Add(user)
+                    Else
+                        If user.endDate > Date.Now Or IsNothing(user.endDate) Then
+                            currentUsers.Add(user)
+                        End If
+                    End If
+
+                End If
+            End If
+        Next
+        Return CurrentUsers
+
+    End Function
+    Function getEdumateSSYearsTeaching(users As List(Of user), config As configSettings)
+        Dim ConnectionString As String = config.edumateConnectionString
+        Dim commandString As String =
+"
+select distinct
+schoolbox_staff1.contact_id,
+listagg (cast(class_short_names.short_name AS varchar(10000)),',') WITHIN GROUP (ORDER BY class_short_names.short_name ASC) AS yearsTeaching
+
+
+from
+(
+select
+staff.staff_number,
+salutation.salutation,
+coalesce(replace(contact.preferred_name,'&#0'||'39;',''''), replace(contact.firstname,'&#0'||'39;','''')) as firstname,
+replace(contact.surname,'&#039;','''') as surname,
+sys_user.username as username1,
+contact.email_address,
+house.house,
+campus.campus,
+contact.contact_id,
+replace(work_detail.title,'&#039;','''') as title
+from staff
+inner join contact on contact.contact_id = staff.contact_id
+left join staff_employment on staff_employment.staff_id = staff.staff_id
+left join work_detail on work_detail.contact_id=contact.contact_id
+left join salutation on salutation.salutation_id = contact.salutation_id
+left join sys_user on sys_user.contact_id = contact.contact_id
+left join house on house.house_id = staff.house_id
+left join campus on campus.campus_id = staff.campus_id
+where (staff_employment.end_date is null or staff_employment.end_date >= current date)
+and staff_employment.start_date <= (current date +90 DAYS)
+and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
+) schoolbox_staff1
+inner join staff on schoolbox_staff1.staff_number = staff.staff_number
+inner join contact on staff.contact_id = contact.contact_id
+left join teacher on contact.contact_id = teacher.contact_id
+left join class_teacher on class_teacher.teacher_id = teacher.teacher_id
+left join class on class.class_id = class_teacher.class_id
+left join 
+(
+	select max_student_class.class_id, form.short_name
+	from 
+	(
+		select max(student_id) as randomStudentNumber, class_id
+		from class_enrollment
+		where 
+		(SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date - 30 DAYS) and class_enrollment.end_date
+		group by class_id
+	) max_student_class
+
+
+	INNER JOIN 
+	(
+		select student_id, max(form_run_id) as max_form_run_id
+		from student_form_run 
+		where  
+		(SELECT current date FROM sysibm.sysdummy1) between (student_form_run.start_date - 30 DAYS) and student_form_run.end_date
+		group by student_id
+	) max_form_run
+	ON max_form_run.student_id = max_student_class.randomStudentNumber
+	INNER JOIN form_run on max_form_run.max_form_run_id = form_run.form_run_id
+	INNER JOIN form on form_run.form_id = form.form_id
+) class_short_names
+
+on class.class_id = class_short_names.class_id
+
+where 
+   class_short_names.short_name IS NOT NULL
+   AND class.class NOT LIKE '%Spo%'
+   AND class.class NOT LIKE '%Cha%'
+   AND class.class NOT LIKE '%Year M%'
+   AND class.class NOT LIKE '%Study %'
+   AND class.class NOT LIKE '%PA %'
+   AND class.class NOT LIKE '%Careers %'
+   AND (class.class LIKE '7%' OR class.class LIKE '8%' OR class.class LIKE '9%' OR class.class LIKE '10%' OR class.class LIKE '11%' OR class.class LIKE '12%')
+   
+   
+GROUP BY schoolbox_staff1.staff_number, schoolbox_staff1.firstname, schoolbox_staff1.surname, schoolbox_staff1.contact_id
+
+"
+
+
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As IBM.Data.DB2.DB2DataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+                If Not dr.IsDBNull(0) Then
+
+                    For Each user In users
+
+
+                        If user.contact_id = dr.GetValue(0) Then
+                            If Not dr.IsDBNull(1) Then
+                                user.edumateProperties.yearsTeaching = dr.GetValue(1)
+                            End If
+
+                        End If
+                    Next
+
+
+
+                End If
+            End While
+            conn.Close()
+        End Using
+        Return users
+    End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
