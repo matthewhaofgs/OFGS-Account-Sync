@@ -309,6 +309,11 @@ Public Module AccountSync
             adUsers = getEdumateSSYearsTeaching(adUsers, config)
             addUsersToYearGroups(adUsers, dirEntry)
 
+            'Student AD groups
+            addStudentsToClassGroups(currentEdumateStudents, dirEntry)
+
+
+
             'Update staff AD account details
             updateStaffADDetails(adUsers, edumateStaff)
 
@@ -534,167 +539,176 @@ Public Module AccountSync
         Dim commandString As String =
 "
 SELECT        
-contact.firstname, 
-contact.surname, 
+edumate.contact.firstname, 
+edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
-student.student_id, 
-form.short_name AS grad_form,
-YEAR(student_form_run.end_date) as EndYear,
-student.student_number,
-contact.birthdate,
-stu_school.library_card,
+edumate.student.student_id, 
+edumate.form.short_name AS grad_form,
+YEAR(edumate.student_form_run.end_date) as EndYear,
+edumate.student.student_number,
+edumate.contact.birthdate,
+edumate.stu_school.library_card,
 Rollclass.class,
-stu_school.bos,
-listagg(cast(class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
+edumate.stu_school.bos,
+listagg(cast(edumate.class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY edumate.class.class ASC) AS classes
 
 FROM            
-STUDENT
-INNER JOIN contact ON student.contact_id = contact.contact_id
-INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
-INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
-INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
-INNER JOIN form ON form_run.form_id = form.form_id
-INNER JOIN stu_school ON student.student_id = stu_school.student_id
-LEFT JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
-LEFT JOIN class ON class_enrollment.class_id = class.class_id 
+edumate.STUDENT
+INNER JOIN edumate.contact ON edumate.student.contact_id = edumate.contact.contact_id
+INNER JOIN edumate.view_student_start_exit_dates ON edumate.student.student_id = edumate.view_student_start_exit_dates.student_id
+INNER JOIN edumate.student_form_run ON edumate.student_form_run.student_id = edumate.student.student_id
+INNER JOIN edumate.form_run ON edumate.student_form_run.form_run_id = edumate.form_run.form_run_id
+INNER JOIN edumate.form ON edumate.form_run.form_id = edumate.form.form_id
+INNER JOIN edumate.stu_school ON edumate.student.student_id = edumate.stu_school.student_id
+LEFT JOIN edumate.class_enrollment ON edumate.student.STUDENT_ID = edumate.class_enrollment.STUDENT_ID
+LEFT JOIN edumate.class ON edumate.class_enrollment.class_id = edumate.class.class_id 
 
 LEFT JOIN 
 	(
 	SELECT        
-	student.student_id, 
+	edumate.student.student_id, 
 	edumate.view_student_class_enrolment.class
 
 	FROM            
-	STUDENT
+	edumate.STUDENT
 
-	INNER JOIN edumate.view_student_class_enrolment ON student.student_id = edumate.view_student_class_enrolment.student_id
+	INNER JOIN edumate.view_student_class_enrolment ON edumate.student.student_id = edumate.view_student_class_enrolment.student_id
 
 	WHERE 
  	(edumate.view_student_class_enrolment.class_type_id = 2)
 	AND (edumate.view_student_class_enrolment.academic_year = char(year(current timestamp)))
-	) RollClass ON rollclass.student_id = student.student_id
+	AND (current timestamp BETWEEN edumate.view_student_class_enrolment.START_DATE AND edumate.view_student_class_enrolment.END_DATE)
+	) RollClass ON rollclass.student_id = edumate.student.student_id
 
 	
 WHERE 
 
-(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(edumate.student_form_run.end_date)) 
 
 AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 
+AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.CLASS_ENROLLMENT.start_date - 60 days) AND edumate.CLASS_ENROLLMENT.end_date
+
 GROUP BY 
 
-contact.firstname, 
-contact.surname, 
+edumate.contact.firstname, 
+edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
-student.student_id, 
-form.short_name,
-YEAR(student_form_run.end_date),
-student.student_number,
-contact.birthdate,
-stu_school.library_card,
-Rollclass.class,
-stu_school.bos
+edumate.student.student_id, 
+edumate.form.short_name,
+YEAR(edumate.student_form_run.end_date),
+edumate.student.student_number,
+edumate.contact.birthdate,
+edumate.stu_school.library_card,
+rollclass.class,
+edumate.stu_school.bos
 
 UNION
 
 SELECT        
-contact.firstname, 
-contact.surname, 
+edumate.contact.firstname, 
+edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
-student.student_id, 
+edumate.student.student_id, 
 '13' AS grad_form,
-YEAR(student_form_run.end_date) as EndYear,
-student.student_number,
-contact.birthdate,
-stu_school.library_card,
-Rollclass.class,
-stu_school.bos,
-listagg(cast(class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY class.class ASC) AS classes
+YEAR(edumate.student_form_run.end_date) as EndYear,
+edumate.student.student_number,
+edumate.contact.birthdate,
+edumate.stu_school.library_card,
+rollclass.class,
+edumate.stu_school.bos,
+listagg(cast(edumate.class.class AS varchar(10000)),',') WITHIN GROUP (ORDER BY edumate.class.class ASC) AS classes
 
 
 
 
 
 FROM            
-STUDENT
-INNER JOIN contact ON student.contact_id = contact.contact_id
-INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
-INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
-INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
-INNER JOIN form ON form_run.form_id = form.form_id
-INNER JOIN stu_school ON student.student_id = stu_school.student_id
-LEFT JOIN class_enrollment ON student.STUDENT_ID = class_enrollment.STUDENT_ID
-LEFT JOIN class ON class_enrollment.class_id = class.class_id 
-INNER JOIN TIMETABLE ON form_run.TIMETABLE_ID = timetable.TIMETABLE_ID
+edumate.STUDENT
+INNER JOIN edumate.contact ON edumate.student.contact_id = edumate.contact.contact_id
+INNER JOIN edumate.view_student_start_exit_dates ON edumate.student.student_id = edumate.view_student_start_exit_dates.student_id
+INNER JOIN edumate.student_form_run ON edumate.student_form_run.student_id = edumate.student.student_id
+INNER JOIN edumate.form_run ON edumate.student_form_run.form_run_id = edumate.form_run.form_run_id
+INNER JOIN edumate.form ON edumate.form_run.form_id = edumate.form.form_id
+INNER JOIN edumate.stu_school ON edumate.student.student_id = edumate.stu_school.student_id
+LEFT JOIN edumate.class_enrollment ON edumate.student.STUDENT_ID = edumate.class_enrollment.STUDENT_ID
+LEFT JOIN edumate.class ON edumate.class_enrollment.class_id = edumate.class.class_id 
+INNER JOIN edumate.TIMETABLE ON edumate.form_run.TIMETABLE_ID = edumate.timetable.TIMETABLE_ID
 
 LEFT JOIN 
 	(
 	SELECT        
-	student.student_id, 
+	edumate.student.student_id, 
 	edumate.view_student_class_enrolment.class
 
 	FROM            
-	STUDENT
+	edumate.STUDENT
 
-	INNER JOIN edumate.view_student_class_enrolment ON student.student_id = edumate.view_student_class_enrolment.student_id
+	INNER JOIN edumate.view_student_class_enrolment ON edumate.student.student_id = edumate.view_student_class_enrolment.student_id
 
 	WHERE 
  	(edumate.view_student_class_enrolment.class_type_id = 2)
 	AND (edumate.view_student_class_enrolment.academic_year = char(year(current timestamp)))
-	) RollClass ON rollclass.student_id = student.student_id
+	AND (current timestamp BETWEEN edumate.view_student_class_enrolment.START_DATE AND edumate.view_student_class_enrolment.END_DATE)
+	) RollClass ON rollclass.student_id = edumate.student.student_id
 
 	
 WHERE 
 
-(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(edumate.student_form_run.end_date)) 
 
 AND YEAR(edumate.view_student_start_exit_dates.exit_date) = year(current_date)
 
-AND edumate.view_student_start_exit_dates.exit_date = timetable.COMPUTED_END_DATE
+AND edumate.view_student_start_exit_dates.exit_date = edumate.timetable.COMPUTED_END_DATE
 
-AND form.SHORT_NAME = '12'
+AND edumate.form.SHORT_NAME = '12'
 
-AND class.CLASS LIKE '12%'
+AND edumate.class.CLASS LIKE '12%'
 
 
-AND student.student_id NOT IN
+
+AND edumate.student.student_id NOT IN
 (
 	SELECT distinct       
 
-	student.student_id
+	edumate.student.student_id
 
 	FROM            
-	STUDENT
-	INNER JOIN edumate.view_student_start_exit_dates ON student.student_id = edumate.view_student_start_exit_dates.student_id
-	INNER JOIN student_form_run ON student_form_run.student_id = student.student_id
-	INNER JOIN form_run ON student_form_run.form_run_id = form_run.form_run_id
-	INNER JOIN form ON form_run.form_id = form.form_id
-	INNER JOIN stu_school ON student.student_id = stu_school.student_id
+	edumate.STUDENT
+	INNER JOIN edumate.view_student_start_exit_dates ON edumate.student.student_id = edumate.view_student_start_exit_dates.student_id
+	INNER JOIN edumate.student_form_run ON edumate.student_form_run.student_id = edumate.student.student_id
+	INNER JOIN edumate.form_run ON edumate.student_form_run.form_run_id = edumate.form_run.form_run_id
+	INNER JOIN edumate.form ON edumate.form_run.form_id = edumate.form.form_id
+	INNER JOIN edumate.stu_school ON edumate.student.student_id = edumate.stu_school.student_id
 	
 	WHERE 
 
-	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(student_form_run.end_date)) 
+	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(edumate.student_form_run.end_date)) 
 
 	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 )
 
 GROUP BY 
 
-contact.firstname, 
-contact.surname, 
+edumate.contact.firstname, 
+edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
-student.student_id, 
-form.short_name,
-YEAR(student_form_run.end_date),
-student.student_number,
-contact.birthdate,
-stu_school.library_card,
-Rollclass.class,
-stu_school.bos
+edumate.student.student_id, 
+edumate.form.short_name,
+YEAR(edumate.student_form_run.end_date),
+edumate.student.student_number,
+edumate.contact.birthdate,
+edumate.stu_school.library_card,
+rollclass.class,
+edumate.stu_school.bos
+
+ORDER BY surname
+
+
 
 "
 
@@ -1645,28 +1659,28 @@ stu_school.bos
         Dim commandString As String =
 "
 SELECT        
-contact.firstname,
-contact.surname,
-staff_employment.start_date,
-staff_employment.end_date,
-staff.staff_id,
-staff.staff_number,
-sys_user.username,
-contact.email_address,
-staff_employment.employment_type_id,
-contact.contact_id,
-replace(work_detail.title,'&#039;','''') as title
+edumate.contact.firstname,
+edumate.contact.surname,
+edumate.staff_employment.start_date,
+edumate.staff_employment.end_date,
+edumate.staff.staff_id,
+edumate.staff.staff_number,
+edumate.sys_user.username,
+edumate.contact.email_address,
+edumate.staff_employment.employment_type_id,
+edumate.contact.contact_id,
+replace(edumate.work_detail.title,'&#039;','''') as title
 
 
-FROM            STAFF
+FROM            edumate.STAFF
 
-INNER JOIN Contact 
-  ON staff.contact_id = contact.contact_id 
-INNER JOIN staff_employment
-  ON staff.staff_id = staff_employment.staff_id
-LEFT JOIN sys_user 
-  ON contact.contact_id = sys_user.contact_id
-left join work_detail on work_detail.contact_id=contact.contact_id
+INNER JOIN edumate.contact 
+  ON edumate.staff.contact_id = edumate.contact.contact_id 
+INNER JOIN edumate.staff_employment
+  ON edumate.staff.staff_id = edumate.staff_employment.staff_id
+LEFT JOIN edumate.sys_user 
+  ON edumate.contact.contact_id = edumate.sys_user.contact_id
+left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.contact_id
 
 "
 
@@ -3095,11 +3109,11 @@ left join work_detail on work_detail.contact_id=contact.contact_id
         Dim commandString As String =
 "
 SELECT        
-group_membership.groups_id,
-group_membership.contact_id
+edumate.group_membership.groups_id,
+edumate.group_membership.contact_id
 
 
-FROM            group_membership
+FROM            edumate.group_membership
 "
 
 
@@ -3345,42 +3359,42 @@ listagg (cast(class_short_names.short_name AS varchar(10000)),',') WITHIN GROUP 
 from
 (
 select
-staff.staff_number,
-salutation.salutation,
-coalesce(replace(contact.preferred_name,'&#0'||'39;',''''), replace(contact.firstname,'&#0'||'39;','''')) as firstname,
-replace(contact.surname,'&#039;','''') as surname,
-sys_user.username as username1,
-contact.email_address,
-house.house,
-campus.campus,
-contact.contact_id,
-replace(work_detail.title,'&#039;','''') as title
-from staff
-inner join contact on contact.contact_id = staff.contact_id
-left join staff_employment on staff_employment.staff_id = staff.staff_id
-left join work_detail on work_detail.contact_id=contact.contact_id
-left join salutation on salutation.salutation_id = contact.salutation_id
-left join sys_user on sys_user.contact_id = contact.contact_id
-left join house on house.house_id = staff.house_id
-left join campus on campus.campus_id = staff.campus_id
-where (staff_employment.end_date is null or staff_employment.end_date >= current date)
-and staff_employment.start_date <= (current date +90 DAYS)
-and (contact.pronounced_name is null or contact.pronounced_name != 'NOT STAFF')
+edumate.staff.staff_number,
+edumate.salutation.salutation,
+coalesce(replace(edumate.contact.preferred_name,'&#0'||'39;',''''), replace(edumate.contact.firstname,'&#0'||'39;','''')) as firstname,
+replace(edumate.contact.surname,'&#039;','''') as surname,
+edumate.sys_user.username as username1,
+edumate.contact.email_address,
+edumate.house.house,
+edumate.campus.campus,
+edumate.contact.contact_id,
+replace(edumate.work_detail.title,'&#039;','''') as title
+from edumate.staff
+inner join edumate.contact on edumate.contact.contact_id = edumate.staff.contact_id
+left join edumate.staff_employment on edumate.staff_employment.staff_id = edumate.staff.staff_id
+left join edumate.work_detail on edumate.work_detail.contact_id = edumate.contact.contact_id
+left join edumate.salutation on edumate.salutation.salutation_id = edumate.contact.salutation_id
+left join edumate.sys_user on edumate.sys_user.contact_id = edumate.contact.contact_id
+left join edumate.house on edumate.house.house_id = edumate.staff.house_id
+left join edumate.campus on edumate.campus.campus_id = edumate.staff.campus_id
+where (edumate.staff_employment.end_date is null or edumate.staff_employment.end_date >= current date)
+and edumate.staff_employment.start_date <= (current date +90 DAYS)
+and (edumate.contact.pronounced_name is null or edumate.contact.pronounced_name != 'NOT STAFF')
 ) schoolbox_staff1
-inner join staff on schoolbox_staff1.staff_number = staff.staff_number
-inner join contact on staff.contact_id = contact.contact_id
-left join teacher on contact.contact_id = teacher.contact_id
-left join class_teacher on class_teacher.teacher_id = teacher.teacher_id
-left join class on class.class_id = class_teacher.class_id
+inner join edumate.staff on schoolbox_staff1.staff_number = edumate.staff.staff_number
+inner join edumate.contact on edumate.staff.contact_id = edumate.contact.contact_id
+left join edumate.teacher on edumate.contact.contact_id = edumate.teacher.contact_id
+left join edumate.class_teacher on edumate.class_teacher.teacher_id = edumate.teacher.teacher_id
+left join edumate.class on edumate.class.class_id = edumate.class_teacher.class_id
 left join 
 (
-	select max_student_class.class_id, form.short_name
+	select max_student_class.class_id, edumate.form.short_name
 	from 
 	(
 		select max(student_id) as randomStudentNumber, class_id
-		from class_enrollment
+		from edumate.class_enrollment
 		where 
-		(SELECT current date FROM sysibm.sysdummy1) between (class_enrollment.start_date - 30 DAYS) and class_enrollment.end_date
+		(SELECT current date FROM sysibm.sysdummy1) between (edumate.class_enrollment.start_date - 30 DAYS) and edumate.class_enrollment.end_date
 		group by class_id
 	) max_student_class
 
@@ -3388,27 +3402,27 @@ left join
 	INNER JOIN 
 	(
 		select student_id, max(form_run_id) as max_form_run_id
-		from student_form_run 
+		from edumate.student_form_run 
 		where  
-		(SELECT current date FROM sysibm.sysdummy1) between (student_form_run.start_date - 30 DAYS) and student_form_run.end_date
+		(SELECT current date FROM sysibm.sysdummy1) between (edumate.student_form_run.start_date - 30 DAYS) and edumate.student_form_run.end_date
 		group by student_id
 	) max_form_run
 	ON max_form_run.student_id = max_student_class.randomStudentNumber
-	INNER JOIN form_run on max_form_run.max_form_run_id = form_run.form_run_id
-	INNER JOIN form on form_run.form_id = form.form_id
+	INNER JOIN edumate.form_run on max_form_run.max_form_run_id = edumate.form_run.form_run_id
+	INNER JOIN edumate.form on edumate.form_run.form_id = edumate.form.form_id
 ) class_short_names
 
-on class.class_id = class_short_names.class_id
+on edumate.class.class_id = class_short_names.class_id
 
 where 
    class_short_names.short_name IS NOT NULL
-   AND class.class NOT LIKE '%Spo%'
-   AND class.class NOT LIKE '%Cha%'
-   AND class.class NOT LIKE '%Year M%'
-   AND class.class NOT LIKE '%Study %'
-   AND class.class NOT LIKE '%PA %'
-   AND class.class NOT LIKE '%Careers %'
-   AND (class.class LIKE '7%' OR class.class LIKE '8%' OR class.class LIKE '9%' OR class.class LIKE '10%' OR class.class LIKE '11%' OR class.class LIKE '12%')
+   AND edumate.class.class NOT LIKE '%Spo%'
+   AND edumate.class.class NOT LIKE '%Cha%'
+   AND edumate.class.class NOT LIKE '%Year M%'
+   AND edumate.class.class NOT LIKE '%Study %'
+   AND edumate.class.class NOT LIKE '%PA %'
+   AND edumate.class.class NOT LIKE '%Careers %'
+   AND (edumate.class.class LIKE '7%' OR edumate.class.class LIKE '8%' OR edumate.class.class LIKE '9%' OR edumate.class.class LIKE '10%' OR edumate.class.class LIKE '11%' OR edumate.class.class LIKE '12%')
    
    
 GROUP BY schoolbox_staff1.staff_number, schoolbox_staff1.firstname, schoolbox_staff1.surname, schoolbox_staff1.contact_id

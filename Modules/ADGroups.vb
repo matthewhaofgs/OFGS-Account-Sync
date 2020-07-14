@@ -86,6 +86,38 @@ Module ADGroups
 
     End Sub
 
+
+	Sub addUsersToStudentGroup(users As List(Of user), group As String)
+
+
+
+		Using ADgroup As New DirectoryEntry("LDAP://" & group)
+			'Setting username & password to Nothing forces
+			'the connection to use your logon credentials
+			ADgroup.Username = Nothing
+			ADgroup.Password = Nothing
+			'Always use a secure connection
+			ADgroup.AuthenticationType = AuthenticationTypes.Secure
+			ADgroup.RefreshCache()
+
+
+			ADgroup.Properties("member").Clear()
+			ADgroup.CommitChanges()
+			For Each user In users
+
+				ADgroup.Properties("member").Add(user.distinguishedName)
+				ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
+
+			Next
+			ADgroup.CommitChanges()
+			'MsgBox(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
+
+
+
+		End Using
+	End Sub
+
+
 	Sub addUserToDepartmentGroups(users As List(Of user), dirEntry As DirectoryEntry)
 
 		Dim departments As New List(Of department)
@@ -117,6 +149,20 @@ Module ADGroups
 		existingGroupNames = getADGroups(dirEntry)
 
 		For Each objDepartment In departments
+
+			objDepartment.name = objDepartment.name.Replace("&amp;", "and")
+			objDepartment.name = objDepartment.name.Replace(" ", "_")
+			objDepartment.name = objDepartment.name.Replace(",", "_")
+			objDepartment.name = objDepartment.name.Replace(";", "")
+			objDepartment.name = objDepartment.name.Replace("\", "_")
+			objDepartment.name = objDepartment.name.Replace("/", "_")
+			objDepartment.name = objDepartment.name.Replace("&", "_")
+			objDepartment.name = objDepartment.name.Replace(":", "_")
+			objDepartment.name = objDepartment.name.Replace("(", "_")
+			objDepartment.name = objDepartment.name.Replace(")", "_")
+			objDepartment.name = objDepartment.name.Replace("é", "e")
+
+
 			existing = False
 			For Each existingGroupName In existingGroupNames
 				If "Edumate_Department_" & objDepartment.name = existingGroupName Then
@@ -222,7 +268,23 @@ Module ADGroups
 
 			existingGroupNames = getADGroups(dirEntry)
 		'MsgBox("Break")
+
+
+
 		For Each objJobRole In jobRoles
+			objJobRole.name = objJobRole.name.Replace("&amp;", "and")
+			objJobRole.name = objJobRole.name.Replace(" ", "_")
+			objJobRole.name = objJobRole.name.Replace(",", "_")
+			objJobRole.name = objJobRole.name.Replace(";", "")
+			objJobRole.name = objJobRole.name.Replace("\", "_")
+			objJobRole.name = objJobRole.name.Replace("/", "_")
+			objJobRole.name = objJobRole.name.Replace("&", "_")
+			objJobRole.name = objJobRole.name.Replace(":", "_")
+			objJobRole.name = objJobRole.name.Replace("(", "_")
+			objJobRole.name = objJobRole.name.Replace(")", "_")
+			objJobRole.name = objJobRole.name.Replace("é", "e")
+
+
 			existing = False
 			For Each existingGroupName In existingGroupNames
 				If objJobRole.name = existingGroupName Then
@@ -349,6 +411,72 @@ Module ADGroups
 			addUsersToGroup(objDepartment.members, ("CN=Edumate_" & objDepartment.name & ",OU=_Edumate Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"))
 
 		Next
+	End Sub
+
+
+
+	Sub addStudentsToClassGroups(users As List(Of user), direntry As DirectoryEntry)
+
+		Dim groups As New List(Of department)
+		Dim existingGroupNames As List(Of String)
+
+
+		For Each user In users
+			Dim classes As String()
+			classes = Split(user.enrolledClasses, ",")
+
+			For Each strClass In classes
+				Dim existing As Boolean = False
+				strClass = strClass.Replace("&amp;", "and")
+				strClass = strClass.Replace(" ", "_")
+				strClass = strClass.Replace(",", "_")
+				strClass = strClass.Replace(";", "")
+				strClass = strClass.Replace("\", "_")
+				strClass = strClass.Replace("/", "_")
+				strClass = strClass.Replace("&", "_")
+				strClass = strClass.Replace(":", "_")
+				strClass = strClass.Replace("(", "_")
+				strClass = strClass.Replace(")", "_")
+				strClass = strClass.Replace("é", "e")
+
+
+				strClass = Left(strClass, 45)
+				For Each group In groups
+					If group.name = strClass Then
+						existing = True
+						group.members.Add(user)
+					End If
+				Next
+				If existing = False Then
+					Dim group As New department
+					group.name = strClass
+					group.members.Add(user)
+					groups.Add(group)
+				End If
+			Next
+		Next
+
+
+		existingGroupNames = getADGroups(direntry)
+
+		For Each objgroup In groups
+			Dim existing As Boolean = False
+			For Each existingGroupName In existingGroupNames
+				If "Class_" & objgroup.name = existingGroupName Then
+					existing = True
+				End If
+			Next
+			If existing = False Then
+				createADGroup("Class_" & objgroup.name)
+			End If
+		Next
+
+		For Each objDepartment In groups
+			addUsersToStudentGroup(objDepartment.members, ("CN=Class_" & objDepartment.name & ",OU=_Edumate Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"))
+
+		Next
+
+
 	End Sub
 
 

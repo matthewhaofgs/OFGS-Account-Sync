@@ -9,29 +9,29 @@
 SELECT        
 parentcontact.firstname,
 parentcontact.surname,
-carer.carer_id,
-student.student_id,
-carer.carer_number
+edumate.carer.carer_id,
+edumate.student.student_id,
+edumate.carer.carer_number
 
 
-FROM            relationship
+FROM            edumate.relationship
 
-INNER JOIN contact as ParentContact
-ON relationship.contact_id2 = Parentcontact.contact_id
+INNER JOIN edumate.contact as ParentContact
+ON edumate.relationship.contact_id2 = Parentcontact.contact_id
 
-INNER JOIN contact as StudentContact 
-ON relationship.contact_id1 = studentContact.contact_id
+INNER JOIN edumate.contact as StudentContact 
+ON edumate.relationship.contact_id1 = studentContact.contact_id
 
-INNER JOIN student
-ON studentContact.contact_id = student.contact_id
+INNER JOIN edumate.student
+ON studentContact.contact_id = edumate.student.contact_id
 
-INNER JOIN carer 
-ON parentcontact.contact_id = carer.contact_id
-
-
+INNER JOIN edumate.carer 
+ON parentcontact.contact_id = edumate.carer.contact_id
 
 
-WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+
+
+WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
 "
 
 
@@ -91,32 +91,30 @@ WHERE        (relationship.relationship_type_id IN (1, 4, 15, 28, 33))
 SELECT        
 parentcontact.firstname,
 parentcontact.surname,
-carer.carer_id,
-student.student_id,
-carer.carer_number
+edumate.carer.carer_id,
+edumate.student.student_id,
+edumate.carer.carer_number
 
 
 
-FROM            relationship
+FROM            edumate.relationship
 
-INNER JOIN contact as ParentContact
-ON relationship.contact_id1 = Parentcontact.contact_id
+INNER JOIN edumate.contact as ParentContact
+ON edumate.relationship.contact_id1 = Parentcontact.contact_id
 
-INNER JOIN contact as StudentContact 
-ON relationship.contact_id2 = studentContact.contact_id
+INNER JOIN edumate.contact as StudentContact 
+ON edumate.relationship.contact_id2 = studentContact.contact_id
 
-INNER JOIN student
-ON studentContact.contact_id = student.contact_id
+INNER JOIN edumate.student
+ON studentContact.contact_id = edumate.student.contact_id
 
-INNER JOIN carer 
-ON parentcontact.contact_id = carer.contact_id
-
-
+INNER JOIN edumate.carer 
+ON parentcontact.contact_id = edumate.carer.contact_id
 
 
-WHERE        (relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
 
 
+WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
 
 
 "
