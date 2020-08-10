@@ -53,6 +53,7 @@ Public Module AccountSync
 		Public adSurname As String
         Public edumateDepartmentMemberships As List(Of String)
         Public workTitles As New List(Of String)
+        Public relationshipType As String
 
 
 
@@ -1172,8 +1173,8 @@ ORDER BY surname
 									strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Student Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
 									message.body = message.body & strMessageBody
                                 Case "Parent"
-									message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
-								Case "Staff"
+                                    message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
+                                Case "Staff"
                                     message.body = message.body & "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
                             End Select
 
@@ -1189,7 +1190,7 @@ ORDER BY surname
                             Case "Student"
                                 emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
                             Case "Parent"
-                                emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                                emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
                             Case "Staff"
                                 emailsToSend.Last.body = "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
 
@@ -1499,8 +1500,10 @@ ORDER BY surname
             Dim current As Boolean = False
             For Each student In user.children
                 Try
-                    If student.endDate > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
-                        current = True
+                    If Not IsNothing(student) Then
+                        If student.endDate > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                            current = True
+                        End If
                     End If
                 Catch
                 End Try

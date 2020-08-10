@@ -11,8 +11,8 @@ parentcontact.firstname,
 parentcontact.surname,
 edumate.carer.carer_id,
 edumate.student.student_id,
-edumate.carer.carer_number
-
+edumate.carer.carer_number,
+edumate.relationship_type.relationship_type
 
 FROM            edumate.relationship
 
@@ -28,10 +28,11 @@ ON studentContact.contact_id = edumate.student.contact_id
 INNER JOIN edumate.carer 
 ON parentcontact.contact_id = edumate.carer.contact_id
 
+INNER JOIN edumate.relationship_type
+ON edumate.relationship.relationship_type_id = edumate.relationship_type.relationship_type_id
 
 
-
-WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33, 10)) 
 "
 
 
@@ -77,6 +78,7 @@ WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33))
                         users.Last.userType = "Parent"
                         users.Last.edumateProperties.carer_number = dr.GetValue(4)
                         users.Last.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                        users.Last.relationshipType = dr.GetValue(5)
                     End If
                 End If
             End While
@@ -114,7 +116,7 @@ ON parentcontact.contact_id = edumate.carer.contact_id
 
 
 
-WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
+WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34, 11)) 
 
 
 "
