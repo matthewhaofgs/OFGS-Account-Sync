@@ -1,4 +1,6 @@
-﻿Module Parents
+﻿Imports System.DirectoryServices
+
+Module Parents
 
     Function getEdumateParents(config As configSettings, edumateStudents As List(Of user))
 
@@ -168,6 +170,99 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
 
         Return users
     End Function
+
+
+
+    Sub DisableFomerParents(direntry As DirectoryEntry, currentEdumateParents As List(Of user))
+
+        Using searcher As New DirectorySearcher(direntry)
+
+            Dim ParentsToDisable As New List(Of SearchResult)
+
+            searcher.PropertiesToLoad.Add("cn")
+            searcher.PropertiesToLoad.Add("employeeID")
+            searcher.PropertiesToLoad.Add("distinguishedName")
+            searcher.PropertiesToLoad.Add("employeeNumber")
+            searcher.PropertiesToLoad.Add("givenName")
+            searcher.PropertiesToLoad.Add("homeDirectory")
+            searcher.PropertiesToLoad.Add("homeDrive")
+            searcher.PropertiesToLoad.Add("mail")
+            searcher.PropertiesToLoad.Add("profilePath")
+            searcher.PropertiesToLoad.Add("samAccountName")
+            searcher.PropertiesToLoad.Add("sn")
+            searcher.PropertiesToLoad.Add("userPrincipalName")
+            searcher.PropertiesToLoad.Add("memberof")
+            searcher.PropertiesToLoad.Add("userAccountControl")
+            searcher.PropertiesToLoad.Add("pwdLastSet")
+
+
+
+            searcher.Filter = "(objectCategory=person)"
+            searcher.ServerTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.SizeLimit = 100000000
+            searcher.Asynchronous = False
+            searcher.ServerPageTimeLimit = New TimeSpan(0, 0, 60)
+            searcher.PageSize = 10000
+
+            Dim queryResults As SearchResultCollection
+            queryResults = searcher.FindAll
+
+            Dim result As SearchResult
+
+            For Each result In queryResults
+                Dim active As Boolean = False
+                For Each user In currentEdumateParents
+                    If result.Properties("employeeID").Count > 0 Then
+                        If result.Properties("employeeID")(0) = user.employeeID Then
+                            active = True
+                        End If
+                    End If
+                Next
+                If active = False Then
+                    ParentsToDisable.Add(result)
+                    Console.WriteLine(result.Properties("cn")(0))
+                End If
+            Next
+
+
+            MsgBox("break")
+
+            For Each parentToDisable In ParentsToDisable
+
+                Using ADuser As New DirectoryEntry("LDAP://" & parentToDisable.Properties("distinguishedName")(0))
+                    'Setting username & password to Nothing forces
+                    'the connection to use your logon credentials
+                    ADuser.Username = Nothing
+                    ADuser.Password = Nothing
+                    'Always use a secure connection
+                    ADuser.AuthenticationType = AuthenticationTypes.Secure
+                    ADuser.RefreshCache()
+
+
+                    ADuser.Properties("userAccountControl").Value = "66082"
+
+
+                    ADuser.CommitChanges()
+
+
+                    ADuser.MoveTo(New DirectoryEntry(("LDAP://" & "OU=@ofgsfamily.com-disabled,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")))
+
+                End Using
+
+
+
+
+
+
+            Next
+
+        End Using
+
+    End Sub
+
+
+
+
 
 
 End Module

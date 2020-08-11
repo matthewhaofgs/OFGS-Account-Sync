@@ -276,8 +276,13 @@ Public Module AccountSync
 				createUsers(parentsToAdd, config, conn)
 			End If
 
-			'Update parent mysql datasbase
-			updateParentDatabase(config, edumateParents)
+            'disable former parent accounts
+            Dim currentparents As List(Of user)
+            currentparents = excludeParentsOutsideEnrollDate(config, edumateParents)
+            DisableFomerParents(GetDirectoryEntry("LDAP://OU=@ofgsfamily.com,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"), currentparents)
+
+            'Update parent mysql datasbase
+            updateParentDatabase(config, edumateParents)
 
 			'Get Edumate data for staff
 			Dim edumateStaff As List(Of user)
@@ -1501,7 +1506,7 @@ ORDER BY surname
             For Each student In user.children
                 Try
                     If Not IsNothing(student) Then
-                        If student.endDate > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                        If DateTime.Parse(Year(student.endDate) & "-12-31") > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
                             current = True
                         End If
                     End If
