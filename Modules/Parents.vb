@@ -220,16 +220,16 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
                 Next
                 If active = False Then
                     ParentsToDisable.Add(result)
-                    Console.WriteLine(result.Properties("cn")(0))
+                    Console.WriteLine(result.Properties("distinguishedName")(0))
                 End If
             Next
 
 
-            MsgBox("break")
+
 
             For Each parentToDisable In ParentsToDisable
 
-                Using ADuser As New DirectoryEntry("LDAP://" & parentToDisable.Properties("distinguishedName")(0))
+                Using ADuser As New DirectoryEntry("LDAP://" & (parentToDisable.Properties("distinguishedName")(0)).ToString)
                     'Setting username & password to Nothing forces
                     'the connection to use your logon credentials
                     ADuser.Username = Nothing

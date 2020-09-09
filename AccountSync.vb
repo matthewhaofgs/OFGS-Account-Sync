@@ -594,7 +594,8 @@ WHERE
 
 AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 
-AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.CLASS_ENROLLMENT.start_date - 60 days) AND edumate.CLASS_ENROLLMENT.end_date
+AND (((SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.CLASS_ENROLLMENT.start_date - 60 days) AND edumate.CLASS_ENROLLMENT.end_date) OR edumate.CLASS_ENROLLMENT.start_date IS NULL)
+
 
 GROUP BY 
 
@@ -696,6 +697,7 @@ AND edumate.student.student_id NOT IN
 
 	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
 )
+
 
 GROUP BY 
 
@@ -1358,15 +1360,15 @@ ORDER BY surname
                 Case "Staff"
                     Dim rgx As New Regex("[^a-zA-Z]")
                     Dim availableNameFound As Boolean = False
-                    Dim i As Integer = 1
+                    Dim i As Integer = 0
 
-					While availableNameFound = False
+                    While availableNameFound = False
 
-						If i > user.surname.Length Then
-							strUsername = rgx.Replace(user.firstName & Left(user.surname, 1), "").ToLower & (i - user.surname.Length + 1).ToString
-						Else
-							strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
-						End If
+                        If i = 0 Then
+                            strUsername = (Left(user.firstName, 1) & user.surname.ToLower)
+                        Else
+                            strUsername = (Left(user.firstName, 1) & user.surname.ToLower) & i.ToString
+                        End If
 
 						'strUsername = rgx.Replace(user.firstName & Left(user.surname, i), "").ToLower
 						Console.WriteLine("Trying " & strUsername & "...")

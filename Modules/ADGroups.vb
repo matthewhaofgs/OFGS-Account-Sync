@@ -79,12 +79,7 @@ Module ADGroups
 
 		End Using
 
-
-
-
-
-
-    End Sub
+	End Sub
 
 
 	Sub addUsersToStudentGroup(users As List(Of user), group As String)
@@ -104,10 +99,11 @@ Module ADGroups
 			ADgroup.Properties("member").Clear()
 			ADgroup.CommitChanges()
 			For Each user In users
-
-				ADgroup.Properties("member").Add(user.distinguishedName)
-				ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
-
+				Try
+					ADgroup.Properties("member").Add(user.distinguishedName)
+					ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
+				Catch
+				End Try
 			Next
 			ADgroup.CommitChanges()
 			'MsgBox(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
