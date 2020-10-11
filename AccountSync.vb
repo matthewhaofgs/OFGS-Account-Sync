@@ -1474,7 +1474,7 @@ ORDER BY surname
         System.Threading.Thread.CurrentThread.Sleep(1)
         Dim Position As New Random(System.DateTime.Now.Millisecond)
         Dim wordnumber As Integer = Position.Next(0, wordlist.Count - 1)
-        Return wordlist(wordnumber)
+        Return (wordlist(wordnumber)).ToLower
         Position = Nothing
         wordnumber = Nothing
     End Function

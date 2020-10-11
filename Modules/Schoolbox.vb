@@ -641,14 +641,14 @@ edumate.period.end_time
 
 FROM edumate.TERM_GROUP, edumate.cycle_day, edumate.period_cycle_day, edumate.period, edumate.term, edumate.timetable
 
-WHERE (start_date > '01/01/2020') 
-AND (end_date < '01/01/2021') 
+WHERE (start_date > '01/01/' || year(current_date)) 
+AND (end_date < '12/31/'|| year(current_date)) 
 AND (edumate.term_group.cycle_id = edumate.cycle_day.cycle_id) 
 AND (edumate.cycle_day.cycle_day_id = edumate.period_cycle_day.cycle_day_id) 
 AND (edumate.period_cycle_day.period_id = edumate.period.period_id) 
 AND (edumate.term_group.term_id = edumate.term.term_id) 
 AND (edumate.term.timetable_id = edumate.timetable.timetable_id)
-
+AND edumate.timetable.timetable LIKE ('%'|| year(current_date) || '%')
 "
 
 
@@ -835,7 +835,8 @@ INNER JOIN edumate.ACADEMIC_YEAR
 SELECT DISTINCT 
 
 replace(CONCAT(edumate.course.code, edumate.class.identifier),'12','13') AS CLASS_CODE, 
-replace(edumate.class.class,'12','13') AS CLASS,
+edumate.class.class as CLASS,
+--replace(edumate.class.class,'12','13') AS CLASS,
 edumate.student.student_number
 
 FROM            edumate.CLASS_ENROLLMENT
