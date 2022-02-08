@@ -36,7 +36,7 @@ Module ADGroups
 
             End If
 
-			If user.edumateCurrent = 1 And musicTutor = 0 Then
+			If (user.employmentType = 1 Or user.employmentType = 2) And user.edumateCurrent = 1 And musicTutor = 0 Then
 				currentStaff.Add(user)
 			End If
 
@@ -61,18 +61,23 @@ Module ADGroups
             ADgroup.Password = Nothing
             'Always use a secure connection
             ADgroup.AuthenticationType = AuthenticationTypes.Secure
-            ADgroup.RefreshCache()
+			Try
+				ADgroup.RefreshCache()
 
 
-            ADgroup.Properties("member").Clear()
-            ADgroup.CommitChanges()
-            For Each user In users
+				ADgroup.Properties("member").Clear()
+				ADgroup.CommitChanges()
+				For Each user In users
 
-                ADgroup.Properties("member").Add(user.distinguishedName)
-				ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
+					ADgroup.Properties("member").Add(user.distinguishedName)
+					ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofg.nsw.edu.au")
 
-			Next
-            ADgroup.CommitChanges()
+				Next
+
+				ADgroup.CommitChanges()
+			Catch
+
+			End Try
 			'MsgBox(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
 
 
@@ -101,7 +106,7 @@ Module ADGroups
 			For Each user In users
 				Try
 					ADgroup.Properties("member").Add(user.distinguishedName)
-					ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofgs.nsw.edu.au")
+					ADgroup.Properties("mail").Add(ADgroup.Properties("cn").Value & "@ofg.nsw.edu.au")
 				Catch
 				End Try
 			Next
@@ -178,6 +183,74 @@ Module ADGroups
 		Next
 
 	End Sub
+
+
+	Sub addUserToClassesTeaching(users As List(Of user), dirEntry As DirectoryEntry)
+
+		Dim departments As New List(Of department)
+		Dim existing As Boolean
+		Dim existingGroupNames As List(Of String)
+
+
+		For Each user In users
+			If Not IsNothing(user.edumateClassesTeaching) Then
+				For Each edumateDepartment In user.edumateClassesTeaching
+					existing = False
+					For Each objDepartment In departments
+						If edumateDepartment = objDepartment.name Then
+							existing = True
+							objDepartment.members.Add(user)
+						End If
+					Next
+					If existing = False Then
+						Dim objDepartment = New department
+						objDepartment.name = edumateDepartment
+						objDepartment.members.Add(user)
+						departments.Add(objDepartment)
+					End If
+				Next
+			End If
+
+		Next
+
+		existingGroupNames = getADGroups(dirEntry)
+
+		For Each objDepartment In departments
+
+			objDepartment.name = objDepartment.name.Replace("&amp;", "and")
+			objDepartment.name = objDepartment.name.Replace(" ", "_")
+			objDepartment.name = objDepartment.name.Replace(",", "_")
+			objDepartment.name = objDepartment.name.Replace(";", "")
+			objDepartment.name = objDepartment.name.Replace("\", "_")
+			objDepartment.name = objDepartment.name.Replace("/", "_")
+			objDepartment.name = objDepartment.name.Replace("&", "_")
+			objDepartment.name = objDepartment.name.Replace(":", "_")
+			objDepartment.name = objDepartment.name.Replace("(", "_")
+			objDepartment.name = objDepartment.name.Replace(")", "_")
+			objDepartment.name = objDepartment.name.Replace("é", "e")
+
+
+			existing = False
+			For Each existingGroupName In existingGroupNames
+				If "Class_Teacher_" & objDepartment.name = existingGroupName Then
+					existing = True
+
+				End If
+			Next
+			If existing = False Then
+				'MsgBox("Break")
+				createADGroup("Class_Teacher_" & objDepartment.name)
+
+			End If
+		Next
+
+		For Each objDepartment In departments
+			addUsersToGroup(objDepartment.members, ("CN=Class_Teacher_" & objDepartment.name & ",OU=_Edumate Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"))
+		Next
+
+	End Sub
+
+
 
 	Function getADGroups(direntry As DirectoryEntry)
 

@@ -14,7 +14,8 @@ parentcontact.surname,
 edumate.carer.carer_id,
 edumate.student.student_id,
 edumate.carer.carer_number,
-edumate.relationship_type.relationship_type
+edumate.relationship_type.relationship_type,
+parentcontact.mobile_phone
 
 FROM            edumate.relationship
 
@@ -81,8 +82,13 @@ WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33, 10
                         users.Last.edumateProperties.carer_number = dr.GetValue(4)
                         users.Last.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
                         users.Last.relationshipType = dr.GetValue(5)
+                        If Not IsDBNull(dr.GetValue(6)) Then
+                            users.Last.edumateProperties.phoneNumber = dr.GetValue(6)
+                        Else
+                            users.Last.edumateProperties.phoneNumber = 0
+                        End If
                     End If
-                End If
+                    End If
             End While
             conn.Close()
         End Using
@@ -97,7 +103,9 @@ parentcontact.firstname,
 parentcontact.surname,
 edumate.carer.carer_id,
 edumate.student.student_id,
-edumate.carer.carer_number
+edumate.carer.carer_number,
+edumate.relationship_type.relationship_type,
+parentcontact.mobile_phone
 
 
 
@@ -115,6 +123,8 @@ ON studentContact.contact_id = edumate.student.contact_id
 INNER JOIN edumate.carer 
 ON parentcontact.contact_id = edumate.carer.contact_id
 
+INNER JOIN edumate.relationship_type
+ON edumate.relationship.relationship_type_id = edumate.relationship_type.relationship_type_id
 
 
 
@@ -162,6 +172,12 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
                         users.Last.userType = "Parent"
                         users.Last.edumateProperties.carer_number = dr.GetValue(4)
                         users.Last.children.Add(getStudentFromID(dr.GetValue(3), edumateStudents))
+                        users.Last.relationshipType = dr.GetValue(5)
+                        If Not IsDBNull(dr.GetValue(6)) Then
+                            users.Last.edumateProperties.phoneNumber = dr.GetValue(6)
+                        Else
+                            users.Last.edumateProperties.phoneNumber = 0
+                        End If
                     End If
                 End If
             End While
@@ -169,6 +185,7 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
         End Using
 
         Return users
+
     End Function
 
 
@@ -178,7 +195,7 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
         Using searcher As New DirectorySearcher(direntry)
 
             Dim ParentsToDisable As New List(Of SearchResult)
-
+            Dim ParentsToEnable As New List(Of SearchResult)
             searcher.PropertiesToLoad.Add("cn")
             searcher.PropertiesToLoad.Add("employeeID")
             searcher.PropertiesToLoad.Add("distinguishedName")
@@ -221,11 +238,10 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
                 If active = False Then
                     ParentsToDisable.Add(result)
                     Console.WriteLine(result.Properties("distinguishedName")(0))
+                Else
+                    ParentsToEnable.Add(result)
                 End If
             Next
-
-
-
 
             For Each parentToDisable In ParentsToDisable
 
@@ -246,6 +262,35 @@ WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34,
 
 
                     ADuser.MoveTo(New DirectoryEntry(("LDAP://" & "OU=@ofgsfamily.com-disabled,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")))
+
+                End Using
+
+
+
+
+
+
+            Next
+
+            For Each parentToEnable In ParentsToEnable
+
+                Using ADuser As New DirectoryEntry("LDAP://" & (parentToEnable.Properties("distinguishedName")(0)).ToString)
+                    'Setting username & password to Nothing forces
+                    'the connection to use your logon credentials
+                    ADuser.Username = Nothing
+                    ADuser.Password = Nothing
+                    'Always use a secure connection
+                    ADuser.AuthenticationType = AuthenticationTypes.Secure
+                    ADuser.RefreshCache()
+
+
+                    ADuser.Properties("userAccountControl").Value = "66048"
+
+
+                    ADuser.CommitChanges()
+
+
+                    ADuser.MoveTo(New DirectoryEntry(("LDAP://" & "OU=@ofgsfamily.com,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")))
 
                 End Using
 

@@ -54,6 +54,7 @@ Public Module AccountSync
         Public edumateDepartmentMemberships As List(Of String)
         Public workTitles As New List(Of String)
         Public relationshipType As String
+        Public edumateClassesTeaching As List(Of String)
 
 
 
@@ -77,6 +78,7 @@ Public Module AccountSync
 		Public carer_number As String
         Public workTitle As String
         Public yearsTeaching As String
+        Public phoneNumber As String
     End Class
 
 
@@ -208,7 +210,7 @@ Public Module AccountSync
     Sub Main()
 
 		Dim config As New configSettings()
-		Console.Clear()
+        'Console.Clear()
         Console.WriteLine("Reading config...")
         config = readConfig()
 
@@ -261,10 +263,10 @@ Public Module AccountSync
 			Console.WriteLine("Getting Edumate parent data...")
 			Console.WriteLine("")
 			Dim edumateParents As List(Of user)
-			edumateParents = getEdumateParents(config, currentEdumateStudents)
+            edumateParents = getEdumateParents(config, currentEdumateStudents)
 
-			'Get parent users who do not yet have accounts
-			Dim parentsToAdd As List(Of user)
+            'Get parent users who do not yet have accounts
+            Dim parentsToAdd As List(Of user)
 			parentsToAdd = getEdumateUsersNotInAD(edumateParents, adUsers)
 			parentsToAdd = excludeParentsOutsideEnrollDate(config, parentsToAdd)
 			parentsToAdd = addMailTo(config, parentsToAdd)
@@ -279,7 +281,8 @@ Public Module AccountSync
             'disable former parent accounts
             Dim currentparents As List(Of user)
             currentparents = excludeParentsOutsideEnrollDate(config, edumateParents)
-            DisableFomerParents(GetDirectoryEntry("LDAP://OU=@ofgsfamily.com,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"), currentparents)
+            'DisableFomerParents(GetDirectoryEntry("LDAP://OU=@ofgsfamily.com,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"), currentparents)
+            'DisableFomerParents(GetDirectoryEntry("LDAP://OU=@ofgsfamily.com-disabled,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"), currentparents)
 
             'Update parent mysql datasbase
             updateParentDatabase(config, edumateParents)
@@ -308,6 +311,8 @@ Public Module AccountSync
 			AddStaffToGroups(adUsers, config)
 			adUsers = getEdumateDepartments(adUsers, config)
 			addUserToDepartmentGroups(adUsers, dirEntry)
+            adUsers = getEdumateStaffClasses(adUsers, config)
+            addUserToClassesTeaching(adUsers, dirEntry)
             adUsers = getWorkTitlesFromEdumateTitle(adUsers)
             Dim currentAdStaff = excludeNonCurrentStaff(adUsers)
             addUserToRoleGroups(currentAdStaff, dirEntry)
@@ -323,11 +328,14 @@ Public Module AccountSync
             'Update staff AD account details
             updateStaffADDetails(adUsers, edumateStaff)
 
-			'Re Pull AD data after creating new accounts
-			adUsers = getADUsers(dirEntry)
 
-			'Add usernames to account objects / refresh data now accountsd are created
-			edumateParents = addUsernamesToUsers(edumateParents, adUsers)
+            'Re Pull AD data after creating new accounts
+            adUsers = getADUsers(dirEntry)
+
+            updateParentADDetails(adUsers, edumateParents)
+
+            'Add usernames to account objects / refresh data now accountsd are created
+            edumateParents = addUsernamesToUsers(edumateParents, adUsers)
 			currentEdumateStudents = New List(Of user)
 
 			currentEdumateStudents = excludeUserOutsideEnrollDate(edumateStudents, config)
@@ -545,7 +553,7 @@ Public Module AccountSync
         Dim commandString As String =
 "
 SELECT        
-edumate.contact.firstname, 
+coalesce(replace(edumate.contact.preferred_name,'&#0'||'39;',''''), replace(edumate.contact.firstname,'&#0'||'39;','''')) as firstname,
 edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
@@ -567,7 +575,9 @@ INNER JOIN edumate.student_form_run ON edumate.student_form_run.student_id = edu
 INNER JOIN edumate.form_run ON edumate.student_form_run.form_run_id = edumate.form_run.form_run_id
 INNER JOIN edumate.form ON edumate.form_run.form_id = edumate.form.form_id
 INNER JOIN edumate.stu_school ON edumate.student.student_id = edumate.stu_school.student_id
-LEFT JOIN edumate.class_enrollment ON edumate.student.STUDENT_ID = edumate.class_enrollment.STUDENT_ID
+LEFT JOIN edumate.class_enrollment ON edumate.student.STUDENT_ID = edumate.class_enrollment.STUDENT_ID 
+	AND (((SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.CLASS_ENROLLMENT.start_date - 120 days) AND edumate.CLASS_ENROLLMENT.end_date))
+
 LEFT JOIN edumate.class ON edumate.class_enrollment.class_id = edumate.class.class_id 
 
 LEFT JOIN 
@@ -592,14 +602,14 @@ WHERE
 
 (YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(edumate.student_form_run.end_date)) 
 
-AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
+AND (SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 120 days) AND date(YEAR(edumate.view_student_start_exit_dates.exit_date)||'-12-31')
 
-AND (((SELECT current date FROM sysibm.sysdummy1) BETWEEN (edumate.CLASS_ENROLLMENT.start_date - 60 days) AND edumate.CLASS_ENROLLMENT.end_date) OR edumate.CLASS_ENROLLMENT.start_date IS NULL)
 
 
 GROUP BY 
 
 edumate.contact.firstname, 
+edumate.contact.preferred_name,
 edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
@@ -695,13 +705,14 @@ AND edumate.student.student_id NOT IN
 
 	(YEAR(edumate.view_student_start_exit_dates.exit_date) = YEAR(edumate.student_form_run.end_date)) 
 
-	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 90 days) AND edumate.view_student_start_exit_dates.exit_date
+	AND (SELECT (current date) FROM sysibm.sysdummy1) BETWEEN (edumate.view_student_start_exit_dates.start_date - 120 days) AND edumate.view_student_start_exit_dates.exit_date
 )
 
 
 GROUP BY 
 
 edumate.contact.firstname, 
+edumate.contact.preferred_name,
 edumate.contact.surname, 
 edumate.view_student_start_exit_dates.start_date, 
 edumate.view_student_start_exit_dates.exit_date, 
@@ -715,6 +726,8 @@ rollclass.class,
 edumate.stu_school.bos
 
 ORDER BY surname
+
+
 
 
 
@@ -1090,6 +1103,7 @@ ORDER BY surname
                     End If
                     If objUserToAdd.ad_username <> "" Then
                         objUser.Properties("samAccountName").Add(objUserToAdd.ad_username)
+
                     End If
                     If objUserToAdd.firstName <> "" Then
                         objUser.Properties("givenName").Add(objUserToAdd.firstName)
@@ -1111,10 +1125,14 @@ ORDER BY surname
 
 
                     If config.applyChanges Then
+
+
                         objUser.CommitChanges()
+
+
                     End If
 
-					Dim pwSet = 0
+                    Dim pwSet = 0
 					While pwSet = 0
 						Try
 						objUserToAdd.password = createPassword()                   'New Object() {createPassword()}
@@ -1128,27 +1146,73 @@ ORDER BY surname
 						End Try
 					End While
 
+                    Console.WriteLine("User:" & objUserToAdd.ad_username)
+                    Console.WriteLine("Pass:" & objUserToAdd.password)
+                    Console.WriteLine("")
 
-					'512	Enabled Account
-					'514	Disabled Account
-					'544	Enabled, Password Not Required
-					'546	Disabled, Password Not Required
-					'66048	Enabled, Password Doesn't Expire
-					'66050	Disabled, Password Doesn't Expire
-					'66080	Enabled, Password Doesn't Expire & Not Required
-					'66082	Disabled, Password Doesn't Expire & Not Required
-					'262656	Enabled, Smartcard Required
-					'262658	Disabled, Smartcard Required
-					'262688	Enabled, Smartcard Required, Password Not Required
-					'262690	Disabled, Smartcard Required, Password Not Required
-					'328192	Enabled, Smartcard Required, Password Doesn't Expire
-					'328194	Disabled, Smartcard Required, Password Doesn't Expire
-					'328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
-					'328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+                    '512	Enabled Account
+                    '514	Disabled Account
+                    '544	Enabled, Password Not Required
+                    '546	Disabled, Password Not Required
+                    '66048	Enabled, Password Doesn't Expire
+                    '66050	Disabled, Password Doesn't Expire
+                    '66080	Enabled, Password Doesn't Expire & Not Required
+                    '66082	Disabled, Password Doesn't Expire & Not Required
+                    '262656	Enabled, Smartcard Required
+                    '262658	Disabled, Smartcard Required
+                    '262688	Enabled, Smartcard Required, Password Not Required
+                    '262690	Disabled, Smartcard Required, Password Not Required
+                    '328192	Enabled, Smartcard Required, Password Doesn't Expire
+                    '328194	Disabled, Smartcard Required, Password Doesn't Expire
+                    '328224	Enabled, Smartcard Required, Password Doesn't Expire & Not Required
+                    '328226	Disabled, Smartcard Required, Password Doesn't Expire & Not Required
+
+                    For Each mailTo In objUserToAdd.mailTo
+
+                        Dim duplicate As Boolean = False
+                        For Each message In emailsToSend
+                            If message.mailTo = mailTo Then
+                                duplicate = True
+                                Select Case objUserToAdd.userType
+                                    Case "Student"
+                                        Dim strMessageBody As String
+                                        strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Student Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
+                                        message.body = message.body & strMessageBody
+                                    Case "Parent"
+                                        If IsNothing(objUserToAdd.relationshipType) Then
+                                            objUserToAdd.relationshipType = "Unknown"
+                                        End If
+                                        message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
+
+                                    Case "Staff"
+                                        message.body = message.body & "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
+                                End Select
+
+                            End If
+                        Next
+
+                        If duplicate = False Then
+
+                            emailsToSend.Add(New emailNotification)
+                            emailsToSend.Last.mailTo = mailTo
+
+                            Select Case objUserToAdd.userType
+                                Case "Student"
+                                    emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
+                                Case "Parent"
+                                    If IsNothing(objUserToAdd.relationshipType) Then
+                                        objUserToAdd.relationshipType = "Unknown"
+                                    End If
+                                    emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
+                                Case "Staff"
+                                    emailsToSend.Last.body = "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
 
 
+                            End Select
+                        End If
+                    Next
 
-					Const ADS_UF_ACCOUNTDISABLE = &H10200
+                    Const ADS_UF_ACCOUNTDISABLE = &H10200
                     objUser.Properties("userAccountControl").Value = ADS_UF_ACCOUNTDISABLE
                     If config.applyChanges Then
                         objUser.CommitChanges()
@@ -1168,43 +1232,7 @@ ORDER BY surname
                         objUser.Properties("userPrincipalName").Value)
                 Console.WriteLine("")
 
-                For Each mailTo In objUserToAdd.mailTo
 
-                    Dim duplicate As Boolean = False
-                    For Each message In emailsToSend
-                        If message.mailTo = mailTo Then
-                            duplicate = True
-                            Select Case objUserToAdd.userType
-                                Case "Student"
-                                    Dim strMessageBody As String
-									strMessageBody = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Student Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
-									message.body = message.body & strMessageBody
-                                Case "Parent"
-                                    message.body = message.body & "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
-                                Case "Staff"
-                                    message.body = message.body & "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
-                            End Select
-
-                        End If
-                    Next
-
-                    If duplicate = False Then
-
-                        emailsToSend.Add(New emailNotification)
-                        emailsToSend.Last.mailTo = mailTo
-
-                        Select Case objUserToAdd.userType
-                            Case "Student"
-                                emailsToSend.Last.body = "Student account created:  " & objUser.Properties("displayName").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value.ToString & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Class Of:" & objUserToAdd.classOf.ToString & vbCrLf & "Start Date: " & objUserToAdd.startDate.ToString & vbCrLf & vbCrLf
-                            Case "Parent"
-                                emailsToSend.Last.body = "Parent account created:  " & objUser.Properties("description").Value & vbCrLf & "Carer Number:" & objUser.Properties("EmployeeNumber").Value.ToString & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & "Relation:" & objUserToAdd.relationshipType.ToString & vbCrLf & vbCrLf
-                            Case "Staff"
-                                emailsToSend.Last.body = "Staff account created:  " & objUser.Properties("description").Value & vbCrLf & "Username:" & objUser.Properties("samAccountName").Value & vbCrLf & "Password:" & objUserToAdd.password.ToString & vbCrLf & vbCrLf
-
-
-                        End Select
-                    End If
-                Next
 
             End If
 
@@ -1232,7 +1260,7 @@ ORDER BY surname
 
         For Each edumateUser In edumateUsers
 
-            CONSOLE__WRITE(String.Format("Processed {0} of {1}", i, edumateUsers.Count))
+            'CONSOLE__WRITE(String.Format("Processed {0} of {1}", i, edumateUsers.Count))
             Dim found As Boolean = False
             For Each adUser In adUsers
 
@@ -1246,7 +1274,7 @@ ORDER BY surname
             End If
             i = i + 1
         Next
-        CONSOLE__CLEAR_EOL()
+        'CONSOLE__CLEAR_EOL()
         Return usersToAdd
     End Function
 
@@ -1272,28 +1300,28 @@ ORDER BY surname
         Return ReturnUsers
     End Function
 
-    Public Sub CONSOLE__WRITE(ByRef szText As String, Optional ByVal bClearEOL As Boolean = True)
-        'Output the text
-        Console.Write(szText)
-        'Optionally clear to end of line (EOL)
-        If bClearEOL Then CONSOLE__CLEAR_EOL()
-        'Move cursor back to where we started, using Backspaces
-        Console.Write(Microsoft.VisualBasic.StrDup(szText.Length(), Chr(8)))
-    End Sub
+    ' Public Sub CONSOLE__WRITE(ByRef szText As String, Optional ByVal bClearEOL As Boolean = True)
+    '    'Output the text
+    '   Console.Write(szText)
+    '    'Optionally clear to end of line (EOL)
+    '    If bClearEOL Then CONSOLE__CLEAR_EOL()
+    '    'Move cursor back to where we started, using Backspaces
+    '    Console.Write(Microsoft.VisualBasic.StrDup(szText.Length(), Chr(8)))
+    'End Sub
 
-    Public Sub CONSOLE__CLEAR_EOL()
-        'Clear to End of line (EOL)
-        'Save window and cursor positions
-        Dim x As Integer = Console.CursorLeft
-        Dim y As Integer = Console.CursorTop
-        Dim wx As Integer = Console.WindowLeft
-        Dim wy As Integer = Console.WindowTop
-        'Write spaces until end of buffer width
-        Console.Write(Space(Console.BufferWidth - x))
-        'Restore window and cursor position
-        Console.SetWindowPosition(wx, wy)
-        Console.SetCursorPosition(x, y)
-    End Sub
+    'Public Sub CONSOLE__CLEAR_EOL()
+    '    'Clear to End of line (EOL)
+    '    'Save window and cursor positions
+    '    Dim x As Integer = Console.CursorLeft
+    '    Dim y As Integer = Console.CursorTop
+    '    Dim wx As Integer = Console.WindowLeft
+    '    Dim wy As Integer = Console.WindowTop
+    '    'Write spaces until end of buffer width
+    '    Console.Write(Space(Console.BufferWidth - x))
+    '    'Restore window and cursor position
+    '    Console.SetWindowPosition(wx, wy)
+    '    Console.SetCursorPosition(x, y)
+    'End Sub
 
     Function evaluateUsernames(users As List(Of user), adusers As List(Of user))
         Console.WriteLine("Evaluating usernames for new users...")
@@ -1322,13 +1350,17 @@ ORDER BY surname
 							strUsername = rgx.Replace(user.surname & Left(user.firstName, i), "").ToLower
 						End If
 
-						Console.WriteLine("Trying " & strUsername & "...")
+                        If Len(strUsername) > 15 Then
+                            strUsername = Left(strUsername, 14) & i.ToString
+                        End If
+
+                        Console.WriteLine("Trying " & strUsername & "...")
                         Dim duplicate As Boolean
                         duplicate = False
                         Dim a As Integer = 1
                         For Each adUser In adusers
 
-                            CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
+                            'CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
                             Try
                                 adUser.ad_username = adUser.ad_username.ToLower
                             Catch ex As Exception
@@ -1377,7 +1409,7 @@ ORDER BY surname
                         Dim a As Integer = 1
                         For Each adUser In adusers
 
-                            CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
+                            'CONSOLE__WRITE(String.Format("Checking for duplicates {0} of {1}", a, adusers.Count))
                             Try
                                 adUser.ad_username = adUser.ad_username.ToLower
                             Catch ex As Exception
@@ -1505,7 +1537,11 @@ ORDER BY surname
 
         For Each user In users
             Dim current As Boolean = False
+
+
+
             For Each student In user.children
+
                 Try
                     If Not IsNothing(student) Then
                         If DateTime.Parse(Year(student.endDate) & "-12-31") > Date.Now() And student.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
@@ -2834,10 +2870,10 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
 			End Select
 
 			If seniorSchool And Not IsNothing(user.enrolledClasses) Then
-				If user.enrolledClasses.Contains("Multimedia") Or user.enrolledClasses.Contains("Design") Or user.enrolledClasses.Contains("Visual") Or user.enrolledClasses.Contains("Technology") Then
-					AdobeUsers.Add(user)
-				End If
-			End If
+                ' If user.enrolledClasses.Contains("Multimedia") Or user.enrolledClasses.Contains("Design") Or user.enrolledClasses.Contains("Visual") Or user.enrolledClasses.Contains("Tech") Or user.enrolledClasses.Contains("IST") Then
+                AdobeUsers.Add(user)
+                '  End If
+            End If
 		Next
 
 		addUsersToGroup(kindyUsers, config.sg_k)    '<================================================================
@@ -2925,7 +2961,7 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
         Next
 
 
-        Console.WriteLine("Kindy Parent Count: " & kindyParents.Count)
+        'Console.WriteLine("Kindy Parent Count: " & kindyParents.Count)
 
         addUsersToGroup(kindyParents, "CN=SG_Parent_YearK,OU=_Distribution Groups,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au")
 
@@ -2958,18 +2994,22 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
             ADuser.AuthenticationType = AuthenticationTypes.Secure
             ADuser.RefreshCache()
 
-			If targetOU = "OU=Former Staff,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au" Then
-				ADuser.Properties("userAccountControl").Value = "66082"
-			Else
-				ADuser.Properties("userAccountControl").Value = "66080"
-			End If
+            If targetOU = "OU=Former Staff,OU=Staff Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au" Then
+                ADuser.Properties("userAccountControl").Value = "66082"
+            Else
+                If targetOU.Contains("Alumni") Then
+                    ADuser.Properties("userAccountControl").Value = "66082"
+                Else
 
-			ADuser.CommitChanges()
+                    ADuser.Properties("userAccountControl").Value = "66080"
+                End If
+            End If
+            ADuser.CommitChanges()
 
 
-			ADuser.MoveTo(New DirectoryEntry(("LDAP://" & targetOU)))
+            ADuser.MoveTo(New DirectoryEntry("LDAP://" & targetOU))
 
-		End Using
+        End Using
 
     End Sub
 
@@ -3046,19 +3086,19 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
             End If
 
             'Move former students to Alumni OU
-            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not (adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
-				'moveStudentToAlum(adUser, config.studentAlumOU)
-				targetOU = "alum"
-			End If
+            If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not ((adUser.endDate > Date.Now() Or adUser.currentYear = "12") And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
+                'moveStudentToAlum(adUser, config.studentAlumOU)
+                targetOU = "alum"
+            End If
 
-			'Alum to current
-			If adUser.distinguishedName.Contains("Alumni") And adUser.endDate > Date.Now() And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
-				targetOU = "OU=" & adUser.classOf & ",OU=Student Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"
-			End If
+            'Alum to current
+            If adUser.distinguishedName.Contains("Alumni") And (adUser.endDate > Date.Now() Or adUser.currentYear = "12") And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                targetOU = "OU=" & adUser.classOf & ",OU=Student Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"
+            End If
 
 
-			'Move former staff 
-			If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
+            'Move former staff 
+            If adUser.edumateCurrent = 0 And adUser.distinguishedName.Contains("Staff Users") And Not adUser.distinguishedName.Contains("Generic") And Not adUser.distinguishedName.Contains("Domain") And Not adUser.distinguishedName.Contains("Former") And Not adUser.distinguishedName.Contains("@ofgsfamily.com") And Not adUser.distinguishedName.Contains("test") Then
                 targetOU = config.formerStaffOU
             End If
 
@@ -3081,12 +3121,18 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
             Next
 
 
-			Console.WriteLine("Moving User: " & adUser.displayName)
-			Console.WriteLine("Old OU: " & adUser.distinguishedName)
+            'Console.WriteLine("Moving User: " & adUser.displayName)
+            'Console.WriteLine("Old OU: " & adUser.distinguishedName)
 
-			Console.WriteLine("New OU: " & targetOU)
+            '            Console.WriteLine("New OU: " & targetOU)
 
-			If Not IsNothing(targetOU) Then
+            If Not IsNothing(targetOU) Then
+                Console.WriteLine("Moving User: " & adUser.displayName)
+                Console.WriteLine("Old OU: " & adUser.distinguishedName)
+
+                Console.WriteLine("New OU: " & targetOU)
+
+
                 If targetOU = "alum" Then
                     moveStudentToAlum(adUser, config.studentAlumOU)
                 Else
@@ -3216,13 +3262,14 @@ FROM            edumate.group_membership
 
 						ADObject.Properties("title").Value = edumateUser.edumateProperties.workTitle
 
+                        Try
+                            ADObject.CommitChanges()
+                        Catch
+                        End Try
 
-						ADObject.CommitChanges()
 
 
-
-
-					End Using
+                    End Using
 
 
 
@@ -3234,9 +3281,48 @@ FROM            edumate.group_membership
 
 	End Sub
 
+    Sub updateParentADDetails(AdUSers As List(Of user), edumateUsers As List(Of user))
+
+        For Each edumateUser In edumateUsers
+            For Each aduser In AdUSers
+                If aduser.employeeID = edumateUser.employeeID Then
 
 
-	Function getEdumateDepartments(users As List(Of user), config As configSettings)
+
+                    Using ADObject As New DirectoryEntry("LDAP://" & aduser.distinguishedName)
+                        'Setting username & password to Nothing forces
+                        'the connection to use your logon credentials
+                        ADObject.Username = Nothing
+                        ADObject.Password = Nothing
+                        'Always use a secure connection
+                        ADObject.AuthenticationType = AuthenticationTypes.Secure
+                        ADObject.RefreshCache()
+
+
+                        ADObject.Properties("telephoneNumber").Value = edumateUser.edumateProperties.phoneNumber
+
+                        Try
+                            ADObject.CommitChanges()
+                        Catch
+                        End Try
+
+
+
+                    End Using
+
+
+
+
+                End If
+            Next
+        Next
+
+
+    End Sub
+
+
+
+    Function getEdumateDepartments(users As List(Of user), config As configSettings)
 		Dim ConnectionString As String = config.edumateConnectionString
 		Dim commandString As String =
 "
@@ -3479,7 +3565,86 @@ GROUP BY schoolbox_staff1.staff_number, schoolbox_staff1.firstname, schoolbox_st
 
 
 
+    Function getEdumateStaffClasses(users As List(Of user), config As configSettings)
+        Dim ConnectionString As String = config.edumateConnectionString
+        Dim commandString As String =
+"
+SELECT DISTINCT
 
+class,
+contact_id,
+firstname,
+surname
+
+FROM
+(
+SELECT DISTINCT 
+
+edumate.contact.contact_id,
+edumate.staff.staff_number,
+edumate.staff.short_name,
+edumate.contact.firstname,
+edumate.contact.surname,
+edumate.department.department,
+edumate.school.school,
+edumate.class.class
+
+FROM
+edumate.class_teacher
+
+inner join edumate.teacher on edumate.class_teacher.teacher_id = edumate.teacher.teacher_id
+inner join edumate.contact on edumate.teacher.contact_id = edumate.contact.contact_id
+inner join edumate.staff on edumate.contact.contact_id = edumate.staff.contact_id
+inner join edumate.class on edumate.class_teacher.class_id = edumate.class.class_id
+inner join edumate.course on edumate.class.course_id = edumate.course.course_id
+inner join edumate.subject on edumate.course.subject_id = edumate.subject.subject_id
+inner join edumate.department on edumate.subject.department_id = edumate.department.department_id
+INNER JOIN edumate.ACADEMIC_YEAR ON edumate.class.academic_year_id = edumate.academic_year.academic_year_id
+INNER JOIN edumate.school ON edumate.department.school_id = edumate.school.school_id 
+
+
+
+WHERE 
+edumate.academic_year.academic_year like year(CURRENT_DATE)
+)
+
+"
+
+
+        Using conn As New IBM.Data.DB2.DB2Connection(ConnectionString)
+            conn.Open()
+
+            'define the command object to execute
+            Dim command As New IBM.Data.DB2.DB2Command(commandString, conn)
+            command.Connection = conn
+            command.CommandText = commandString
+
+            Dim dr As IBM.Data.DB2.DB2DataReader
+            dr = command.ExecuteReader
+
+            Dim i As Integer = 0
+            While dr.Read()
+                If Not dr.IsDBNull(0) Then
+
+                    For Each user In users
+
+
+                        If user.contact_id = dr.GetValue(1) Then
+                            If IsNothing(user.edumateClassesTeaching) Then
+                                user.edumateClassesTeaching = New List(Of String)
+                            End If
+                            user.edumateClassesTeaching.Add(dr.GetValue(0))
+                        End If
+                    Next
+
+
+
+                End If
+            End While
+            conn.Close()
+        End Using
+        Return users
+    End Function
 
 
 

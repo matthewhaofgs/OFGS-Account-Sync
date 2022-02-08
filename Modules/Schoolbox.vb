@@ -23,7 +23,7 @@ Public Module Schoolbox
         'Console.WriteLine("")
 
         Call timetableStructure(config)
-        Call timetable(config)
+        'Call timetable(config) ' DEPRECIATED, now in csv exporter
         Call enrollment(config)
         Call events(config)
 
@@ -108,7 +108,7 @@ Public Module Schoolbox
                     users.Last.Campus = "Junior"
                     users.Last.Role = "Junior Students"
                 Else
-                    users.Last.Campus = "Senior"
+                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
                     users.Last.Role = "Senior Students"
                 End If
             Catch
@@ -155,6 +155,8 @@ Public Module Schoolbox
         'Parents **********************
 
         For Each edumateParent In edumateParents
+
+
             users.Add(New SchoolBoxUser)
 
             users.Last.Delete = ""
@@ -181,7 +183,13 @@ Public Module Schoolbox
             users.Last.Postcode = ""
             users.Last.Username = edumateParent.ad_username
             users.Last.AltEmail = users.Last.Username & adconfig.parentDomainName
-            users.Last.ExternalID = edumateParent.edumateProperties.carer_number
+            If edumateParent.edumateProperties.carer_number <> 3489 Then
+                users.Last.ExternalID = edumateParent.edumateProperties.carer_number
+            Else
+                users.Last.ExternalID = 3489000000
+            End If
+
+
             users.Last.FirstName = """" & Replace(edumateParent.firstName, "&#039;", "'") & """"
             users.Last.Surname = """" & Replace(edumateParent.surname, "&#039;", "'") & """"
 
@@ -192,146 +200,146 @@ Public Module Schoolbox
 						Case "12"
 							Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
 						Case "11"
 							Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
 						Case "10"
 							Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "9"
                             Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "8"
                             Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "7"
                             Select Case users.Last.Campus
 								Case ""
-									users.Last.Campus = "Senior"
-								Case "Junior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Senior"
-									users.Last.Campus = "Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "6"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "5"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "4"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "3"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "2"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
                         Case "1"
                             Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
 						Case "K"
 							Select Case users.Last.Campus
 								Case ""
 									users.Last.Campus = "Junior"
 								Case "Junior"
 									users.Last.Campus = "Junior"
-								Case "Senior"
-									users.Last.Campus = "Junior, Senior"
-								Case "Junior, Senior"
-									users.Last.Campus = "Junior, Senior"
-							End Select
+                                Case "Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                Case "Junior, Senior, Year 7-10, Year 11, Year 12"
+                                    users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                            End Select
 						Case Else
 					End Select
 
@@ -346,8 +354,8 @@ Public Module Schoolbox
 
 
 			If edumateParent.children.Count > 0 And users.Last.Campus = "" Then
-				users.Last.Campus = "Junior, Senior"
-			End If
+                users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+            End If
 
 
 
@@ -510,8 +518,8 @@ inner join edumate.staff on schoolbox_staff2.staff_number = edumate.staff.staff_
 
                 users.Last.Role = "Staff"
 
-				users.Last.Campus = "Junior, Senior"
-				users.Last.Password = ""
+                users.Last.Campus = "Junior, Senior, Year 7-10, Year 11, Year 12"
+                users.Last.Password = ""
 
                 users.Last.Year = "Staff"
                 users.Last.ResidentialHouse = ""
@@ -540,20 +548,25 @@ inner join edumate.staff on schoolbox_staff2.staff_number = edumate.staff.staff_
 
 
                 If dr.GetValue(7) = "true" Then
-                    users.Last.AltEmail = "donotemail@ofgs.nsw.edu.au"
+                    users.Last.AltEmail = "donotemail@ofg.nsw.edu.au"
                     users.Last.EmailAddressFromUsername = "N"
                 Else
                     users.Last.AltEmail = users.Last.Username & adconfig.staffDomainName
                 End If
 
-                If users.Last.AltEmail = "pddowney@ofgs.nsw.edu.au" Then
+                If users.Last.AltEmail = "pddowney@ofg.nsw.edu.au" Then
                     users.Last.EmailAddressFromUsername = "N"
-                    users.Last.AltEmail = "principal@ofgs.nsw.edu.au"
+                    users.Last.AltEmail = "principal@ofg.nsw.edu.au"
                 End If
 
-                If users.Last.AltEmail = "dannyrav@ofgs.nsw.edu.au" Then
+                If users.Last.AltEmail = "dannyrav@ofg.nsw.edu.au" Then
                     users.Last.EmailAddressFromUsername = "N"
-                    users.Last.AltEmail = "sport@ofgs.nsw.edu.au"
+                    users.Last.AltEmail = "sport@ofg.nsw.edu.au"
+                    users.Last.Role = "Administration"
+                End If
+
+                If users.Last.AltEmail = "janineg@ofg.nsw.edu.au" Then
+                    users.Last.Role = "Administration"
                 End If
 
                 ' *******************************************************************************
@@ -580,7 +593,19 @@ inner join edumate.staff on schoolbox_staff2.staff_number = edumate.staff.staff_
 
         Console.WriteLine("Saving to CSV...")
 
-
+        'pad duplicates
+        For Each a In users
+            Dim count As Integer = 0
+            For Each b In users
+                If a.ExternalID = b.ExternalID Then
+                    count = count + 1
+                    'MsgBox(a.ExternalID & "& " & b.ExternalID)
+                End If
+            Next
+            If count = 2 Then
+                a.ExternalID = a.ExternalID & "p"
+            End If
+        Next
 
         Dim sw As New StreamWriter(".\user.csv")
         sw.WriteLine("Delete?,Schoolbox User ID,Username,External ID,Title,First Name,Surname,Role,Campus,Password,Alt Email,Year,House,Residential House,E-Portfolio?,Hide Contact Details?,Hide Timetable?,Email Address From Username?,Use External Mail Client?,Enable Webmail Tab?,Account Enabled?,Child External IDs,Date of Birth,Home Phone,Mobile Phone,Work Phone,Address,Suburb,Postcode,Position Title")
@@ -628,9 +653,10 @@ inner join edumate.staff on schoolbox_staff2.staff_number = edumate.staff.staff_
         Dim commandString As String
         commandString = "
 SELECT DISTINCT 
-CASE WHEN substr(edumate.timetable.timetable, 6, 6) = 'Year 1' THEN 'Senior' ELSE substr(edumate.timetable.timetable, 6, 6) END AS Expr1, 
-REPLACE(CONCAT(CONCAT(edumate.term.term, ' '), 
-substr(edumate.timetable.timetable, 1, 4)), 'Term 0', 'Term 4') AS Expr2, 
+
+
+replace(edumate.timetable.timetable, ' ', '-'),
+CONCAT(CONCAT(edumate.term.term, ' '), substr(edumate.timetable.timetable, 1, 4)) AS Expr2, 
 edumate.term.start_date, 
 edumate.term.end_date, 
 edumate.term.cycle_start_day, 
@@ -641,14 +667,16 @@ edumate.period.end_time
 
 FROM edumate.TERM_GROUP, edumate.cycle_day, edumate.period_cycle_day, edumate.period, edumate.term, edumate.timetable
 
-WHERE (start_date > '01/01/' || year(current_date)) 
-AND (end_date < '12/31/'|| year(current_date)) 
+WHERE (start_date < CURRENT date + 10 DAYS)
+AND (end_date > CURRENT date - 1  DAYS)
+
 AND (edumate.term_group.cycle_id = edumate.cycle_day.cycle_id) 
 AND (edumate.cycle_day.cycle_day_id = edumate.period_cycle_day.cycle_day_id) 
 AND (edumate.period_cycle_day.period_id = edumate.period.period_id) 
 AND (edumate.term_group.term_id = edumate.term.term_id) 
 AND (edumate.term.timetable_id = edumate.timetable.timetable_id)
-AND edumate.timetable.timetable LIKE ('%'|| year(current_date) || '%')
+AND (edumate.timetable.timetable LIKE ('%'|| year(current_date) || '%') OR edumate.timetable.timetable LIKE ('%'|| (year(current_date + 1 year)) || '%'))
+
 "
 
 
@@ -670,7 +698,7 @@ AND edumate.timetable.timetable LIKE ('%'|| year(current_date) || '%')
             dr = command.ExecuteReader
 
 
-            sw.WriteLine("Term Campus,Term Title,Term Start,Term Finish,Term Start Day Number,Period Day,Period Title,Period Start,Period Finish")
+            sw.WriteLine("Term Identifier,Term Title,Term Start,Term Finish,Term Start Day Number,Period Day,Period Title,Period Start,Period Finish")
 
             Dim fields As Integer = dr.FieldCount - 1
             While dr.Read()
@@ -701,8 +729,17 @@ AND edumate.timetable.timetable LIKE ('%'|| year(current_date) || '%')
         Dim commandstring As String
         commandstring = "
 SELECT DISTINCT
- substr(edumate.timetable.timetable, 6, 6) as CAMPUS1,	
-CONCAT(CONCAT(edumate.term.term, ' '), substr(edumate.timetable.timetable, 1, 4)) AS Expr2,
+
+CASE WHEN substr(edumate.term.term, 6, 1) = '0' THEN year(CURRENT_DATE) || '-' || '4' || '-' || substr(edumate.timetable.timetable, 6, 6)
+ELSE year(CURRENT_DATE) || '-' || substr(edumate.term.term, 6, 1)|| '-' || substr(edumate.timetable.timetable, 6, 6) END AS expr1,
+
+
+CASE WHEN edumate.term.term = 'Term 0' THEN 'Term 4 ' || year(CURRENT_DATE) ELSE
+CONCAT(CONCAT(edumate.term.term, ' '), year(CURRENT_DATE)) END AS Expr2,
+
+
+
+
 edumate.cycle_day.day_index as DAY_NUMBER,
 	edumate.period.period as PERIOD_NUMBER,
 	concat(edumate.course.code,edumate.class.identifier) AS CLASS_CODE,
@@ -773,7 +810,7 @@ OR
             dr = command.ExecuteReader
 
 
-            sw.WriteLine("Term Campus,Term Title,Period Day,Period Title,Class Code,Class Title,Class Room,Teacher Code")
+            sw.WriteLine("Term Identifier,Term Title,Period Day,Period Title,Class Code,Class Title,Class Room,Teacher Code")
 
             Dim fields As Integer = dr.FieldCount - 1
             While dr.Read()
@@ -790,6 +827,7 @@ OR
 
                 campus = Replace(dr.GetValue(0), "Year 1", "Senior")
                 strTerm = Replace(dr.GetValue(1), "Term 0", "Term 4")
+
                 'strTerm = Replace(strTerm, "2020", "2019")
                 If True Then
                     outLine = (campus & "," & strTerm & "," & dr.GetValue(2) & "," & dr.GetValue(3) & "," & dr.GetValue(4) & ",""" & tempStr & """," & dr.GetValue(6) & "," & dr.GetValue(7))
@@ -981,8 +1019,8 @@ left join edumate.room on event_rooms.max_room_id = edumate.room.room_id
 
 
 WHERE
-edumate.event.start_date >  '01/01/2020' 
-AND edumate.event.end_date < '12/31/2021' 
+edumate.event.start_date >  '01/01/2021' 
+AND edumate.event.end_date < '12/31/2022' 
 AND edumate.event.publish_flag = 1
 AND edumate.event.recurring_id is not null and edumate.event.recurring_id > 0
 AND edumate.event.event_id = (select min(event_id) from edumate.event e2
@@ -1025,8 +1063,8 @@ on edumate.event.event_id = event_rooms.event_id
 left join edumate.room on event_rooms.max_room_id = edumate.room.room_id
 
 WHERE
-edumate.event.start_date >  '01/01/2020' 
-AND edumate.event.end_date < '12/31/2021' 
+edumate.event.start_date >  '01/01/2021' 
+AND edumate.event.end_date < '12/31/2022' 
 AND edumate.event.publish_flag = 1
 AND edumate.event.recurring_id is null
 
@@ -1178,7 +1216,7 @@ ON edumate.relationship.contact_id2 = studentContact.contact_id
 
 INNER JOIN edumate.student
 ON studentContact.contact_id = edumate.student.contact_id AND
-edumate.student.student_id in (select student_id from edumate.student s1 where current_date BETWEEN (select min(start_date) from edumate.student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
+edumate.student.student_id in (select student_id from edumate.student s1 where current_date BETWEEN (select min(start_date - 180 days) from edumate.student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
                                                                                  (select max(end_date) from edumate.student_form_run sfr2a where s1.student_id = sfr2a.student_id))
 
 INNER JOIN edumate.carer 
@@ -1186,6 +1224,7 @@ ON parentcontact.contact_id = edumate.carer.contact_id
 
 
 WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
+AND edumate.RELATIONSHIP.MAIL_FLAG = 1
 
 
 UNION 
@@ -1209,13 +1248,15 @@ ON edumate.relationship.contact_id1 = studentContact.contact_id
 
 INNER JOIN edumate.student
 ON studentContact.contact_id = edumate.student.contact_id AND
-edumate.student.student_id in (select student_id from edumate.student s1 where current_date BETWEEN (select min(start_date) from edumate.student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
+edumate.student.student_id in (select student_id from edumate.student s1 where current_date BETWEEN (select min(start_date- 180 days) from edumate.student_form_run sfr1a where s1.student_id = sfr1a.student_id) AND 
                                                                                  (select max(end_date) from edumate.student_form_run sfr2a where s1.student_id = sfr2a.student_id))
 INNER JOIN edumate.carer 
 ON parentcontact.contact_id = edumate.carer.contact_id
 
 
 WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+AND edumate.RELATIONSHIP.MAIL_FLAG = 1
+
 
 
 
@@ -1241,6 +1282,7 @@ WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33))
 
 
             sw.WriteLine("Guardian ID,Student ID,Type")
+            sw.WriteLine("7451,6347,Parent")
 
             Dim fields As Integer = dr.FieldCount - 1
             While dr.Read()
