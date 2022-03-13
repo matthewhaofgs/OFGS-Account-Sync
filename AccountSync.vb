@@ -763,7 +763,8 @@ ORDER BY surname
                     users.Last.userType = "Student"
 
                     users.Last.displayName = Replace(users.Last.firstName, "&#039;", "") & " " & Replace(users.Last.surname, "&#039;", "")
-
+                    users.Last.firstName = Replace(users.Last.firstName, "&#039;", "")
+                    users.Last.surname = Replace(users.Last.surname, "&#039;", "")
 
                     users.Last.employeeNumber = dr.GetValue(7)
                     users.Last.dob = dr.GetValue(8)
@@ -1760,8 +1761,11 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
                     users.Last.userType = "Staff"
 
 					users.Last.displayName = Replace(users.Last.firstName, "&#039;", "") & " " & Replace(users.Last.surname, "&#039;", "")
-					users.Last.edumateCurrent = 0
-					If Not IsDBNull(dr.GetValue(6)) Then users.Last.edumateUsername = dr.GetValue(6)
+                    users.Last.firstName = Replace(users.Last.firstName, "&#039;", "")
+                    users.Last.surname = Replace(users.Last.surname, "&#039;", "")
+
+                    users.Last.edumateCurrent = 0
+                    If Not IsDBNull(dr.GetValue(6)) Then users.Last.edumateUsername = dr.GetValue(6)
                     If Not IsDBNull(dr.GetValue(7)) Then users.Last.edumateEmail = dr.GetValue(7)
                     If Not IsDBNull(dr.GetValue(8)) Then users.Last.employmentType = dr.GetValue(8)
                     users.Last.edumateStaffNumber = dr.GetValue(5)
