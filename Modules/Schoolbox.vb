@@ -125,7 +125,7 @@ Public Module Schoolbox
             users.Last.HideContactDetails = "Y"
             users.Last.HideTimetable = "N"
             users.Last.EmailAddressFromUsername = "N"
-            users.Last.UseExternalMailClient = "N"
+            users.Last.UseExternalMailClient = "Y"
             users.Last.EnableWebmailTab = "Y"
             users.Last.Superuser = "N"
             users.Last.AccountEnabled = "Y"
@@ -1223,7 +1223,7 @@ INNER JOIN edumate.carer
 ON parentcontact.contact_id = edumate.carer.contact_id
 
 
-WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 16, 29, 34)) 
+WHERE        (edumate.relationship.relationship_type_id IN (2, 5, 9, 11, 16, 29, 34)) 
 AND edumate.RELATIONSHIP.MAIL_FLAG = 1
 
 
@@ -1254,7 +1254,7 @@ INNER JOIN edumate.carer
 ON parentcontact.contact_id = edumate.carer.contact_id
 
 
-WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 15, 28, 33)) 
+WHERE        (edumate.relationship.relationship_type_id IN (1, 4, 10, 15, 28, 33)) 
 AND edumate.RELATIONSHIP.MAIL_FLAG = 1
 
 

@@ -3092,11 +3092,22 @@ left join edumate.work_detail on edumate.work_detail.contact_id=edumate.contact.
             'Move former students to Alumni OU
             If adUser.distinguishedName.Contains("Student Users") And Not adUser.distinguishedName.Contains("Alumni") And Not adUser.distinguishedName.Contains("Generic") And Not ((adUser.endDate > Date.Now() Or adUser.currentYear = "12") And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts))) Then 'And Not userAccountEnabled Then
                 'moveStudentToAlum(adUser, config.studentAlumOU)
-                targetOU = "alum"
+                If CInt(adUser.classOf) = CInt(Year(Now())) Then
+                    'do nothing
+                Else
+                    targetOU = "alum"
+                End If
+                Else
+
             End If
 
             'Alum to current
             If adUser.distinguishedName.Contains("Alumni") And (adUser.endDate > Date.Now() Or adUser.currentYear = "12") And adUser.startDate < (Date.Now.AddDays(config.daysInAdvanceToCreateAccounts)) Then
+                targetOU = "OU=" & adUser.classOf & ",OU=Student Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"
+            End If
+
+            'year 13 to current
+            If CInt(adUser.classOf) = CInt(Year(Now())) Then
                 targetOU = "OU=" & adUser.classOf & ",OU=Student Users,OU=All,DC=i,DC=ofgs,DC=nsw,DC=edu,DC=au"
             End If
 
