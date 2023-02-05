@@ -1,6 +1,6 @@
 # OFGS-Account-Sync
 
-Application to sync student, staff & parent account information from SMS (Edumate ONLY at present) into AD, Schoolbox, and a MySQL database. 
+Application to sync student, staff & parent account information from SMS (Edumate) into AD, Schoolbox, and a MySQL database. 
 
 Still very much a WIP, but is functional. Heavily customised to the OFGS environment at the moment, but working on making more flexible 
 
